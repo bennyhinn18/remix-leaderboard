@@ -42,7 +42,7 @@ export default function Leaderboard() {
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     const fetchMembers = async () => {
-      const { data } = await supabase.from("members").select("*").order("points", { ascending: false })
+      const { data } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
 
       if (data) {
         const membersWithStats = await Promise.all(
