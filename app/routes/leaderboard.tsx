@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react"
 import { useEffect, useState } from "react"
 import { Menu, Trophy, Github, Code } from "lucide-react"
 import { supabase } from "~/utils/supabase.server"
-import { getSupabaseClient } from "~/utils/supabase.client"
+import { initSupabase } from "~/utils/supabase.client"
 import type { Member } from "~/types/database"
 import styles from "~/styles/leaderboard.module.css"
 
@@ -39,7 +39,7 @@ export default function Leaderboard() {
   useEffect(() => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return
 
-    const supabase = getSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     const fetchMembers = async () => {
       const { data } = await supabase.from("members").select("*").order("points", { ascending: false })
