@@ -1,52 +1,76 @@
-export type EventStatus = "upcoming" | "ongoing" | "completed" | "cancelled"
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
-export interface AgendaItem {
-  id: string
-  eventId: string
+export type LeadingClan = {
+  name: string
+  avatar: string
+  score: number
+}
+
+export type AgendaItem = {
+  time: string
   title: string
-  duration: number
-  presenter?: string
-  description?: string
-  orderIndex: number
+  description: string
+  speaker?: string
+}
+
+export interface Database {
+  public: {
+    Tables: {
+      events: {
+        Row: {
+          id: string
+          title: string
+          date: string
+          time: string
+          venue: string
+          leading_clan: LeadingClan
+          agenda: AgendaItem[]
+          status: "upcoming" | "ongoing" | "completed" | "cancelled"
+          attendees: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          date: string
+          time: string
+          venue: string
+          leading_clan: LeadingClan
+          agenda: AgendaItem[]
+          status?: "upcoming" | "ongoing" | "completed" | "cancelled"
+          attendees?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          date?: string
+          time?: string
+          venue?: string
+          leading_clan?: LeadingClan
+          agenda?: AgendaItem[]
+          status?: "upcoming" | "ongoing" | "completed" | "cancelled"
+          attendees?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+    }
+  }
 }
 
 export interface Event {
   id: string
-  createdAt: Date
   title: string
-  description?: string
-  date: Date
-  location?: string
-  leadingClan: string
-  status: EventStatus
+  date: string
+  time: string
+  venue: string
+  leading_clan: LeadingClan
+  agenda: AgendaItem[]
+  status: "upcoming" | "ongoing" | "completed" | "cancelled"
   attendees: number
-  maxCapacity?: number
-  imageUrl?: string
-  agenda?: AgendaItem[]
+  created_at: string
+  updated_at: string
 }
-
-export interface EventRegistration {
-  id: string
-  eventId: string
-  userId: string
-  status: "registered" | "cancelled"
-  createdAt: Date
-}
-
-export interface Absence {
-  id: string
-  eventId: string
-  userId: string
-  reason: string
-  createdAt: Date
-}
-
-export interface EventFeedback {
-  id: string
-  eventId: string
-  userId: string
-  rating: number
-  feedback?: string
-  createdAt: Date
-}
-

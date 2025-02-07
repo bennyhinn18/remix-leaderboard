@@ -16,7 +16,9 @@ interface EventCardProps {
   onJoin: () => void
   onCantAttend: () => void
   isJoined: boolean
+  disabled: boolean
 }
+
 
 export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined }: EventCardProps) {
   const [isHovered, setIsHovered] = useState(false)
@@ -32,17 +34,17 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="border-2 border-white">
-              <AvatarImage src={event.leadingClan.avatar} />
-              <AvatarFallback>{event.leadingClan.name[0]}</AvatarFallback>
+              {/* <AvatarImage src={event.leadingClan.avatar} /> */}
+              <AvatarFallback>{event.leading_clan.name[0]}</AvatarFallback>
             </Avatar>
             <div>
               <div className="text-blue-200">Leading Clan</div>
-              <div className="font-bold text-white">{event.leadingClan.name}</div>
+              <div className="font-bold text-white">{event.leading_clan.name}</div>
             </div>
           </div>
           <div className="flex items-center gap-2 bg-blue-700 px-3 py-1 rounded-full">
             <Trophy className="w-5 h-5 text-yellow-400" />
-            <span className="font-bold">{event.leadingClan.score}</span>
+            <span className="font-bold">{event.leading_clan.score}</span>
           </div>
         </div>
       </div>
@@ -70,7 +72,7 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
         <div className="space-y-3 text-blue-100">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            <span>{format(event.date, "MMMM d, yyyy")}</span>
+            <span>{format(new Date(event.date), "MMMM d, yyyy")}</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
