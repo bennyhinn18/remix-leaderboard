@@ -143,7 +143,7 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
         <DialogHeader>
           <DialogTitle>Add New Event</DialogTitle>
         </DialogHeader>
@@ -165,6 +165,7 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
               <Input
                 id="title"
                 name="title"
+                defaultValue="Weekly Bash:  BYTE-BASH-BLITZ 👊"
                 required
                 disabled={isSubmitting}
                 aria-invalid={validationErrors.title ? "true" : undefined}
@@ -191,9 +192,8 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
                       {date ? format(date, "PPP") : "Pick a date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0 bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
                     <Calendar
-                      mode="single"
                       selected={date}
                       onSelect={setDate}
                       initialFocus
@@ -205,13 +205,19 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
               </div>
               <div>
                 <Label htmlFor="time">Time</Label>
-                <Input id="time" name="time" placeholder="e.g., 19:00 - 21:00 IST" required disabled={isSubmitting} />
+                <Input id="time" name="time" placeholder="e.g., 09:30 - 03:00 IST" required disabled={isSubmitting} />
               </div>
             </div>
 
             <div>
               <Label htmlFor="venue">Venue</Label>
-              <Input id="venue" name="venue" required disabled={isSubmitting} />
+              <Input
+                id="venue"
+                name="venue"
+                defaultValue="Center for Innovation, Stella Mary's College of Engineering"
+                required
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 
@@ -321,14 +327,23 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="min-w-[100px]">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="min-w-[100px]"
+              onClick={() => {
+              if (!isSubmitting) {
+                onClose()
+              }
+              }}
+            >
               {isSubmitting ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center">
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
-                </motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </motion.div>
               ) : (
-                "Create Event"
+              "Create Event"
               )}
             </Button>
           </div>

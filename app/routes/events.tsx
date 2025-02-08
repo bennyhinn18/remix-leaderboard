@@ -244,7 +244,7 @@ export default function EventsRoute() {
               </motion.div>
             )}
 
-            {/* <AttendeesList event={selectedEvent} /> */}
+            <AttendeesList event={selectedEvent} />
 
             <AbsenceModal event={selectedEvent} isOpen={showAbsence} onClose={() => setShowAbsence(false)} />
 
