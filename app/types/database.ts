@@ -23,7 +23,7 @@ export interface Member {
   id: number
   created_at: string
   name: string
-  points: number
+  bash_points: number
   avatar_url?: string
 }
 

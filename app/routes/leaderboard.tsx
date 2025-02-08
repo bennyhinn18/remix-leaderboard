@@ -3,12 +3,12 @@
 import { json } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
 import { useEffect, useState } from "react"
-import { Menu, Trophy, Github, Code, Search, Star, Award, Crown, Medal } from "lucide-react"
+import { Trophy, Github, Code, Search, Star, Award, Crown, Medal } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "~/utils/supabase.server"
 import { initSupabase } from "~/utils/supabase.client"
 import type { Member } from "~/types/database"
-import iconImage from "~/assets/bashers.png";
+import iconImage from "~/assets/bashers.png"
 
 interface MemberWithStats extends Member {
   githubStreak?: number
@@ -18,12 +18,34 @@ interface MemberWithStats extends Member {
 
 function getTier(points: number): MemberWithStats["tier"] {
   if (points >= 2400) return "diamond"
-  if (points >= 1200) return "platinum"
+  if (points >= 2000) return "platinum"
   return "gold"
 }
 
+function getTierIcon(tier: string) {
+  switch (tier) {
+    case "diamond":
+      return <Star className="w-4 h-4" />
+    case "platinum":
+      return <Award className="w-4 h-4" />
+    default:
+      return <Trophy className="w-4 h-4" />
+  }
+}
+
+function getTierStyles(tier: string) {
+  switch (tier) {
+    case "diamond":
+      return "bg-gradient-to-r from-cyan-300 to-cyan-500 text-cyan-900"
+    case "platinum":
+      return "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900"
+    default:
+      return "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900"
+  }
+}
+
 export const loader = async () => {
-  const { data: members } = await supabase.from("members").select("*").order("points", { ascending: false })
+  const { data: members } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
 
   return json({
     members: members || [],
@@ -32,7 +54,7 @@ export const loader = async () => {
   })
 }
 
-const TopThreeCard = ({ member, index }: { member: MemberWithStats; index: number }) => {
+const TopThreeCard = ({ member, index,activeTab }: { member: MemberWithStats; index: number,activeTab:string }) => {
   const getRankStyles = (rank: number) => {
     switch (rank) {
       case 0:
@@ -128,9 +150,9 @@ const TopThreeCard = ({ member, index }: { member: MemberWithStats; index: numbe
                 <span className={`text-sm ${styles.text}`}>@{member.github_username}</span>
                 <motion.div
                   whileHover={{ scale: 1.1 }}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm`}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
                 >
-                  <Star className="w-4 h-4" />
+                  {getTierIcon(member.tier)}
                   {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
                 </motion.div>
               </div>
@@ -144,8 +166,8 @@ const TopThreeCard = ({ member, index }: { member: MemberWithStats; index: numbe
             transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
             className="text-center"
           >
-            <div className={`text-4xl font-bold ${styles.text}`}>{member.points}</div>
-            <div className={`text-sm ${styles.text}`}>Points</div>
+            <div className={`text-4xl font-bold ${styles.text}`}>{activeTab==="overall"? member.bash_points:activeTab==="github"? member.github_streak || 0:member.leetcodeStreak} </div>
+            <div className={`text-sm ${styles.text}`}> {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}</div>
           </motion.div>
         </div>
       </motion.div>
@@ -153,7 +175,7 @@ const TopThreeCard = ({ member, index }: { member: MemberWithStats; index: numbe
   )
 }
 
-const RegularCard = ({ member, index }: { member: MemberWithStats; index: number }) => {
+const RegularCard = ({ member, index,activeTab }: { member: MemberWithStats; index: number,activeTab:string }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -197,9 +219,9 @@ const RegularCard = ({ member, index }: { member: MemberWithStats; index: number
             </Link>
             <motion.div
               whileHover={{ scale: 1.1 }}
-              className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20"
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTierStyles(member.tier)}`}
             >
-              <Star className="w-4 h-4" />
+              {getTierIcon(member.tier)}
               {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
             </motion.div>
           </div>
@@ -209,9 +231,9 @@ const RegularCard = ({ member, index }: { member: MemberWithStats; index: number
         {/* Score */}
         <motion.div whileHover={{ scale: 1.1 }} className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl">
           <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-            {member.points}
+            {member.bash_points}
           </div>
-          <div className="text-sm text-gray-400">Points</div>
+          <div className="text-sm text-gray-400">{activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}</div>
         </motion.div>
       </div>
     </motion.div>
@@ -221,7 +243,7 @@ const RegularCard = ({ member, index }: { member: MemberWithStats; index: number
 export default function Leaderboard() {
   const { members: initialMembers, SUPABASE_URL, SUPABASE_ANON_KEY } = useLoaderData<typeof loader>()
   const [members, setMembers] = useState<MemberWithStats[]>(
-    initialMembers.map((m) => ({ ...m, tier: getTier(m.points) })),
+    initialMembers.map((m) => ({ ...m, tier: getTier(m.bash_points) })),
   )
   const [activeTab, setActiveTab] = useState<"overall" | "github" | "leetcode">("overall")
   const [searchQuery, setSearchQuery] = useState("")
@@ -238,7 +260,8 @@ export default function Leaderboard() {
         const membersWithStats = await Promise.all(
           data.map(async (member) => ({
             ...member,
-            tier: getTier(member.points),
+            tier: getTier(member.bash_points),
+            tierIcon: getTierIcon(getTier(member.bash_points)),
             githubStreak: await fetchGitHubStreak(member.github_username),
             leetcodeStreak: 0,
           })),
@@ -269,6 +292,26 @@ export default function Leaderboard() {
   }, [])
 
   async function fetchGitHubStreak(username: string) {
+        /*try {
+      const response = await fetch(`https://api.github.com/users/${username}/events/public`)
+      const events = await response.json()
+
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      const contributions = events.filter((event: any) => {
+        const eventDate = new Date(event.created_at)
+        return (
+          eventDate > thirtyDaysAgo &&
+          (event.type === "PushEvent" || event.type === "CreateEvent" || event.type === "PullRequestEvent")
+        )
+      })
+
+      return contributions.length
+    } catch (error) {
+      console.error(`Error fetching GitHub stats for ${username}:`, error)
+      return 0
+    }*/
     return 0 // Keeping the original functionality
   }
 
@@ -278,27 +321,12 @@ export default function Leaderboard() {
       member.github_username.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const getTierIcon = (tier: string) => {
-    switch (tier) {
-      case "diamond":
-        return <Star className="w-4 h-4" />
-      case "platinum":
-        return <Award className="w-4 h-4" />
-      default:
-        return <Trophy className="w-4 h-4" />
-    }
-  }
-
-  const getTierStyles = (tier: string) => {
-    switch (tier) {
-      case "diamond":
-        return "bg-gradient-to-r from-cyan-300 to-cyan-500 text-cyan-900"
-      case "platinum":
-        return "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900"
-      default:
-        return "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900"
-    }
-  }
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
+    if (activeTab === "overall") return b.bash_points - a.bash_points
+    if (activeTab === "github") return (b.githubStreak || 0) - (a.githubStreak || 0)
+    if (activeTab === "leetcode") return (b.leetcodeStreak || 0) - (a.leetcodeStreak || 0)
+    return 0
+  })
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black dark:from-white dark:to-gray-50">
@@ -310,7 +338,7 @@ export default function Leaderboard() {
       >
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
-            <img src={iconImage} alt="Basher Logo" className="w-16 h-16" />
+            <img src={iconImage || "/placeholder.svg"} alt="Basher Logo" className="w-16 h-16" />
             <div className="text-center flex-1">
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Leaderboard
@@ -365,15 +393,15 @@ export default function Leaderboard() {
           <motion.div layout className="space-y-6">
             {/* Top 3 Section */}
             <div className="space-y-4">
-              {filteredMembers.slice(0, 3).map((member, index) => (
-                <TopThreeCard key={member.id} member={member} index={index} />
+              {sortedMembers.slice(0, 3).map((member, index) => (
+                <TopThreeCard key={member.id} member={member} index={index} activeTab={activeTab} />
               ))}
             </div>
 
             {/* Rest of the Leaderboard */}
             <div className="space-y-4 mt-8">
-              {filteredMembers.slice(3).map((member, index) => (
-                <RegularCard key={member.id} member={member} index={index + 3} />
+              {sortedMembers.slice(3).map((member, index) => (
+                <RegularCard key={member.id} member={member} index={index + 3} activeTab={activeTab} />
               ))}
             </div>
           </motion.div>
