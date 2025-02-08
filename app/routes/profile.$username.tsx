@@ -25,13 +25,13 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   
-  const contributions = githubEvents.filter((event: any) => {
+  const contributions = Array.isArray(githubEvents) ? githubEvents.filter((event: any) => {
     const eventDate = new Date(event.created_at)
     return eventDate > thirtyDaysAgo && 
       (event.type === 'PushEvent' || 
        event.type === 'CreateEvent' || 
        event.type === 'PullRequestEvent')
-  })
+  }) : []
 
   const profile: BasherProfile = {
     ...member,
