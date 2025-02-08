@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/u
 import { Button } from "~/components/ui/button"
 import { Textarea } from "~/components/ui/textarea"
 import { Star } from "lucide-react"
-import type { Event } from "../../types/events"
+import type { Event } from "../types/events"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface FeedbackModalProps {

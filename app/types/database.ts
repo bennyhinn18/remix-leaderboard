@@ -1,4 +1,25 @@
 export interface Member {
+  tier(tier: any): import("clsx").ClassValue
+  duolingo_streak: boolean
+  discord_messages: boolean
+  leetcode_streak: boolean
+  github_streak: boolean
+  github_username: ReactNode
+  tier: any
+  tier: any
+  github_username: any
+  discord_messages: number
+  discord_messages: number
+  duolingo_streak: number
+  duolingo_streak: number
+  [x: string]: number
+  github_username: any
+  duolingo_streak: number
+  discord_messages: number
+  tier(tier: any): import("clsx").ClassValue
+  leetcode_streak: number
+  github_streak: number
+  github_streak: number
   id: number
   created_at: string
   name: string
