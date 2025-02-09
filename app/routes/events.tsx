@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { useToast } from "~/hooks/use-toast"
 import type { Database } from "~/types/events"
-import { AddEventForm } from "./events.add"
+import { AddEventForm } from "./events.new"
 import { WeekAnnouncement } from "~/components/week-announcement"
 import { AttendeesList } from "~/components/attendees-list"
 
@@ -195,9 +195,11 @@ export default function EventsRoute() {
               </SelectTrigger>
               <SelectContent className="bg-blue-900 text-white border-blue-700">
                 {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id} className="hover:bg-blue-800 focus:bg-blue-800">
-                    {event.title} - {new Date(event.date).toLocaleDateString()}
-                  </SelectItem>
+                    <SelectItem key={event.id} value={event.id} className="hover:bg-blue-800 focus:bg-blue-800">
+                      <div className="flex flex-col md:flex-row">
+                        <span className="truncate">{event.title.length > 20 ? `${event.title.substring(0, 20)}...` : event.title} -{new Date(event.date).toLocaleDateString()}</span>
+                      </div>
+                    </SelectItem>
                 ))}
               </SelectContent>
             </Select>
