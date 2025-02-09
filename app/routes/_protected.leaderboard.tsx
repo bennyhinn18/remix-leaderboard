@@ -54,7 +54,7 @@ export const loader = async () => {
   })
 }
 
-const TopThreeCard = ({ member, index,activeTab }: { member: MemberWithStats; index: number,activeTab:string }) => {
+const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; index: number; activeTab: string }) => {
   const getRankStyles = (rank: number) => {
     switch (rank) {
       case 0:
@@ -121,7 +121,7 @@ const TopThreeCard = ({ member, index,activeTab }: { member: MemberWithStats; in
             <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/40">
               {member.avatar_url ? (
                 <img
-                  src={member.avatar_url || "/placeholder.svg"}
+                  src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
                   alt={member.name}
                   className="w-full h-full object-cover"
                 />
@@ -166,8 +166,17 @@ const TopThreeCard = ({ member, index,activeTab }: { member: MemberWithStats; in
             transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
             className="text-center"
           >
-            <div className={`text-4xl font-bold ${styles.text}`}>{activeTab==="overall"? member.bash_points:activeTab==="github"? member.github_streak || 0:member.leetcodeStreak} </div>
-            <div className={`text-sm ${styles.text}`}> {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}</div>
+            <div className={`text-4xl font-bold ${styles.text}`}>
+              {activeTab === "overall"
+                ? member.bash_points
+                : activeTab === "github"
+                  ? member.github_streak || 0
+                  : member.leetcodeStreak}{" "}
+            </div>
+            <div className={`text-sm ${styles.text}`}>
+              {" "}
+              {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}
+            </div>
           </motion.div>
         </div>
       </motion.div>
@@ -175,7 +184,7 @@ const TopThreeCard = ({ member, index,activeTab }: { member: MemberWithStats; in
   )
 }
 
-const RegularCard = ({ member, index,activeTab }: { member: MemberWithStats; index: number,activeTab:string }) => {
+const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; index: number; activeTab: string }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -197,7 +206,7 @@ const RegularCard = ({ member, index,activeTab }: { member: MemberWithStats; ind
         >
           {member.avatar_url ? (
             <img
-              src={member.avatar_url || "/placeholder.svg"}
+              src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
               alt={member.name}
               className="w-full h-full object-cover"
             />
@@ -233,7 +242,9 @@ const RegularCard = ({ member, index,activeTab }: { member: MemberWithStats; ind
           <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
             {member.bash_points}
           </div>
-          <div className="text-sm text-gray-400">{activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}</div>
+          <div className="text-sm text-gray-400">
+            {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}
+          </div>
         </motion.div>
       </div>
     </motion.div>
@@ -292,7 +303,7 @@ export default function Leaderboard() {
   }, [])
 
   async function fetchGitHubStreak(username: string) {
-        /*try {
+    /*try {
       const response = await fetch(`https://api.github.com/users/${username}/events/public`)
       const events = await response.json()
 
@@ -318,7 +329,7 @@ export default function Leaderboard() {
   const filteredMembers = members.filter(
     (member) =>
       member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.github_username.toLowerCase().includes(searchQuery.toLowerCase()),
+      (member.github_username?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
   )
 
   const sortedMembers = [...filteredMembers].sort((a, b) => {
@@ -346,7 +357,7 @@ export default function Leaderboard() {
             </div>
             <div className="text-right">
               <div className="text-lg font-semibold text-white">Hello Gavi!!!</div>
-              <div className="text-sm text-gray-400">How's your learning journey?</div>
+              <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
           </div>
 

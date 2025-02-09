@@ -29,7 +29,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       statusText: "Not Found",
     })
   }
-
   return json({ clan })
 }
 

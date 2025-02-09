@@ -49,6 +49,7 @@ interface AttendeesListProps {
         agenda: AgendaItem[]
         status: "upcoming" | "ongoing" | "completed" | "cancelled"
         attendees: number
+        absentees: number
         created_at: string
         updated_at: string
     }
@@ -57,7 +58,6 @@ interface AttendeesListProps {
 export function AttendeesList({
   attendees = [],
   isLoading = false,
-  onStatusChange,
   onSearch,
   onFilter,
   error,

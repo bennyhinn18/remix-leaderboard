@@ -99,7 +99,7 @@ function ClanCard({ clan }: { clan: Clan }) {
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20">
             <img
-              src={clan.logo_url || " "}
+              src={clan.logo_url || `https://api.dicebear.com/9.x/dylan/svg?seed=${clan.clan_name}`}
               alt={`${clan.clan_name} logo`}
               className="w-full h-full object-cover"
             />

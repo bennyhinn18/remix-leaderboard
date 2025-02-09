@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
-import { Briefcase, FileText, Award, Star, Share2, Github } from 'lucide-react'
+import { Briefcase, FileText, Star, Share2, Github } from 'lucide-react'
 import type { BasherProfile } from "~/types/profile"
 import { format } from "date-fns"
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog"
@@ -55,7 +55,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
           >
             {profile.avatar_url ? (
               <img
-                src={profile.avatar_url || "/placeholder.svg"}
+                src={`https://api.dicebear.com/9.x/dylan/svg?seed=${profile.name}` || profile.avatar_url}
                 alt={profile.name}
                 className="w-full h-full object-cover"
               />
@@ -134,7 +134,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-800">
                     {profile.avatar_url ? (
                       <img
-                        src={profile.avatar_url || "/placeholder.svg"}
+                        src={`https://api.dicebear.com/9.x/dylan/svg?seed=${profile.name}` || profile.avatar_url}
                         alt={profile.name}
                         className="w-full h-full object-cover"
                       />
