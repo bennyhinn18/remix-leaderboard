@@ -70,7 +70,7 @@ export default function Login() {
           <div className="space-y-2 relative w-32 h-32">
             <img
               src={iconImage}
-              alt="SportsDot Logo"
+              alt="Byte Bash Logo"
               className="w-full h-full object-cover"
             />
           </div>

@@ -1,22 +1,8 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import {
-  Menu,
-  Users,
-  Home,
-  UserCircle,
-  Book,
-  Mail,
-  Globe,
-  LogOut,
-  Building,
-  Moon,
-  Sun,
-  ChevronDown,
-} from "lucide-react"
+import { Link } from "@remix-run/react"
+import { Trophy, Star, Mail, Globe, LogOut, Building, ChevronDown, Book, PanelRightOpen, Calendar, UserCheck } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/sheet"
 import {
@@ -29,70 +15,85 @@ import {
 } from "~/components/ui/dropdown-menu"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
-// import { useTheme } from "~/providers/theme-provider"
-import type { NavigationItem, UserNavigation } from "~/types/navigation"
+import type { BasherProfile } from "~/types/profile"
+import iconImage from "~/assets/bashers.png";
 
-const navigation: NavigationItem[] = [
+const navigation = [
   {
-    title: "Home",
-    href: "/",
-    icon: Home,
+    title: "Leaderboard",
+    href: "/leaderboard",
+    icon: Trophy,
   },
   {
-    title: "View Clans",
+    title: "Credits",
+    href: "/credits",
+    icon: Star,
+  },
+  {
+    title: "Events",
+    href: "/events",
+    icon: Calendar,
+    description: "Upcoming challenges and meetups",
+  },
+  {
+    title: "Clans",
     href: "/clans",
     icon: Building,
     items: [
       {
-        title: "Aura 7f",
-        href: "/clans/aura-7f",
+        title: "Terminal Tigers",
+        href: "/clans/terminal-tigers",
+        members: 24,
       },
       {
-        title: "Belmonts",
-        href: "/clans/belmonts",
+        title: "Code Crusaders",
+        href: "/clans/code-crusaders",
+        members: 18,
       },
       {
-        title: "Lumina",
-        href: "/clans/lumina",
+        title: "Binary Bandits",
+        href: "/clans/binary-bandits",
+        members: 21,
       },
       {
-        title: "Shadastria Adepti",
-        href: "/clans/shadastria-adepti",
+        title: "Syntax Spartans",
+        href: "/clans/syntax-spartans",
+        members: 16,
       },
     ],
   },
   {
-    title: "Bashers",
-    href: "/bashers",
-    icon: Users,
+    title: "Companions",
+    href: "/companions",
+    icon: UserCheck,
   },
 ]
 
-const bottomNav: NavigationItem[] = [
+const bottomNav = [
   {
     title: "Contact",
-    href: "/contact",
+    href: "/support",
     icon: Mail,
   },
   {
     title: "Website",
-    href: "https://bbt.com",
+    href: "https://bytebashblitz.vercel.app/",
     icon: Globe,
   },
   {
     title: "Handbook",
-    href: "/handbook",
+    href: "https://basher-handbook.notion.site/",
     icon: Book,
+    external: true,
   },
 ]
 
 interface MainNavProps {
-  user: UserNavigation
+  user: BasherProfile
 }
 
 export function MainNav({ user }: MainNavProps) {
   const [open, setOpen] = React.useState(false)
-//   const { theme, toggleTheme } = useTheme()
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -102,20 +103,25 @@ export function MainNav({ user }: MainNavProps) {
           size="lg"
           className="relative h-14 w-14 rounded-full bg-[#4dc4f9]/10 hover:bg-[#4dc4f9]/20 transition-colors"
         >
-          <Menu className="h-8 w-8 text-[#4dc4f9]" />
+          <PanelRightOpen className="h-8 w-8 text-[#4dc4f9]" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-white dark:bg-gray-950">
-        <SheetHeader className="p-4 border-b border-[#4dc4f9]/10">
+      <SheetContent
+        side="right"
+        className="w-[300px] p-0 flex flex-col bg-gradient-to-br from-gray-900 to-black text-white"
+      >
+        <SheetHeader className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2">
+            <div className="space-y-2 relative w-12 h-12">
             <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bashers-QUqKBsOsaxWS2xsmkPl295pRAvng84.png"
-              alt="Bashers Logo"
-              className="h-8 w-8"
+              src={iconImage}
+              alt="Byte Bash Logo"
+              className="w-full h-full object-cover"
             />
+            </div>
             <div className="flex flex-col">
-              <SheetTitle className="text-lg font-bold text-black dark:text-white">Byte Bash Blitz</SheetTitle>
-              <p className="text-sm text-[#4dc4f9]">{user.username}'s Clan</p>
+              <SheetTitle className="text-lg font-bold text-white">Byte Bash Blitz</SheetTitle>
+              <p className="text-sm text-blue-400">{user.basherLevel} Basher</p>
             </div>
           </div>
         </SheetHeader>
@@ -128,41 +134,38 @@ export function MainNav({ user }: MainNavProps) {
                   {item.items ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-between hover:bg-[#4dc4f9]/10 text-black dark:text-white"
-                        >
+                        <Button variant="ghost" className="w-full justify-between hover:bg-white/5 text-white">
                           <span className="flex items-center gap-2">
-                            {item.icon && <item.icon className="h-5 w-5 text-[#4dc4f9]" />}
+                            {item.icon && React.createElement(item.icon, { className: "h-5 w-5 text-blue-400" })}
                             {item.title}
                           </span>
-                          <ChevronDown className="h-4 w-4 text-[#4dc4f9]" />
+                          <ChevronDown className="h-4 w-4 text-blue-400" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="start"
                         alignOffset={-8}
-                        className="w-[230px] bg-white dark:bg-gray-950"
+                        className="w-[230px] bg-gray-900/95 backdrop-blur-xl border border-white/10"
                       >
-                        <DropdownMenuLabel className="text-[#4dc4f9]">Select Clan</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {item.items.map((subItem: NavigationItem) => (
+                        <DropdownMenuLabel className="text-blue-400">Select Clan</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-white/10" />
+                        {item.items.map((subItem) => (
                           <DropdownMenuItem key={subItem.title} asChild>
-                            <Link href={subItem.href || "#"} className="text-black dark:text-white">
+                            <Link
+                              to={subItem.href}
+                              className="text-white hover:text-blue-400 flex justify-between items-center"
+                            >
                               {subItem.title}
+                              <span className="text-sm text-gray-400">{subItem.members} members</span>
                             </Link>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-2 hover:bg-[#4dc4f9]/10 text-black dark:text-white"
-                      asChild
-                    >
-                      <Link href={item.href || "#"}>
-                        {item.icon && <item.icon className="h-5 w-5 text-[#4dc4f9]" />}
+                    <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-white/5 text-white" asChild>
+                      <Link to={item.href}>
+                        {item.icon && <item.icon className="h-5 w-5 text-blue-400" />}
                         {item.title}
                       </Link>
                     </Button>
@@ -176,47 +179,40 @@ export function MainNav({ user }: MainNavProps) {
                 <Button
                   key={item.title}
                   variant="ghost"
-                  className="w-full justify-start gap-2 hover:bg-[#4dc4f9]/10 text-black dark:text-white"
+                  className="w-full justify-start gap-2 hover:bg-white/5 text-white"
                   asChild
                 >
-                  <Link href={item.href || "#"}>
-                    {item.icon && <item.icon className="h-5 w-5 text-[#4dc4f9]" />}
+                  <Link to={item.href}>
+                    {item.icon && <item.icon className="h-5 w-5 text-blue-400" />}
                     {item.title}
                   </Link>
                 </Button>
               ))}
-              {/* <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 hover:bg-[#4dc4f9]/10 text-black dark:text-white"
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? (
-                  <Moon className="h-5 w-5 text-[#4dc4f9]" />
-                ) : (
-                  <Sun className="h-5 w-5 text-[#4dc4f9]" />
-                )}
-                {theme === "dark" ? "Dark" : "Light"} Mode
-              </Button> */}
             </nav>
           </div>
         </ScrollArea>
 
-        <div className="mt-auto border-t border-[#4dc4f9]/10 p-4">
+        <div className="mt-auto border-t border-white/10 p-4">
           <div className="flex items-center gap-3 mb-4">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <Avatar className="h-10 w-10 rounded-lg border border-white/10">
+              <AvatarImage src={user.avatar_url} />
+              <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+                {user.name.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-black dark:text-white">{user.username}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-white">{user.name}</p>
+                <div className="px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs">{user.basherNo}</div>
+              </div>
+              <p className="text-xs text-gray-400 truncate">{user.clanName}</p>
             </div>
           </div>
           <Button
             variant="ghost"
-            className="w-full justify-start gap-2 hover:bg-red-500/10 hover:text-red-500 text-black dark:text-white"
+            className="w-full justify-start gap-2 hover:bg-red-500/10 hover:text-red-400 text-white group"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-5 w-5 group-hover:text-red-400" />
             Logout
           </Button>
         </div>

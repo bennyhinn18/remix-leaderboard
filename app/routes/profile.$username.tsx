@@ -4,6 +4,7 @@ import { ArrowLeft, Github, Code, Book, Globe2, MessageSquare, Trophy, Award, Br
 import { supabase } from "~/utils/supabase.server"
 import { ProfileInfo } from "~/components/profile-info"
 import type { BasherProfile } from "~/types/profile"
+import { MainNav } from "~/components/main-nav"
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { username } = params
@@ -39,7 +40,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     joinedDate: new Date(member.created_at),
     basherLevel: member.bash_points >= 2500 ? "Diamond" : member.points >= 2400 ? "Platinum" : "Gold",
     bashPoints: member.bash_points,
-    clanName: "Terminal Tigers",
+    clanName: member.clan_name || "Byte Basher",
     basherNo: "BBT2023045",
     projects: 12,
     certifications: 5,
@@ -75,7 +76,7 @@ export default function Profile() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation */}
-        <div className="mb-8">
+        <div className="mb-8 flex justify-between items-center">
           <Link 
             to="/leaderboard"
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
@@ -83,6 +84,7 @@ export default function Profile() {
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
           </Link>
+          <MainNav user={profile} />
         </div>
 
         {/* Profile Info Section */}
