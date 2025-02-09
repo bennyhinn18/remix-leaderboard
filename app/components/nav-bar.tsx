@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "@remix-run/react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Trophy, Calendar, Users, Menu, X, ChevronLeft, ChevronRight, Star, Heart } from "lucide-react"
+import { Trophy, Calendar, Users, Menu, X, Star, PanelLeftOpen, PanelRightOpen } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { cn } from "~/lib/utils"
@@ -23,10 +23,10 @@ const navItems: NavItem[] = [
     description: "View rankings and achievements",
   },
   {
-    icon: <Star className="w-5 h-5" />,
-    label: "Credits",
-    href: "/credits",
-    description: "Earn and spend your credits",
+    icon: <Users className="w-5 h-5" />,
+    label: "Profiles",
+    href: "/profiles",
+    description: "Browse member profiles",
   },
   {
     icon: <Calendar className="w-5 h-5" />,
@@ -35,23 +35,17 @@ const navItems: NavItem[] = [
     description: "Upcoming challenges and meetups",
   },
   {
-    icon: <Heart className="w-5 h-5" />,
-    label: "Companions",
-    href: "/companions",
-    description: "Your coding buddies",
+    icon: <Star className="w-5 h-5" />,
+    label: "Credits",
+    href: "/credits",
+    description: "Earn and spend your credits",
   },
-  {
-    icon: <Users className="w-5 h-5" />,
-    label: "Profiles",
-    href: "/profiles",
-    description: "Browse member profiles",
-  }
 ]
 
 export function NavBar() {
   const [isMobile, setIsMobile] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true)
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(false)
   const location = useLocation()
 
   useEffect(() => {
@@ -138,10 +132,16 @@ export function NavBar() {
               variant="ghost"
               size="icon"
               onClick={() => setIsDesktopSidebarOpen(!isDesktopSidebarOpen)}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-200"
               aria-label={isDesktopSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
-              {isDesktopSidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+              <motion.div
+                initial={false}
+                animate={{ rotate: isDesktopSidebarOpen ? 0 : 180 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isDesktopSidebarOpen ? <PanelLeftOpen className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
+              </motion.div>
             </Button>
           </div>
           <ScrollArea className="flex-1 py-6">
@@ -177,7 +177,7 @@ export function NavBar() {
       {/* Mobile Bottom Bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-t border-white/10 backdrop-blur-xl z-50">
         <div className="flex items-center justify-around p-3">
-          {navItems.slice(0, 3).map((item) => {
+          {navItems.slice(0, 4).map((item) => {
             const isActive = location.pathname === item.href
             return (
               <Link

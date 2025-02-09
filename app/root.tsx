@@ -9,6 +9,7 @@ import type { LinksFunction } from "@remix-run/node";
 import iconImage from "~/assets/bashers.png";
 // import { NavBar } from "~/components/nav-bar";
 import "./tailwind.css";
+import { BottomNav } from "./components/bottom-nav";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -38,7 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        {/* <NavBar /> */}
+        <BottomNav />
       </body>
     </html>
   );

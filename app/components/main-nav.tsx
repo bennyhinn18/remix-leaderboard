@@ -41,23 +41,24 @@ const navigation = [
     icon: Building,
     items: [
       {
-        title: "Terminal Tigers",
-        href: "/clans/terminal-tigers",
+        title: "Aura 7f",
+        href: `/clans/aura-7f`,
+        id: "aura-7f",
         members: 24,
       },
       {
-        title: "Code Crusaders",
-        href: "/clans/code-crusaders",
+        title: "Belmonts",
+        href: `/clans/belmonts`,
         members: 18,
       },
       {
-        title: "Binary Bandits",
-        href: "/clans/binary-bandits",
+        title: "Lumina",
+        href: `/clans/lumina`,
         members: 21,
       },
       {
-        title: "Syntax Spartans",
-        href: "/clans/syntax-spartans",
+        title: "Shadastria Adepti",
+        href: `/clans/shadastria-adepti`,
         members: 16,
       },
     ],
