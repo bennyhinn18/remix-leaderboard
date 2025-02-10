@@ -1,44 +1,43 @@
-"use client"
-
 import type { ActionFunction } from "@remix-run/node"
 import { Form, useActionData, useNavigation } from "@remix-run/react"
-import { json, redirect,useEffect } from "@remix-run/node"
+import { json, redirect } from "@remix-run/node"
 import { supabase } from "~/utils/supabase.server"
 import { getUserSession } from "~/utils/session.server"
-import { logger } from "~/utils/logger.server"
+
 import { Github } from "lucide-react"
+import { useEffect } from "react"
 
 export const loader = async ({ request }: { request: Request }) => {
-  logger.debug("Login page loader called")
+  console.log("Login page loader called")
   const user = await getUserSession(request)
   if (user) {
-    logger.debug("User already logged in, redirecting to dashboard", { userId: user.id })
+    console.log("User already logged in, redirecting to dashboard", { userId: user.id })
     return redirect("/dashboard")
   }
   return null
 }
 
 export const action: ActionFunction = async ({ request }) => {
-  logger.info("Starting GitHub authentication")
+  console.log("Starting GitHub authentication")
 
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
         scopes: "read:org",
-        redirectTo: `${process.env.PUBLIC_URL || "http://localhost:3000"}/auth/callback`,
+        redirectTo: `${process.env.PUBLIC_URL || "https://effective-rotary-phone-pjjgpqwpx7wjcr7p9-5173.app.github.dev"}/auth/callback`,
       },
     })
 
     if (error) {
-      logger.error("Supabase OAuth error", { error })
+      console.log("Supabase OAuth error", { error })
       return json({ error: "Authentication failed" }, { status: 400 })
     }
 
-    logger.info("OAuth URL generated successfully")
+    console.log("OAuth URL generated successfully")
     return json({ url: data.url })
   } catch (error) {
-    logger.error("Unexpected error during authentication", { error })
+    console.log("Unexpected error during authentication", { error })
     return json({ error: "An unexpected error occurred" }, { status: 500 })
   }
 }
@@ -51,7 +50,7 @@ export default function Login() {
   // Use useEffect to handle client-side redirect
   useEffect(() => {
     if (actionData?.url) {
-      logger.debug("Redirecting to GitHub OAuth URL", { url: actionData.url })
+      console.log("Redirecting to GitHub OAuth URL", { url: actionData.url })
       window.location.href = actionData.url
     }
   }, [actionData])

@@ -17,8 +17,8 @@ interface MemberWithStats extends Member {
 }
 
 function getTier(points: number): MemberWithStats["tier"] {
-  if (points >= 2400) return "diamond"
-  if (points >= 2000) return "platinum"
+  if (points >= 8) return "diamond"
+  if (points >= 5) return "platinum"
   return "gold"
 }
 
