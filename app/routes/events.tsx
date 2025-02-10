@@ -1,7 +1,7 @@
 "use client"
 
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node"
-import { useLoaderData, useNavigation, useSubmit, useNavigate, useFetcher } from "@remix-run/react"
+import { useLoaderData, useNavigation, useSubmit, useNavigate } from "@remix-run/react"
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "~/utils/supabase.server"
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { useToast } from "~/hooks/use-toast"
 import type { Database } from "~/types/events"
-import { AddEventForm } from "./events.add"
+import { AddEventForm } from "./events.new"
 import { WeekAnnouncement } from "~/components/week-announcement"
 import { AttendeesList } from "~/components/attendees-list"
 
@@ -55,7 +55,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (intent === "join") {
       const { data: event, error: fetchError } = await supabase
         .from("events")
-        .select("attendees")
+        .select("attendees, absentees")
         .eq("id", eventId)
         .single()
 
@@ -65,6 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
         .from("events")
         .update({
           attendees: (event.attendees || 0) + 1,
+          absentees: (event.absentees || 0) + 1,
           updated_at: new Date().toISOString(),
         })
         .eq("id", eventId)
@@ -86,7 +87,6 @@ export default function EventsRoute() {
   const navigation = useNavigation()
   const submit = useSubmit()
   const navigate = useNavigate()
-  const fetcher = useFetcher()
   const { toast } = useToast()
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(events[0] ?? null)
@@ -195,9 +195,11 @@ export default function EventsRoute() {
               </SelectTrigger>
               <SelectContent className="bg-blue-900 text-white border-blue-700">
                 {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id} className="hover:bg-blue-800 focus:bg-blue-800">
-                    {event.title} - {new Date(event.date).toLocaleDateString()}
-                  </SelectItem>
+                    <SelectItem key={event.id} value={event.id} className="hover:bg-blue-800 focus:bg-blue-800">
+                      <div className="flex flex-col md:flex-row">
+                        <span className="truncate">{event.title.length > 20 ? `${event.title.substring(0, 20)}...` : event.title} -{new Date(event.date).toLocaleDateString()}</span>
+                      </div>
+                    </SelectItem>
                 ))}
               </SelectContent>
             </Select>

@@ -19,7 +19,12 @@ interface AbsenceModalProps {
 }
 
 export function AbsenceModal({ event, isOpen, onClose }: AbsenceModalProps) {
-  const fetcher = useFetcher()
+  interface FetcherData {
+    success?: boolean
+    error?: string
+  }
+
+  const fetcher = useFetcher<FetcherData>()
   const [email, setEmail] = useState("")
   const [reason, setReason] = useState("")
   const [isSent, setIsSent] = useState(false)
@@ -35,7 +40,7 @@ export function AbsenceModal({ event, isOpen, onClose }: AbsenceModalProps) {
 
   // Handle successful submission
   useEffect(() => {
-    if (fetcher.data?.success && !isSent) {
+    if ((fetcher.data as { success?: boolean })?.success && !isSent) {
       setIsSent(true)
       setTimeout(() => {
         onClose()
@@ -55,7 +60,7 @@ export function AbsenceModal({ event, isOpen, onClose }: AbsenceModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-gradient-to-br from-blue-900 to-indigo-900 text-white">
         <DialogHeader>
-          <DialogTitle className="text-white">Can't Attend?</DialogTitle>
+          <DialogTitle className="text-white">Can&apos;t Attend?</DialogTitle>
         </DialogHeader>
         <AnimatePresence mode="wait">
           {!isSent ? (

@@ -1,13 +1,12 @@
 "use client"
 
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
+import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { Crown, Star, Award, Users } from "lucide-react"
 import { Card } from "~/components/ui/card"
 import { supabase } from "~/utils/supabase.server"
 import { useEffect, useState } from "react"
-import type { ActionFunctionArgs } from "@remix-run/node"
 import type React from "react" // Added import for React
 import { UpdateChampionsForm } from "~/components/update-champions-form"
 
@@ -302,7 +301,7 @@ export default function Credits() {
         className="text-center space-y-2 p-6 pb-0"
           >
         <h1 className="text-3xl font-bold text-purple-400">Hall of Fame</h1>
-        <p className="text-gray-400">Celebrating our community's brightest stars</p>
+        <p className="text-gray-400">Celebrating our community&apos;s brightest stars</p>
         <div className="flex justify-end">
           {currentDate >= startOfMonth && currentDate <= endOfVisibility && <UpdateChampionsForm />}
         </div>
@@ -329,7 +328,7 @@ export default function Credits() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-300"
           >
-            <p className="text-gray-400">Recognizing this month's outstanding achievements</p>
+            <p className="text-gray-400">Recognizing this month&apos;s outstanding achievements</p>
           </motion.p>
         </div>
 

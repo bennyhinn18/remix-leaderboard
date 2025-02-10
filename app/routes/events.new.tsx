@@ -17,7 +17,7 @@ import type React from "react" // Added import for React
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData()
-
+  console.log("form Data",formData)
   // Validate required fields
   const requiredFields = ["title", "date", "time", "venue", "clanName", "clanScore"]
   for (const field of requiredFields) {
@@ -39,29 +39,44 @@ export async function action({ request }: ActionFunctionArgs) {
     i++
   }
 
+    // Format the date
+    const dateStr = formData.get("date") as string
+    const date = new Date(dateStr)
+    const formattedDate = format(date, "yyyy-MM-dd")
+
+  const now = new Date().toISOString()
+
   const newEvent = {
     title: formData.get("title") as string,
-    date: formData.get("date") as string,
+    date: formattedDate,
     time: formData.get("time") as string,
     venue: formData.get("venue") as string,
     leading_clan: {
       name: formData.get("clanName") as string,
-      avatar: "/placeholder.svg?height=50&width=50",
+      avatar: "/placeholder.svg?height=50&width=50", // Add default avatar
       score: Number.parseInt(formData.get("clanScore") as string) || 0,
     },
     agenda: agendaItems,
     status: "upcoming",
-    attendees: 0,
+    attendees: "0", // Store as string
+    created_at: now,
+    updated_at: now,
   }
 
   try {
     const { error } = await supabase.from("events").insert([newEvent])
+    console.log("Form Data:", Object.fromEntries(formData.entries()))
 
-    if (error) throw error
+
+    if (error) {
+      console.error("Supabase error:", error)
+      return json({ error: `Failed to create event: ${error.message}` }, { status: 500 })
+    }
 
     return redirect("/events")
   } catch (error) {
-    return json({ error: "Failed to create event" }, { status: 500 })
+    console.error("Failed to create event:", error)
+    return json({ error: "Failed to create event. Please try again." }, { status: 500 })
   }
 }
 
@@ -121,7 +136,6 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
 
   const removeAgendaItem = (index: number) => {
     setAgendaItems(agendaItems.filter((_, i) => i !== index))
-    // Clear validation errors for removed item
     const newErrors = { ...validationErrors }
     delete newErrors[`agenda[${index}].time`]
     delete newErrors[`agenda[${index}].title`]
@@ -133,7 +147,6 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
     const newItems = [...agendaItems]
     newItems[index] = { ...newItems[index], [field]: value }
     setAgendaItems(newItems)
-    // Clear validation error when field is filled
     if (value) {
       const newErrors = { ...validationErrors }
       delete newErrors[`agenda[${index}].${field}`]

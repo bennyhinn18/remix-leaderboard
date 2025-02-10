@@ -10,7 +10,7 @@ import iconImage from "~/assets/bashers.png";
 // import { NavBar } from "~/components/nav-bar";
 import "./tailwind.css";
 import { BottomNav } from "./components/bottom-nav";
-
+import { AuthProvider } from "~/contexts/auth";
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -31,6 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Byte Bash Blitz</title>
+        <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="icon" href={iconImage} />
         <Meta />
         <Links />
@@ -46,5 +47,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  
+  return <AuthProvider> <Outlet /> </AuthProvider>;
 }

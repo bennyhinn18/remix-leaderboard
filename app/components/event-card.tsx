@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card } from "~/components/ui/card"
 import { Button } from "~/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
+import { Avatar, AvatarFallback } from "~/components/ui/avatar"
 import { Badge } from "~/components/ui/badge"
 import { Calendar, Clock, MapPin, Users, Trophy, Check } from "lucide-react"
 import type { Event } from "~/types/events"
@@ -79,7 +79,7 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
             <span>{event.time}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
+            <MapPin className="w-6 h-6" />
             <span>{event.venue}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
             onClick={onCantAttend}
             className="flex-1 text-blue-200 hover:text-white hover:bg-blue-800"
           >
-            Can't Attend
+            Can&apos;t Attend
           </Button>
         </div>
       </div>
