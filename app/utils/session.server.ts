@@ -16,24 +16,25 @@ export async function name() {
 }
 
 export async function createUserSession(accessToken: string, refreshToken: string, redirectTo: string) {
-  const session = await sessionStorage.getSession()
-  session.set("accessToken", accessToken)
-  session.set("refreshToken", refreshToken)
+  const session = await sessionStorage.getSession();
+  session.set("accessToken", accessToken);
+  session.set("refreshToken", refreshToken);
 
-
-  
+  await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
 
   return redirect(redirectTo, {
     headers: {
       "Set-Cookie": await sessionStorage.commitSession(session),
     },
-  })
+  });
 }
+
 
 export async function getUserSession(request: Request) {
   const {data} = await supabase.auth.getSession()
   console.log("session",data.session?.access_token)
-  const accessToken = ""
+  const accessToken = data.session?.access_token;
+
 
   if (!accessToken) return null
 

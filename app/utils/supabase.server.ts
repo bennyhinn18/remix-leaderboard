@@ -1,23 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-import invariant from "tiny-invariant";
+import { createServerClient } from "@supabase/auth-helpers-remix"
+import type { Database } from "~/types/database"
 
-invariant(process.env.SUPABASE_URL, "SUPABASE_URL must be set");
-invariant(process.env.SUPABASE_ANON_KEY, "SUPABASE_ANON_KEY must be set");
+export const createServerSupabase = (request: Request, response: Response) =>
+  createServerClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, { request, response })
 
-export const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-  {
-    auth: {
-      persistSession: true
-    },
-    db: {
-      schema: 'public'
-    },
-    global: {
-      headers: {
-        'Cache-Control': 'public, max-age=60'
-      }
-    }
-  }
-);
