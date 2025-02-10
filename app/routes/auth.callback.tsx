@@ -1,87 +1,66 @@
-import type { LoaderFunction } from "@remix-run/node"
+import type { LoaderFunctionArgs } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
-import { supabase } from "~/utils/supabase.server"
-import { createUserSession } from "~/utils/session.server"
-import { logger } from "~/utils/logger.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 
 async function checkOrgMembership(accessToken: string) {
-  logger.debug("Checking organization membership")
+  const response = await fetch("https://api.github.com/user/orgs", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
 
-  try {
-    const response = await fetch("https://api.github.com/user/orgs", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      logger.error("GitHub API error", {
-        status: response.status,
-        statusText: response.statusText,
-      })
-      return false
-    }
-
-    const orgs = await response.json()
-    logger.debug("Retrieved organizations", {
-      count: orgs.length,
-      orgs: orgs.map((org: any) => org.login),
-    })
-
-    const isMember = orgs.some((org: any) => org.login === "byte-bash-blitz")
-    logger.info("Organization membership check complete", { isMember })
-    return isMember
-  } catch (error) {
-    logger.error("Error checking organization membership", { error })
-    return false
+  if (!response.ok) {
+    throw new Error("Failed to fetch organization data")
   }
+
+  const orgs = await response.json()
+  console.log("User organizations:", orgs)
+  return orgs.some((org: any) => org.login === "Byte-Bash-Blitz")
 }
 
-export const loader: LoaderFunction = async ({ request }) => {
-  logger.info("Auth callback initiated")
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const response = new Response()
+  const supabase = createServerSupabase(request, response)
   const url = new URL(request.url)
   const code = url.searchParams.get("code")
 
   if (!code) {
-    logger.warn("No code parameter found in callback URL")
     return redirect("/login")
   }
 
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error || !session) {
+    return redirect("/login?error=auth")
+  }
+
   try {
-    logger.debug("Exchanging code for session")
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (error || !session) {
-      logger.error("Session exchange failed", { error })
-      return redirect("/login?error=auth")
-    }
-
-    logger.debug("Session obtained successfully", {
-      userId: session.user.id,
-      hasProviderToken: !!session.provider_token,
-    })
-
     // Check organization membership
-    const isMember = await checkOrgMembership(session.provider_token || "")
+    const isMember = await checkOrgMembership(session.provider_token!)
 
     if (!isMember) {
-      logger.warn("User not in required organization")
       await supabase.auth.signOut()
       return redirect("/login?error=not-member")
     }
 
-    logger.info("Authentication successful, creating session")
-    return createUserSession(session.access_token, session.refresh_token, "/dashboard")
+    return redirect("/dashboard", {
+      headers: response.headers,
+    })
   } catch (error) {
-    logger.error("Unexpected error in auth callback", { error })
-    return redirect("/login?error=unexpected")
+    console.error("Error checking organization membership:", error)
+    await supabase.auth.signOut()
+    return redirect("/login?error=org-check-failed")
   }
 }
 
 export default function AuthCallback() {
-  return <div>Processing authentication...</div>
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p>Processing authentication...</p>
+    </div>
+  )
 }
 

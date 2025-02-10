@@ -1,60 +1,49 @@
-"use client"
-
-import type { ActionFunction } from "@remix-run/node"
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node"
+import { json, redirect } from "@remix-run/node"
 import { Form, useActionData, useNavigation } from "@remix-run/react"
-import { json, redirect,useEffect } from "@remix-run/node"
-import { supabase } from "~/utils/supabase.server"
-import { getUserSession } from "~/utils/session.server"
-import { logger } from "~/utils/logger.server"
 import { Github } from "lucide-react"
+import { createServerSupabase } from "~/utils/supabase.server"
 
-export const loader = async ({ request }: { request: Request }) => {
-  logger.debug("Login page loader called")
-  const user = await getUserSession(request)
-  if (user) {
-    logger.debug("User already logged in, redirecting to dashboard", { userId: user.id })
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const response = new Response()
+  const supabase = createServerSupabase(request, response)
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (session) {
     return redirect("/dashboard")
   }
-  return null
+
+  return json({}, { headers: response.headers })
 }
 
-export const action: ActionFunction = async ({ request }) => {
-  logger.info("Starting GitHub authentication")
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const response = new Response()
+  const supabase = createServerSupabase(request, response)
 
-  try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        scopes: "read:org",
-        redirectTo: `${process.env.PUBLIC_URL || "http://localhost:3000"}/auth/callback`,
-      },
-    })
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: {
+      redirectTo: `${process.env.PUBLIC_URL || "http://localhost:3000"}/auth/callback`,
+      scopes: "read:org",
+    },
+  })
 
-    if (error) {
-      logger.error("Supabase OAuth error", { error })
-      return json({ error: "Authentication failed" }, { status: 400 })
-    }
-
-    logger.info("OAuth URL generated successfully")
-    return json({ url: data.url })
-  } catch (error) {
-    logger.error("Unexpected error during authentication", { error })
-    return json({ error: "An unexpected error occurred" }, { status: 500 })
+  if (error) {
+    return json({ error: "Authentication failed" }, { status: 400 })
   }
+
+  return redirect(data.url, {
+    headers: response.headers,
+  })
 }
 
 export default function Login() {
-  const actionData = useActionData()
+  const actionData = useActionData<typeof action>()
   const navigation = useNavigation()
   const isSubmitting = navigation.state === "submitting"
-
-  // Use useEffect to handle client-side redirect
-  useEffect(() => {
-    if (actionData?.url) {
-      logger.debug("Redirecting to GitHub OAuth URL", { url: actionData.url })
-      window.location.href = actionData.url
-    }
-  }, [actionData])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">

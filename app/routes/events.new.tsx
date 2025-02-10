@@ -17,7 +17,7 @@ import type React from "react" // Added import for React
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData()
-
+  console.log("form Data",formData)
   // Validate required fields
   const requiredFields = ["title", "date", "time", "venue", "clanName", "clanScore"]
   for (const field of requiredFields) {
@@ -47,7 +47,6 @@ export async function action({ request }: ActionFunctionArgs) {
   const now = new Date().toISOString()
 
   const newEvent = {
-    id: crypto.randomUUID(), // Generate UUID
     title: formData.get("title") as string,
     date: formattedDate,
     time: formData.get("time") as string,
@@ -66,6 +65,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const { error } = await supabase.from("events").insert([newEvent])
+    console.log("Form Data:", Object.fromEntries(formData.entries()))
+
 
     if (error) {
       console.error("Supabase error:", error)

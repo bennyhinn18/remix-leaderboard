@@ -1,10 +1,10 @@
 import { redirect } from "@remix-run/node"
 import { Octokit } from "@octokit/rest"
-
+/*
 if (!process.env.GITHUB_CLIENT_ID) throw new Error("GITHUB_CLIENT_ID is required")
 if (!process.env.GITHUB_CLIENT_SECRET) throw new Error("GITHUB_CLIENT_SECRET is required")
 if (!process.env.GITHUB_CALLBACK_URL) throw new Error("GITHUB_CALLBACK_URL is required")
-
+*/
 export async function checkOrganizationMembership(accessToken: string) {
   const octokit = new Octokit({ auth: accessToken })
 
