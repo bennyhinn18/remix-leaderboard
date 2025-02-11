@@ -45,9 +45,9 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-start px-8 py-10 rounded-2xl bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
+        className="flex justify-between items-start px-4 sm:px-8 py-6 sm:py-10 rounded-2xl bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
       >
-        <div className="flex items-start gap-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -68,12 +68,12 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
             )}
           </motion.div>
 
-          <div className="text-left">
+          <div className="text-center sm:text-left w-full sm:w-auto">
             <motion.h1
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200 }}
-              className="text-4xl font-bold text-white mb-2"
+              className="text-2xl sm:text-4xl font-bold text-white mb-2"
             >
               {profile.name}
             </motion.h1>
@@ -82,7 +82,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="flex items-center gap-3 mb-4"
+              className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4"
             >
               <Badge variant="secondary" className="bg-[#4dc4f9]/10 text-[#4dc4f9] hover:bg-[#4dc4f9]/20">
                 {profile.title}
@@ -96,7 +96,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4"
+              className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4"
             >
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 text-amber-500" />
@@ -128,7 +128,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
-              <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-xl p-8">
+              <div className="w-[90vw] sm:max-w-md p-4 sm:p-8 relative bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-xl">
                 {/* Share Card Content */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-800">
@@ -185,7 +185,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="flex justify-center gap-4"
+        className="flex flex-wrap justify-center gap-2 sm:gap-4 w-full"
       >
         {profile.portfolio && (
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

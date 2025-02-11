@@ -25,7 +25,7 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
 
   return (
     <Card
-      className="relative overflow-hidden transition-all duration-300 hover:shadow-lg bg-gradient-to-br from-blue-900 to-indigo-900 text-white"
+      className="relative  overflow-hidden transition-all duration-300 hover:shadow-lg bg-gradient-to-br from-blue-900 to-indigo-900 text-white"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

@@ -82,7 +82,7 @@ export function CreateClanForm() {
             </div>
 
             {/* Logo & Banner */}
-            <div className="grid gap-4 sm:grid-cols-2">
+            {/* <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="logo_url" className="text-white flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-green-400" />
@@ -109,7 +109,7 @@ export function CreateClanForm() {
                   className="bg-white/5 border-white/10 text-white"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
 
           <Button

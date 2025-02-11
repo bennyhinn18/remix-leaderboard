@@ -2,7 +2,7 @@ import { json, type ActionFunctionArgs } from "@remix-run/node"
 import { useLoaderData, useNavigation, Link } from "@remix-run/react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, Trophy, Star, ChevronRight, Activity, Sparkles } from "lucide-react"
-import { supabase } from "~/utils/supabase.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 import { CreateClanForm } from "~/components/create-clan-form"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -13,7 +13,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const quote2 = formData.get("quote2")
   const logoUrl = formData.get("logo_url")
   const bannerUrl = formData.get("banner_url")
-
+  const response = new Response()
+  const supabase =createServerSupabase(request, response)
   // Validate required fields
   if (!clanName || !description || !quote1) {
     return json({ error: "Missing required fields" })
@@ -83,7 +84,9 @@ interface Clan {
   bash_clan_no: string
 }
 
-export const loader = async () => {
+export const loader = async ({ request }: ActionFunctionArgs) => {
+  const response = new Response()
+  const supabase = createServerSupabase(request, response)
   const { data: clans } = await supabase.from("clans").select("*")
   return json({ clans })
 }

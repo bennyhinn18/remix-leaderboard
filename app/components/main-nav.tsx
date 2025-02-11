@@ -109,7 +109,7 @@ export function MainNav({ user }: MainNavProps) {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-[300px] p-0 flex flex-col bg-gradient-to-br from-gray-900 to-black text-white"
+        className="w-[280px] p-0 flex flex-col bg-gradient-to-br from-gray-900 to-black text-white"
       >
         <SheetHeader className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2">

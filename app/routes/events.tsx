@@ -152,6 +152,7 @@ export default function EventsRoute() {
   const submit = useSubmit()
   const navigate = useNavigate()
   const { toast } = useToast()
+  
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(events[0] ?? null)
   const [showAgenda, setShowAgenda] = useState(false)
@@ -192,7 +193,7 @@ export default function EventsRoute() {
       toast({
         title: "Success!",
         description: "You've successfully joined the event.",
-        duration: 3000,
+        duration: 5000,
       })
     },
     [submit, toast],
@@ -296,8 +297,8 @@ export default function EventsRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 pt-8 pb-[78px] px-4">
+      <div className="max-w-4xl mx-auto ">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -306,9 +307,9 @@ export default function EventsRoute() {
           <h1 className="text-3xl font-bold text-white">Weekly Bash Events</h1>
           <Button
             onClick={() => setShowAddEvent(true)}
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2 text-white" />
             Add Event
           </Button>
         </motion.div>
@@ -392,12 +393,11 @@ export default function EventsRoute() {
             <AbsenceModal event={selectedEvent} isOpen={showAbsence} onClose={() => setShowAbsence(false)} />
 
             <FeedbackModal event={selectedEvent} isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
-          </>
-        )}
-        <div className="mt-8 flex flex-col items-center">
-        <Dialog open={showAddEvent} onOpenChange={() => setShowAddEvent(false)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
-            <DialogHeader>
+
+            <div className="mt-8">
+          <Dialog open={showAddEvent} onOpenChange={() => setShowAddEvent(false)}>
+          <DialogContent className="max-w-full p-8 max-h-[90vh] overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white">
+            <DialogHeader className="flex flex-col items-center text-xl ">
               <DialogTitle>Add New Event</DialogTitle>
             </DialogHeader>
 
@@ -603,8 +603,9 @@ export default function EventsRoute() {
           </DialogContent>
         </Dialog>
         </div>
+          </>
+        )}
       </div>
     </div>
   )
 }
-

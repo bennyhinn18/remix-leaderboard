@@ -14,7 +14,6 @@ async function checkOrgMembership(accessToken: string) {
   }
 
   const orgs = await response.json()
-  console.log("User organizations:", orgs)
   return orgs.some((org: any) => org.login === "Byte-Bash-Blitz")
 }
 
@@ -46,7 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return redirect("/login?error=not-member")
     }
 
-    return redirect("/dashboard", {
+    return redirect("/leaderboard", {
       headers: response.headers,
     })
   } catch (error) {

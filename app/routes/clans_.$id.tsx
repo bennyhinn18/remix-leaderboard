@@ -13,16 +13,18 @@ import {
   TrendingUp,
   MessageSquare,
 } from "lucide-react"
-import { supabase } from "~/utils/supabase.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 import { Button } from "~/components/ui/button"
 import { Progress } from "~/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
 import { Badge } from "~/components/ui/badge"
 import type { Clan } from "~/types/clans"
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params,request }: LoaderFunctionArgs) => {
+  const response = new Response()
+  const supabase =createServerSupabase(request, response)
   const { data: clan } = await supabase.from("clans").select("*").eq("id", params.id).single()
-
+  
   if (!clan) {
     throw new Response("Clan not found", {
       status: 404,

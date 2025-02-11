@@ -5,7 +5,7 @@ import { useLoaderData, Link } from "@remix-run/react"
 import { useEffect, useState } from "react"
 import { Trophy, Github, Code, Search, Star, Award, Crown, Medal } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { createServerSupabase, supabase } from "~/utils/supabase.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 import { initSupabase } from "~/utils/supabase.client"
 import type { Member } from "~/types/database"
 import iconImage from "~/assets/bashers.png"
@@ -50,6 +50,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const {
     data: { session },
   } = await supabase.auth.getSession()
+  
   const { data: members } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
 
   return json({
@@ -149,10 +150,11 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
                 to={`/profile/${member.github_username}`}
                 className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
               >
-                {member.name}
+                <p className="">{member.name}</p>
+                
               </Link>
               <div className="flex items-center gap-2 mt-1">
-                <span className={`text-sm ${styles.text}`}>@{member.github_username}</span>
+                <span className={`text-sm hidden sm:block ${styles.text}`}>@{member.github_username}</span>
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
@@ -192,67 +194,92 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
 const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; index: number; activeTab: string }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="relative overflow-hidden hover:bg-white/5"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.5, delay: index * 0.1 }}
+    className={`relative overflow-hidden rounded-2xl `}
+  >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+      
     >
       <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-4 flex items-center gap-4">
         {/* Rank */}
-        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 text-gray-400">
-          <span className="text-2xl font-bold">{index + 1}</span>
+        <div className="flex flex-col items-center">
+         
+          <span className={`text-3xl font-bold `}>#{index + 1}</span>
         </div>
 
         {/* Avatar */}
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white/20"
-        >
-          {member.avatar_url ? (
-            <img
-              src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
-              alt={member.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-              <span className="text-xl font-bold text-white">{member.name.charAt(0)}</span>
-            </div>
-          )}
+        <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20">
+          <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
+          <div className="relative w-20 h-20 rounded-2xl overflow-hidden ">
+            {member.avatar_url ? (
+              <img
+                src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
+                alt={member.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* Info */}
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+          >
             <Link
               to={`/profile/${member.github_username}`}
-              className="text-lg font-semibold text-white hover:underline"
+              className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
             >
-              {member.name}
+              <p className="">{member.name}</p>
+              
             </Link>
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTierStyles(member.tier)}`}
-            >
-              {getTierIcon(member.tier)}
-              {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
-            </motion.div>
-          </div>
-          <p className="text-sm text-gray-400">@{member.github_username}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-sm hidden sm:block text-gray-400`}>@{member.github_username}</span>
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
+              >
+                {getTierIcon(member.tier)}
+                {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Score */}
-        <motion.div whileHover={{ scale: 1.1 }} className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl">
-          <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-            {member.bash_points}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+          className="text-center"
+        >
+          <div className={'text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400'}>
+            {activeTab === "overall"
+              ? member.bash_points
+              : activeTab === "github"
+                ? member.github_streak || 0
+                : member.leetcodeStreak}{" "}
           </div>
-          <div className="text-sm text-gray-400">
+          <div className={"text-sm  text-gray-400"}>
+            {" "}
             {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}
           </div>
         </motion.div>
-          </div>
+      </div>
     </motion.div>
+  </motion.div>
   )
 }
 
@@ -350,21 +377,21 @@ export default function Leaderboard() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl border-b border-white/10"
+        className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl "
       >
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center">
             <img src={iconImage || "/placeholder.svg"} alt="Basher Logo" className="w-16 h-16" />
             <div className="text-center flex-1">
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                Leaderboard
+              Leaderboard
               </h1>
             </div>
-            <div className="text-right">
+            <div className="hidden sm:block text-right">
               <div className="text-lg font-semibold text-white">Hello Gavi!!!</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
-          </div>
+            </div>
 
           {/* Search and Tabs */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
