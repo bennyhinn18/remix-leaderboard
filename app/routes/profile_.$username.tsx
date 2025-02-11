@@ -1,14 +1,15 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
 import { ArrowLeft, Github, Code, Book, Globe2, MessageSquare, Trophy, Award, Briefcase } from 'lucide-react'
-import { supabase } from "~/utils/supabase.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 import { ProfileInfo } from "~/components/profile-info"
 import type { BasherProfile } from "~/types/profile"
 import { MainNav } from "~/components/main-nav"
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { username } = params
-  
+export async function loader({ params,request }: LoaderFunctionArgs) {
+  const { username } = params;
+  const response=new Response()
+  const supabase= createServerSupabase(request,response)
   const { data: member } = await supabase
     .from('members')
     .select('*')
@@ -34,6 +35,22 @@ export async function loader({ params }: LoaderFunctionArgs) {
        event.type === 'PullRequestEvent')
   }) : []
 
+  const duolingo_username = member.duolingo_username;
+
+  const res = await fetch(
+    `https://www.duolingo.com/2017-06-30/users?username=${duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`);
+
+  const data = await res.json();
+
+  const userData = data.users[0];
+  // I didn't know which of these fields matter, so I just get the max of them.
+  const duolingo_streak = Math.max(
+    userData?.streak ?? 0,
+    userData?.streakData?.currentStreak?.length ?? 0,
+    userData?.streakData?.previousStreak?.length ?? 0
+  );
+
+
   const profile: BasherProfile = {
     ...member,
     title: "Captain Bash",
@@ -56,7 +73,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     streaks: {
       github: contributions.length,
       leetcode: 15,
-      duolingo: 45,
+      duolingo: duolingo_streak,
       discord: 60,
       books: 12
     },

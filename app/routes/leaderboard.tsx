@@ -51,20 +51,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     data: { session },
   } = await supabase.auth.getSession()
   const { data: members } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
-  const accessToken = session?.provider_token
 
-  const orgresponse = await fetch("https://api.github.com/user/org", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
-  console.log("response",orgresponse)  
-  if (!response.ok) {
-    throw new Error("Failed to fetch organization data")
-  }
-
-  const orgs = await response.json()
-  console.log("User organizations:", orgs)
   return json({
     members: members || [],
     SUPABASE_URL: process.env.SUPABASE_URL,

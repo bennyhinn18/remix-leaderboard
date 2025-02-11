@@ -5,7 +5,7 @@ import { useLoaderData } from "@remix-run/react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { Crown, Star, Award, Users } from "lucide-react"
 import { Card } from "~/components/ui/card"
-import { supabase } from "~/utils/supabase.server"
+import { createServerSupabase, supabase } from "~/utils/supabase.server"
 import { useEffect, useState } from "react"
 import type React from "react" // Added import for React
 import { UpdateChampionsForm } from "~/components/update-champions-form"
@@ -32,7 +32,11 @@ interface Award {
   lucideIcon: "crown" | "star" | "users" | "award" // Changed to string identifier
 }
 
-export const loader = async ({}: LoaderFunctionArgs) => {
+export const loader = async ({request}: LoaderFunctionArgs) => {
+
+  const response = new Response()
+  const supabase =createServerSupabase(request, response)
+
   const { data: creditData, error } = await supabase
     .from("credits")
     .select("*")
