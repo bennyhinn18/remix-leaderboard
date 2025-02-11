@@ -347,7 +347,7 @@ export function AddEventForm({ isOpen, onClose }: AddEventFormProps) {
               onClick={() => {
               if (!isSubmitting) {
                 onClose()
-              }
+                }
               }}
             >
               {isSubmitting ? (

@@ -17,7 +17,7 @@ interface MemberWithStats extends Member {
 }
 
 function getTier(points: number): MemberWithStats["tier"] {
-  if (points >= 8) return "diamond"
+  if (points >= 1000) return "diamond"
   if (points >= 5) return "platinum"
   return "gold"
 }
@@ -64,11 +64,11 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
     switch (rank) {
       case 0:
         return {
-          background: "bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600",
-          icon: <Crown className="w-6 h-6 text-yellow-900" />,
-          text: "text-yellow-900",
-          glow: "shadow-lg shadow-yellow-500/50",
-          border: "border-yellow-400",
+          background: "bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600",
+          icon: <Crown className="w-6 h-6 text-cyan-900" />,
+          text: "text-cyan-900",
+          glow: "shadow-lg shadow-cyan-500/50",
+          border: "border-cyan-400",
         }
       case 1:
         return {
@@ -201,7 +201,7 @@ const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; in
       <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-4 flex items-center gap-4">
         {/* Rank */}
         <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 text-gray-400">
-          <span className="text-2xl font-bold">#{index + 1}</span>
+          <span className="text-2xl font-bold">{index + 1}</span>
         </div>
 
         {/* Avatar */}
@@ -251,7 +251,7 @@ const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; in
             {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}
           </div>
         </motion.div>
-      </div>
+          </div>
     </motion.div>
   )
 }

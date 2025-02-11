@@ -26,7 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
-      redirectTo: `${process.env.PUBLIC_URL || "http://localhost:3000"}/auth/callback`,
+      redirectTo: `${process.env.PUBLIC_URL || "https://mxmqh977-5173.inc1.devtunnels.ms"}/auth/callback`,
       scopes: "read:org",
     },
   })
