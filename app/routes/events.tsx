@@ -4,7 +4,7 @@ import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-r
 import { useLoaderData, useNavigation, useSubmit, useNavigate } from "@remix-run/react"
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { supabase } from "~/utils/supabase.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 import { EventCard } from "~/components/event-card"
 import { AgendaSection } from "~/components/agenda-section"
 import { AbsenceModal } from "~/components/absence-modal"
@@ -22,6 +22,10 @@ import { AttendeesList } from "~/components/attendees-list"
 type Event = Database["public"]["Tables"]["events"]["Row"]
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  
+  const response = new Response()
+  const supabase =createServerSupabase(request, response)
+
   try {
     const url = new URL(request.url)
     const status = url.searchParams.get("status")
