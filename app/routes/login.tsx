@@ -3,7 +3,7 @@ import { json, redirect } from "@remix-run/node"
 import { Form, useActionData, useNavigation, useParams, useSearchParams } from "@remix-run/react"
 import { motion } from "framer-motion"
 import { AlertCircle, Github } from "lucide-react"
-import { OrganizationError } from "~/components/org-error"
+// import { OrganizationError } from "~/components/org-error"
 import { createServerSupabase } from "~/utils/supabase.server"
 
 export const loader = async ({ request,params }: LoaderFunctionArgs) => {
