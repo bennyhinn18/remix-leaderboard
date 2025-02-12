@@ -5,7 +5,7 @@ import { useLoaderData } from "@remix-run/react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { Crown, Star, Award, Users } from "lucide-react"
 import { Card } from "~/components/ui/card"
-import { createServerSupabase, supabase } from "~/utils/supabase.server"
+import { createServerSupabase} from "~/utils/supabase.server"
 import { useEffect, useState } from "react"
 import type React from "react" // Added import for React
 import { UpdateChampionsForm } from "~/components/update-champions-form"
