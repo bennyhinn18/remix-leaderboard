@@ -6,99 +6,133 @@ import { ProfileInfo } from "~/components/profile-info"
 import type { BasherProfile } from "~/types/profile"
 import { MainNav } from "~/components/main-nav"
 
+export function ErrorBoundary() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex items-center justify-center p-4">
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold text-red-400">Error</h1>
+        <p className="text-gray-400">Sorry, we couldn't load this profile. Please try again later.</p>
+        <Link
+          to="/leaderboard"
+          className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Leaderboard
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { username } = params
   const response = new Response()
   const supabase = createServerSupabase(request, response)
-  const { data: member } = await supabase.from("members").select("*").eq("github_username", username).single()
 
-  if (!member) {
-    throw new Response("Not Found", { status: 404 })
-  }
-
-  // Fetch GitHub data
-  let githubEvents = []
   try {
-    const response = await fetch(`https://api.github.com/users/${username}/events/public`)
-    if (!response.ok) {
-      console.error(`GitHub API error: ${response.status} ${response.statusText}`)
-      githubEvents = []
-    } else {
-      const data = await response.json()
-      githubEvents = Array.isArray(data) ? data : []
-    }
+    // Set a timeout for the entire loader
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Request timeout")), 8000))
+
+    const result = await Promise.race([
+      (async () => {
+        // Get member data
+        const { data: member, error: memberError } = await supabase
+          .from("members")
+          .select("*")
+          .eq("github_username", username)
+          .single()
+
+        if (memberError || !member) {
+          throw new Response("Not Found", { status: 404 })
+        }
+
+        // Fetch GitHub and Duolingo data in parallel
+        const [githubData, duolingoData] = await Promise.allSettled([
+          fetch(`https://api.github.com/users/${username}/events/public`, {
+            headers: process.env.GITHUB_TOKEN
+              ? {
+                  Authorization: `token ${process.env.GITHUB_TOKEN}`,
+                }
+              : undefined,
+          })
+            .then((res) => res.json())
+            .catch(() => []),
+
+          member.duolingo_username
+            ? fetch(
+                `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData`,
+              )
+                .then((res) => res.json())
+                .catch(() => ({ users: [{ streak: 0 }] }))
+            : Promise.resolve({ users: [{ streak: 0 }] }),
+        ])
+
+        // Process GitHub contributions
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+        const githubEvents = Array.isArray(githubData.value) ? githubData.value : []
+        const contributions = githubEvents.filter((event: any) => {
+          const eventDate = new Date(event.created_at)
+          return (
+            eventDate > thirtyDaysAgo &&
+            (event.type === "PushEvent" || event.type === "CreateEvent" || event.type === "PullRequestEvent")
+          )
+        })
+
+        // Get Duolingo streak
+        const duolingoStreak =
+          duolingoData.status === "fulfilled"
+            ? Math.max(
+                duolingoData.value?.users?.[0]?.streak ?? 0,
+                duolingoData.value?.users?.[0]?.streakData?.currentStreak?.length ?? 0,
+                duolingoData.value?.users?.[0]?.streakData?.previousStreak?.length ?? 0,
+              )
+            : 0
+
+        const profile: BasherProfile = {
+          ...member,
+          title: "Captain Bash",
+          joinedDate: new Date(member.created_at),
+          basherLevel: member.bash_points >= 2500 ? "Diamond" : member.points >= 2400 ? "Platinum" : "Gold",
+          bashPoints: member.bash_points,
+          clanName: member.clan_name || "Byte Basher",
+          basherNo: "BBT2023045",
+          projects: 12,
+          certifications: 5,
+          internships: 2,
+          courses: 15,
+          domains: ["Full Stack Development", "DevOps & Cloud Computing"],
+          languages: [
+            { name: "TypeScript", level: "Expert" },
+            { name: "Python", level: "Advanced" },
+            { name: "Rust", level: "Intermediate" },
+            { name: "Go", level: "Beginner" },
+          ],
+          streaks: {
+            github: contributions.length,
+            leetcode: 15,
+            duolingo: duolingoStreak,
+            discord: 60,
+            books: 12,
+          },
+          hobbies: ["Photography", "Chess", "Guitar", "Hiking"],
+          testimonial:
+            "Being part of this community has transformed my approach to learning and collaboration. The weekly bashes have been instrumental in my growth as a developer.",
+          gpa: 3.8,
+          attendance: 92,
+        }
+
+        return json({ profile })
+      })(),
+      timeoutPromise,
+    ])
+
+    return result
   } catch (error) {
-    console.error("Error fetching GitHub events:", error)
-    githubEvents = []
+    console.error("Profile loader error:", error)
+    throw new Response("Internal Server Error", { status: 500 })
   }
-
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-  const contributions = githubEvents.filter((event: any) => {
-    const eventDate = new Date(event.created_at)
-    return (
-      eventDate > thirtyDaysAgo &&
-      (event.type === "PushEvent" || event.type === "CreateEvent" || event.type === "PullRequestEvent")
-    )
-  })
-
-  let duolingo_streak = 0
-  try {
-    const duolingo_username = member.duolingo_username
-    if (duolingo_username) {
-      const res = await fetch(
-        `https://www.duolingo.com/2017-06-30/users?username=${duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`,
-      )
-      if (res.ok) {
-        const data = await res.json()
-        const userData = data.users?.[0]
-        // Get the max of these fields
-        duolingo_streak = Math.max(
-          userData?.streak ?? 0,
-          userData?.streakData?.currentStreak?.length ?? 0,
-          userData?.streakData?.previousStreak?.length ?? 0,
-        )
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching Duolingo streak:", error)
-  }
-
-  const profile: BasherProfile = {
-    ...member,
-    title: "Captain Bash",
-    joinedDate: new Date(member.created_at),
-    basherLevel: member.bash_points >= 2500 ? "Diamond" : member.points >= 2400 ? "Platinum" : "Gold",
-    bashPoints: member.bash_points,
-    clanName: member.clan_name || "Byte Basher",
-    basherNo: "BBT2023045",
-    projects: 12,
-    certifications: 5,
-    internships: 2,
-    courses: 15,
-    domains: ["Full Stack Development", "DevOps & Cloud Computing"],
-    languages: [
-      { name: "TypeScript", level: "Expert" },
-      { name: "Python", level: "Advanced" },
-      { name: "Rust", level: "Intermediate" },
-      { name: "Go", level: "Beginner" },
-    ],
-    streaks: {
-      github: contributions.length,
-      leetcode: 15,
-      duolingo: duolingo_streak,
-      discord: 60,
-      books: 12,
-    },
-    hobbies: ["Photography", "Chess", "Guitar", "Hiking"],
-    testimonial:
-      "Being part of this community has transformed my approach to learning and collaboration. The weekly bashes have been instrumental in my growth as a developer.",
-    gpa: 3.8,
-    attendance: 92,
-  }
-
-  return json({ profile })
 }
 
 export default function Profile() {
