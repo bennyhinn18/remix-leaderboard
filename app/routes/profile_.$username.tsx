@@ -1,10 +1,12 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
-import { ArrowLeft, Github, Code, Book, Globe2, MessageSquare, Trophy, Award, Briefcase } from 'lucide-react'
+import { ArrowLeft, Github, Code, Book, MessageSquare, Trophy, Award, Briefcase, Cpu, Code2, BookOpen, Globe, Quote } from 'lucide-react'
 import { createServerSupabase } from "~/utils/supabase.server"
 import { ProfileInfo } from "~/components/profile-info"
 import type { BasherProfile } from "~/types/profile"
 import { MainNav } from "~/components/main-nav"
+import { motion } from "framer-motion"
+import { Card } from "~/components/ui/card"
 
 export async function loader({ params,request }: LoaderFunctionArgs) {
   const { username } = params;
@@ -63,6 +65,8 @@ export async function loader({ params,request }: LoaderFunctionArgs) {
     certifications: 5,
     internships: 2,
     courses: 15,
+    resume_url: member.resume_url || "",
+    portfolio_url: member.portfolio_url || "",
     domains: ['Full Stack Development', 'DevOps & Cloud Computing'],
     languages: [
       { name: 'TypeScript', level: 'Expert' },
@@ -110,22 +114,76 @@ export default function Profile() {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
+          <motion.div
+              className="flex flex-col items-center gap-2"
+              initial={{ y: 10 }}
+              animate={{ y: 0 }}
+            >
+          <motion.div
+                animate={{
+                  rotate: [0, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                }}
+              >
             <Trophy className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+            </motion.div>
+            </motion.div>
             <div className="text-3xl font-bold text-blue-400">{profile.projects}</div>
             <div className="text-sm text-gray-400">Projects</div>
           </div>
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
+          <motion.div
+                animate={{
+                  rotate: [0, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                }}
+              >
             <Award className="w-6 h-6 text-green-400 mx-auto mb-2" />
+            </motion.div>
             <div className="text-3xl font-bold text-green-400">{profile.certifications}</div>
             <div className="text-sm text-gray-400">Certifications</div>
           </div>
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
+          <motion.div
+                animate={{
+                  rotate: [0, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                }}
+              >
             <Briefcase className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+            </motion.div>
             <div className="text-3xl font-bold text-purple-400">{profile.internships}</div>
             <div className="text-sm text-gray-400">Internships</div>
           </div>
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
+          <motion.div
+                animate={{
+                  rotate: [0, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                }}
+              >
             <Book className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+            </motion.div>
             <div className="text-3xl font-bold text-orange-400">{profile.courses}</div>
             <div className="text-sm text-gray-400">Courses</div>
           </div>
@@ -137,14 +195,14 @@ export default function Profile() {
             {/* Domains */}
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Globe2 className="w-5 h-5" />
+                <Cpu className="w-5 h-5" />
                 Domains
               </h2>
               <div className="flex flex-wrap gap-2">
                 {profile.domains.map((domain) => (
                   <div 
                     key={domain} 
-                    className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-lg text-sm"
+                    className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm"
                   >
                     {domain}
                   </div>
@@ -212,33 +270,40 @@ export default function Profile() {
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4">Active Streaks</h2>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-purple-500/20 rounded-lg p-4">
+                <div className="bg-purple-500/20 rounded-xl p-4">
                   <Github className="w-5 h-5 text-purple-400 mb-2" />
                   <div className="text-2xl font-bold text-purple-400">
                     {profile.streaks.github}
                   </div>
-                  <div className="text-sm text-purple-400">days on GitHub</div>
+                  <div className="text-sm text-purple-400">GitHub</div>
                 </div>
-                <div className="bg-orange-500/20 rounded-lg p-4">
-                  <Code className="w-5 h-5 text-orange-400 mb-2" />
+                <div className="bg-orange-500/20 rounded-xl p-4">
+                  <Code2 className="w-5 h-5 text-orange-400 mb-2" />
                   <div className="text-2xl font-bold text-orange-400">
                     {profile.streaks.leetcode}
                   </div>
-                  <div className="text-sm text-orange-400">days on LeetCode</div>
+                  <div className="text-sm text-orange-400">LeetCode</div>
                 </div>
-                <div className="bg-green-500/20 rounded-lg p-4">
-                  <Globe2 className="w-5 h-5 text-green-400 mb-2" />
+                <div className="bg-green-500/20 rounded-xl p-4">
+                  <Globe className="w-5 h-5 text-green-400 mb-2" />
                   <div className="text-2xl font-bold text-green-400">
                     {profile.streaks.duolingo}
                   </div>
-                  <div className="text-sm text-green-400">days on Duolingo</div>
+                  <div className="text-sm text-green-400">Duolingo</div>
                 </div>
-                <div className="bg-indigo-500/20 rounded-lg p-4">
+                <div className="bg-indigo-500/20 rounded-xl p-4">
                   <MessageSquare className="w-5 h-5 text-indigo-400 mb-2" />
                   <div className="text-2xl font-bold text-indigo-400">
                     {profile.streaks.discord}
                   </div>
-                  <div className="text-sm text-indigo-400">days on Discord</div>
+                  <div className="text-sm text-indigo-400">Discord</div>
+                </div>
+                <div className="bg-red-500/20 rounded-xl p-4">
+                  <BookOpen className="w-5 h-5 text-red-400 mb-2" />
+                  <div className="text-2xl font-bold text-red-400">
+                    {profile.streaks.discord}
+                  </div>
+                  <div className="text-sm text-red-400">Books</div>
                 </div>
               </div>
             </div>
@@ -257,17 +322,37 @@ export default function Profile() {
                 ))}
               </div>
             </div>
-
-            {/* Testimonial */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
-              <div className="text-gray-300 italic relative">
-                <span className="text-4xl text-gray-500 absolute -top-4 -left-2">"</span>
-                {profile.testimonial}
-                <span className="text-4xl text-gray-500 absolute -bottom-8 -right-2">"</span>
-              </div>
-            </div>
           </div>
         </div>
+        {/* Testimonial */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <Card className="bg-white/5 backdrop-blur-lg border-gray-300/20 p-8 relative overflow-hidden mt-4">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="absolute top-4 left-4"
+              >
+                <Quote className="w-12 h-12 text-gray-300/20" />
+              </motion.div>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3 }}
+                className="absolute bottom-4 right-4 rotate-180"
+              >
+                <Quote className="w-12 h-12 text-gray-300/20" />
+              </motion.div>
+              <motion.blockquote
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-gray-300 italic text-s text-center px-8 leading-relaxed"
+              >
+                {profile.testimonial}
+              </motion.blockquote>
+              </Card>
+            </motion.div>
       </div>
     </div>
   )

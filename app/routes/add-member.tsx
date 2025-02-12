@@ -2,7 +2,7 @@
 
 import { json, type ActionFunctionArgs } from "@remix-run/node"
 import { Form, useActionData, useNavigation } from "@remix-run/react"
-import { supabase } from "~/utils/supabase.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 import { motion, AnimatePresence } from "framer-motion"
 import { UserPlus, Check, AlertCircle, ImageIcon } from "lucide-react"
 
@@ -10,6 +10,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData()
   const name = formData.get("name")
   const avatarUrl = formData.get("avatarUrl")
+  const response =new  Response()
+  const supabase= createServerSupabase(request,response)
 
   if (!name) {
     return json({ error: "Name is required" })

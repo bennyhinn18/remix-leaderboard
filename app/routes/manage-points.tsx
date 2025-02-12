@@ -2,13 +2,15 @@
 
 import { json, type ActionFunctionArgs } from "@remix-run/node"
 import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react"
-import { supabase } from "~/utils/supabase.server"
+import { createServerSupabase } from "~/utils/supabase.server"
 import type { Member } from "~/types/database"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Minus, Users, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { useState } from "react"
 
-export const loader = async () => {
+export const loader = async ({request}) => {
+    const response =new  Response()
+  const supabase= createServerSupabase(request,response)
   const { data: members } = await supabase.from("members").select("*").order("name")
   return json({ members })
 }
@@ -18,7 +20,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const memberId = formData.get("memberId")
   const points = formData.get("points")
   const action = formData.get("action")
-
+  const response =new  Response()
+  const supabase= createServerSupabase(request,response)
   if (!memberId || !points || !action) {
     return json({ error: "Missing required fields" })
   }

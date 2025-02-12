@@ -79,7 +79,7 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
             <span>{event.time}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="w-6 h-6" />
+            <MapPin className="w-4 h-4" />
             <span>{event.venue}</span>
           </div>
           <div className="flex items-center gap-2">

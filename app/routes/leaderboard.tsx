@@ -388,7 +388,7 @@ export default function Leaderboard() {
               </h1>
             </div>
             <div className="hidden sm:block text-right">
-              <div className="text-lg font-semibold text-white">Hello Gavi!!!</div>
+              <div className="text-lg font-semibold text-white">Hello Basher&apos;s</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
             </div>
