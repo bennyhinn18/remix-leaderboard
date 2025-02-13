@@ -1,6 +1,5 @@
 import { createServerSupabase } from "~/utils/supabase.server";
-import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { User } from "lucide-react";
+import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 
 export const loader = async ({ request }:LoaderFunctionArgs) => {
   const response = new Response();

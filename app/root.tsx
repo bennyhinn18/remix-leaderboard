@@ -7,7 +7,6 @@ import {
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
 import iconImage from "~/assets/bashers.png";
-// import { NavBar } from "~/components/nav-bar";
 import "./tailwind.css";
 import { BottomNav } from "./components/bottom-nav";
 import { AuthProvider } from "~/contexts/auth";

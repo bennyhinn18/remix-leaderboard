@@ -11,7 +11,7 @@ export function ErrorBoundary() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex items-center justify-center p-4">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-red-400">Error</h1>
-        <p className="text-gray-400">Sorry, we couldn't load this profile. Please try again later.</p>
+        <p className="text-gray-400">Sorry, we couldn&apos;t load this profile. Please try again later.</p>
         <Link
           to="/leaderboard"
           className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"

@@ -264,7 +264,7 @@ export default function ClanPage() {
           <TabsContent value="overview" className="space-y-6">
             {/* Quotes */}
             <div className="grid gap-4">
-              {clan.quotes.map((quote, index) => (
+              {clan.quotes.map((quote: string, index: number) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -273,7 +273,7 @@ export default function ClanPage() {
                   className="p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-white/10"
                 >
                   <MessageSquare className="w-5 h-5 text-blue-400 mb-2" />
-                  <p className="text-lg italic text-gray-300">"{quote}"</p>
+                  <p className="text-lg italic text-gray-300">&quot;{quote}&quot;</p>
                 </motion.div>
               ))}
             </div>
