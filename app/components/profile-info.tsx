@@ -47,7 +47,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
         animate={{ opacity: 1, y: 0 }}
         className="flex justify-between items-start px-4 sm:px-8 py-6 sm:py-10 rounded-2xl bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
       >
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 sm:justify-between">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -178,19 +178,18 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               {profile.clanName} · No. {profile.basherNo}
             </div>
           </div>
-          <motion.div
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-col  md:hidden sm:flex-row items-center text-right gap-2 sm:gap-4"
+              className="flex flex-col md:hidden sm:flex-row items-end text-right gap-2 sm:gap-4"
             >
-              <div className="flex text-amber-500 font-semibold mr-0 gap-2">
-                <Star className="w-5 h-5 text-amber-500" />
-                  {profile.bashPoints.toLocaleString()} Points
-               
+              <div className="flex text-amber-500 font-semibold gap-2">
+              <Star className="w-5 h-5 text-amber-500" />
+              {profile.bashPoints.toLocaleString()} Points
               </div>
               <div className="text-gray-500">
-                Joined {format(new Date(profile.joinedDate), "MMMM yyyy")}
+              Joined {format(new Date(profile.joinedDate), "MMMM yyyy")}
               </div>
             </motion.div>
         </motion.div>

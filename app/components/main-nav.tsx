@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Link } from "@remix-run/react"
-import { Trophy, Star, Mail, Globe, LogOut, Building, ChevronDown, Book, PanelRightOpen, Calendar, UserCheck } from "lucide-react"
+import { Trophy, Star, Mail, Globe, LogOut, Building, ChevronDown, Book, PanelRightOpen, Calendar } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/sheet"
 import {
@@ -78,7 +78,7 @@ const bottomNav = [
   },
   {
     title: "Website",
-    href: "https://bytebashblitz.vercel.app/",
+    href: "https://bytebashblitz.org/",
     icon: Globe,
   },
   {

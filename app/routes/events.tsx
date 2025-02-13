@@ -10,7 +10,7 @@ import { AgendaSection } from "~/components/agenda-section"
 import { AbsenceModal } from "~/components/absence-modal"
 import { FeedbackModal } from "~/components/feedback-modal"
 import { Button } from "~/components/ui/button"
-import { Plus, AlertCircle, CalendarIcon, Loader2, X } from "lucide-react"
+import { Plus, AlertCircle, CalendarIcon, Loader2, X, ArrowLeft } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { useToast } from "~/hooks/use-toast"
@@ -42,7 +42,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       query = query.eq("status", status)
     }
 
-    const { data: events, error } = await query.order("date", { ascending: true })
+    const { data: events, error } = await query.order("date", { ascending: false })
 
     if (error) throw error
 
@@ -202,7 +202,7 @@ export default function EventsRoute() {
   const handleStatusFilter = useCallback(
     (newStatus: string) => {
       setFilterStatus(newStatus)
-      navigate(`/events?status=${newStatus}`)
+      navigate(`/events${newStatus !== "all" ? `?status=${newStatus}` : ""}`)
     },
     [navigate],
   )
@@ -277,19 +277,28 @@ export default function EventsRoute() {
 
   if (!events.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No events found</AlertTitle>
-            <AlertDescription>There are no events available at the moment.</AlertDescription>
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 py-8 px-4 flex flex-col items-center justify-center">
+        <Button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 mb-6"
+        >
+          <ArrowLeft className="mr-2" />
+          Back
+        </Button>
+        <div className="max-w-2xl w-full text-center">
+          <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-6 w-6 mr-2" />
+        <div>
+          <AlertTitle className="text-lg">No events found</AlertTitle>
+          <AlertDescription className="text-sm">There are no events available at the moment.</AlertDescription>
+        </div>
           </Alert>
           <Button
-            onClick={() => setShowAddEvent(true)}
-            className="mt-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+        onClick={() => setShowAddEvent(true)}
+        className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-3 px-6 rounded-lg"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Create First Event
+        <Plus className="w-5 h-5 mr-2" />
+        Create First Event
           </Button>
         </div>
       </div>

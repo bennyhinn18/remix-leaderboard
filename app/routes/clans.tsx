@@ -247,7 +247,7 @@ export default function Clans() {
             />
             <Star className="w-6 h-6 text-orange-400 mb-2 relative z-10" />
             <div className="text-2xl font-bold relative z-10">
-              {clans.reduce((acc, clan) => acc + clan.hackathons_won, 0)}
+              {clans ? clans.reduce((acc, clan) => acc + clan.hackathons_won, 0) : 0}
             </div>
             <div className="text-sm text-gray-400 relative z-10">Hackathons Won</div>
           </motion.div>
