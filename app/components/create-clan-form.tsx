@@ -2,7 +2,7 @@
 
 import { Form } from "@remix-run/react"
 import { motion } from "framer-motion"
-import { Users, Quote, ImageIcon, Flag } from "lucide-react"
+import { Users, Quote, Flag } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"

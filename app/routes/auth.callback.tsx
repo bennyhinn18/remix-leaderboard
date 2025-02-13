@@ -14,7 +14,7 @@ async function checkOrgMembership(accessToken: string) {
   }
 
   const orgs = await response.json()
-  return orgs.some((org: any) => org.login === "Byte-Bash-Blitz")
+  return orgs.some((org: { login: string }) => org.login === "Byte-Bash-Blitz")
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

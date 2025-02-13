@@ -14,7 +14,7 @@ interface FeedbackModalProps {
   onClose: () => void
 }
 
-export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
+export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [positives, setPositives] = useState("")
@@ -62,8 +62,8 @@ export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
             >
               {/* Star Rating */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-blue-200">Overall Rating</label>
-                <div className="flex gap-2 justify-center">
+                <label htmlFor="overall-rating" className="text-sm font-medium text-blue-200">Overall Rating</label>
+                <div id="overall-rating" className="flex gap-2 justify-center">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <motion.button
                       key={star}
@@ -87,8 +87,9 @@ export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
               {/* Feedback Fields */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-blue-200">What went well?</label>
+                  <label htmlFor="positives" className="text-sm font-medium text-blue-200">What went well?</label>
                   <Textarea
+                    id="positives"
                     value={positives}
                     onChange={(e) => setPositives(e.target.value)}
                     placeholder="Share the positives..."
@@ -97,8 +98,9 @@ export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-blue-200">What could be improved?</label>
+                  <label htmlFor="negatives" className="text-sm font-medium text-blue-200">What could be improved?</label>
                   <Textarea
+                    id="negatives"
                     value={negatives}
                     onChange={(e) => setNegatives(e.target.value)}
                     placeholder="Share your concerns..."
@@ -107,8 +109,9 @@ export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-blue-200">Suggestions for improvement (optional)</label>
+                  <label htmlFor="improvements" className="text-sm font-medium text-blue-200">Suggestions for improvement (optional)</label>
                   <Textarea
+                    id="improvements"
                     value={improvements}
                     onChange={(e) => setImprovements(e.target.value)}
                     placeholder="Your suggestions..."

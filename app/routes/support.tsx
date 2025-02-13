@@ -162,7 +162,7 @@ export default function Support() {
           transition={{ delay: 0.1 }}
           className="grid md:grid-cols-3 gap-4"
         >
-          {resources.map((resource, index) => (
+          {resources.map((resource) => (
             <motion.a
               key={resource.title}
               href={resource.href}
@@ -279,7 +279,7 @@ export default function Support() {
                     className="flex items-center gap-2 text-green-400 text-sm"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    Message sent successfully! We'll get back to you soon.
+                    Message sent successfully! We&apos;ll get back to you soon.
                   </motion.div>
                 )}
               </AnimatePresence>
