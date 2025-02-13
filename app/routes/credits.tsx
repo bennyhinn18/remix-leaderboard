@@ -386,7 +386,19 @@ export default function Credits() {
                   />
                   <div className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
+                      <motion.div
+                      animate={{
+                        rotate: [0, 10, -10, 0],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Number.POSITIVE_INFINITY,
+                        repeatType: "reverse",
+                        ease: "easeInOut",
+                      }}
+                    >
                       <span className="text-4xl">{award.icon}</span>
+                      </motion.div>
                       {getLucideIcon(award.lucideIcon)}
                     </div>
                     <div>

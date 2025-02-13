@@ -3,7 +3,6 @@ import { json, redirect } from "@remix-run/node"
 import { Form, useActionData, useNavigation, useParams, useSearchParams } from "@remix-run/react"
 import { motion } from "framer-motion"
 import { AlertCircle, Github } from "lucide-react"
-// import { OrganizationError } from "~/components/org-error"
 import { createServerSupabase } from "~/utils/supabase.server"
 
 export const loader = async ({ request,params }: LoaderFunctionArgs) => {
@@ -17,10 +16,6 @@ export const loader = async ({ request,params }: LoaderFunctionArgs) => {
   if (session) {
     return redirect("/leaderboard")
   }
-  if (params.error==="not-member") {
-    return <OrganizationError />
-  }
-  return json({}, { headers: response.headers })
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -30,7 +25,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
-      redirectTo: `${process.env.PUBLIC_URL || "https://bug-free-space-couscous-rjj959665w62547v-5173.app.github.dev"}/auth/callback`,
+      redirectTo: `${process.env.PUBLIC_URL || "https://terminal.bytebashblitz.org"}/auth/callback`,
       scopes: "read:org",
     },
   })

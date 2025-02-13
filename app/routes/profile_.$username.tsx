@@ -94,7 +94,7 @@ export default function Profile() {
   const { profile } = useLoaderData<typeof loader>()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <div className="min-h-screen pb-[78px] bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation */}
         <div className="mb-8 flex justify-between items-center">

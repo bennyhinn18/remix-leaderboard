@@ -7,8 +7,8 @@ export interface BasherProfile {
     bashPoints: number
     clanName: string
     basherNo: string
-    portfolio?: string
-    resume?: string
+    portfolio_url?: string
+    resume_url?: string
     avatar_url?: string
     github_username: string
     points: number

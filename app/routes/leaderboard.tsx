@@ -372,7 +372,7 @@ export default function Leaderboard() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black dark:from-white dark:to-gray-50">
+    <div className="min-h-screen pb-[78px] bg-gradient-to-b from-gray-900 to-black dark:from-white dark:to-gray-50">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

@@ -201,24 +201,24 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
         transition={{ delay: 0.5 }}
         className="flex flex-wrap justify-center gap-2 sm:gap-4 w-full"
       >
-        {profile.portfolio && (
+        {profile.portfolio_url && (
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="outline"
               className="bg-[#4dc4f9]/10 border-[#4dc4f9]/20 text-[#4dc4f9] hover:bg-[#4dc4f9]/20"
-              onClick={() => window.open(profile.portfolio, "_blank")}
+              onClick={() => window.open(profile.portfolio_url, "_blank")}
             >
               <Briefcase className="w-4 h-4 mr-2" />
               View Portfolio
             </Button>
           </motion.div>
         )}
-        {profile.resume && (
+        {profile.resume_url && (
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="outline"
               className="bg-[#4dc4f9]/10 border-[#4dc4f9]/20 text-[#4dc4f9] hover:bg-[#4dc4f9]/20"
-              onClick={() => window.open(profile.resume, "_blank")}
+              onClick={() => window.open(profile.resume_url, "_blank")}
             >
               <FileText className="w-4 h-4 mr-2" />
               View Resume

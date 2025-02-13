@@ -48,7 +48,7 @@ function ClanHeader({ clan }: { clan: Clan }) {
       </div>
 
       {/* Content */}
-      <div className="absolute inset-0 p-6 flex flex-col justify-end">
+      <div className="absolute inset-0 p-6  flex flex-col justify-end">
         <div className="flex items-start gap-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
@@ -227,7 +227,7 @@ export default function ClanPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl pb-[78px] mx-auto space-y-8">
         {/* Back Button */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Button variant="ghost" asChild className="text-gray-400 hover:text-white">
