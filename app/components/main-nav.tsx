@@ -42,32 +42,32 @@ const navigation = [
     items: [
       {
         title: "Aura 7f",
-        href: `/clans/aura-7f`,
+        href: `/clans/1`,
         id: "aura-7f",
         members: 24,
       },
       {
         title: "Belmonts",
-        href: `/clans/belmonts`,
+        href: `/clans/2`,
         members: 18,
       },
       {
         title: "Lumina",
-        href: `/clans/lumina`,
+        href: `/clans/3`,
         members: 21,
       },
       {
         title: "Shadastria Adepti",
-        href: `/clans/shadastria-adepti`,
+        href: `/clans/4`,
         members: 16,
       },
     ],
   },
-  {
-    title: "Companions",
-    href: "/companions",
-    icon: UserCheck,
-  },
+  // {
+  //   title: "Companions",
+  //   href: "/companions",
+  //   icon: UserCheck,
+  // },
 ]
 
 const bottomNav = [
