@@ -10,18 +10,6 @@ import { useEffect, useState } from "react"
 import type React from "react" // Added import for React
 import { UpdateChampionsForm } from "~/components/update-champions-form"
 
-interface Credit {
-  id: number
-  month_date: string
-  best_basher: string
-  best_leader: string
-  best_clan: string
-  best_profile: string
-  basher_clan_name: string
-  leader_clan_name: string
-  month: string
-}
-
 interface Award {
   icon: string
   title: string
@@ -115,6 +103,8 @@ function getLucideIcon(iconName: Award["lucideIcon"]) {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const response = new Response()
+  const supabase = createServerSupabase(request, response)
   const formData = await request.formData()
   const data = {
     month_date: new Date().toISOString(),

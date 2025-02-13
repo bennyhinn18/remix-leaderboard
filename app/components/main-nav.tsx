@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Link } from "@remix-run/react"
-import { Trophy, Star, Mail, Globe, LogOut, Building, ChevronDown, Book, PanelRightOpen, Calendar, UserCheck } from "lucide-react"
+import { Trophy, Star, Mail, Globe, LogOut, Building, ChevronDown, Book, PanelRightOpen, Calendar } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/sheet"
 import {
@@ -42,32 +42,32 @@ const navigation = [
     items: [
       {
         title: "Aura 7f",
-        href: `/clans/aura-7f`,
+        href: `/clans/1`,
         id: "aura-7f",
         members: 24,
       },
       {
         title: "Belmonts",
-        href: `/clans/belmonts`,
+        href: `/clans/2`,
         members: 18,
       },
       {
         title: "Lumina",
-        href: `/clans/lumina`,
+        href: `/clans/3`,
         members: 21,
       },
       {
         title: "Shadastria Adepti",
-        href: `/clans/shadastria-adepti`,
+        href: `/clans/4`,
         members: 16,
       },
     ],
   },
-  {
-    title: "Companions",
-    href: "/companions",
-    icon: UserCheck,
-  },
+  // {
+  //   title: "Companions",
+  //   href: "/companions",
+  //   icon: UserCheck,
+  // },
 ]
 
 const bottomNav = [
@@ -78,7 +78,7 @@ const bottomNav = [
   },
   {
     title: "Website",
-    href: "https://bytebashblitz.vercel.app/",
+    href: "https://bytebashblitz.org/",
     icon: Globe,
   },
   {

@@ -116,28 +116,28 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
       >
         <div className="flex items-center gap-6">
           {/* Rank */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center text-white">
             {styles.icon}
             <span className={`text-3xl font-bold mt-2 ${styles.text}`}>#{index + 1}</span>
           </div>
 
           {/* Avatar */}
-          <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20">
+            <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20 hidden sm:block">
             <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
             <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/40">
               {member.avatar_url ? (
-                <img
-                  src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
-                  alt={member.name}
-                  className="w-full h-full object-cover"
-                />
+              <img
+                src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
+                alt={member.name}
+                className="w-full h-full object-cover text-white"
+              />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
-                </div>
+              <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
+              </div>
               )}
             </div>
-          </motion.div>
+            </motion.div>
 
           {/* Info */}
           <div className="flex-1">
@@ -150,7 +150,7 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
                 to={`/profile/${member.github_username}`}
                 className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
               >
-                <p className="">{member.name}</p>
+                <p className="text-white">{member.name}</p>
                 
               </Link>
               <div className="flex items-center gap-2 mt-1">
@@ -210,7 +210,7 @@ const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; in
         {/* Rank */}
         <div className="flex flex-col items-center">
          
-          <span className={`text-3xl font-bold `}>#{index + 1}</span>
+          <span className={`text-3xl font-bold text-white`}>{index + 1}</span>
         </div>
 
         {/* Avatar */}
@@ -242,7 +242,7 @@ const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; in
               to={`/profile/${member.github_username}`}
               className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
             >
-              <p className="">{member.name}</p>
+              <p className="text-white">{member.name}</p>
               
             </Link>
             <div className="flex items-center gap-2 mt-1">
@@ -395,7 +395,7 @@ export default function Leaderboard() {
 
           {/* Search and Tabs */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
@@ -405,7 +405,7 @@ export default function Leaderboard() {
                 className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex relative w-full  gap-2 overflow-x-auto  ">
               {["overall", "github", "leetcode"].map((tab) => (
                 <motion.button
                   key={tab}
