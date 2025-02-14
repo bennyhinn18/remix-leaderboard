@@ -25,13 +25,15 @@ import Calendar from "~/components/calendar"
 import { Input } from "~/components/ui/input"
 import { DialogHeader } from "~/components/ui/dialog"
 import { cn } from "~/lib/utils"
+import { isOrganiser } from "~/utils/currentUser"
 
 type Event = Database["public"]["Tables"]["events"]["Row"]
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const response = new Response()
   const supabase = createServerSupabase(request, response)
-
+  const organiserStatus = await isOrganiser(request) 
+  
   try {
     const url = new URL(request.url)
     const status = url.searchParams.get("status")
@@ -47,6 +49,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     if (error) throw error
 
     return json({
+      organiserStatus,
       events,
       status: status || "all",
     })
@@ -147,7 +150,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function EventsRoute() {
-  const { events, status } = useLoaderData<typeof loader>()
+  const { events, status,organiserStatus } = useLoaderData<typeof loader>()
   const navigation = useNavigation()
   const submit = useSubmit()
   const navigate = useNavigate()
@@ -314,13 +317,13 @@ export default function EventsRoute() {
           className="flex items-center justify-between mb-8"
         >
           <h1 className="text-3xl font-bold text-white">Weekly Bash Events</h1>
-          <Button
+          {organiserStatus && <Button
             onClick={() => setShowAddEvent(true)}
             className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
           >
             <Plus className="w-4 h-4 mr-2 text-white" />
             Add Event
-          </Button>
+          </Button>}
         </motion.div>
 
         <AnimatePresence mode="wait">
