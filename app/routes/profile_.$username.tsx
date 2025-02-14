@@ -8,6 +8,7 @@ import { MainNav } from "~/components/main-nav"
 import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
 
+
 export async function loader({ params,request }: LoaderFunctionArgs) {
   const { username } = params;
   const response=new Response()

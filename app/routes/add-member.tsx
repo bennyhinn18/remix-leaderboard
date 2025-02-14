@@ -21,7 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     {
       name: name.toString(),
       avatar_url: avatarUrl?.toString(),
-      points: 0,
+      bash_points: 0,
     },
   ])
 

@@ -148,7 +148,7 @@ export default function Clans() {
         className="max-w-7xl mx-auto space-y-8 pb-[78px]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between">
           <div className="flex items-center gap-4">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
@@ -175,7 +175,7 @@ export default function Clans() {
               </motion.p>
             </div>
           </div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} >
             <CreateClanForm />
           </motion.div>
         </div>

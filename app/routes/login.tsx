@@ -1,11 +1,11 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node"
 import { json, redirect } from "@remix-run/node"
-import { Form, useActionData, useNavigation, useParams, useSearchParams } from "@remix-run/react"
+import { Form, useActionData, useNavigation,useSearchParams } from "@remix-run/react"
 import { motion } from "framer-motion"
 import { AlertCircle, Github } from "lucide-react"
 import { createServerSupabase } from "~/utils/supabase.server"
 
-export const loader = async ({ request,params }: LoaderFunctionArgs) => {
+export const loader = async ({ request}: LoaderFunctionArgs) => {
   const response = new Response()
   const supabase = createServerSupabase(request, response)
   
@@ -16,6 +16,7 @@ export const loader = async ({ request,params }: LoaderFunctionArgs) => {
   if (session) {
     return redirect("/leaderboard")
   }
+  return null
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {

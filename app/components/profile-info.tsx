@@ -45,10 +45,9 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-start px-4 sm:px-8 py-6 sm:py-10 rounded-2xl bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
+        className="flex justify-between items-center px-4 sm:px-8 py-6 sm:py-10 rounded-2xl bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
       >
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 sm:justify-between">
-          <motion.div
+        <div className="flex flex-col sm:flex-row items-center justify-center sm:items-start gap-4 sm:gap-6 sm:justify-between"><motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-800"
@@ -73,7 +72,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200 }}
-              className="text-2xl sm:text-4xl font-bold text-white mb-2"
+              className="text-2xl sm:text-4xl font-bold text-white"
             >
               {profile.name}
             </motion.h1>
@@ -84,7 +83,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               transition={{ delay: 0.2 }}
               className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4"
             >
-              <Badge variant="secondary" className="bg-[#4dc4f9]/10 text-[#4dc4f9] hover:bg-[#4dc4f9]/20">
+              <Badge variant="secondary" className="bg-[#4dc4f9]/10  text-[#4dc4f9] hover:bg-[#4dc4f9]/20">
                 {profile.title}
               </Badge>
               <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 hover:bg-purple-500/20">
@@ -175,7 +174,10 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
 
           <div className="text-right">
             <div className="text-sm text-emerald-500">
-              {profile.clanName} · No. {profile.basherNo}
+              {profile.basherNo}
+            </div>
+            <div className="text-sm text-emerald-500">
+              {profile.clanName}
             </div>
           </div>
             <motion.div
@@ -188,9 +190,10 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               <Star className="w-5 h-5 text-amber-500" />
               {profile.bashPoints.toLocaleString()} Points
               </div>
-              <div className="text-gray-500">
-              Joined {format(new Date(profile.joinedDate), "MMMM yyyy")}
-              </div>
+              
+                <div className="text-gray-500">
+                Joined {format(new Date(profile.joinedDate), "MMM''yy")}
+                </div>
             </motion.div>
         </motion.div>
       </motion.div>

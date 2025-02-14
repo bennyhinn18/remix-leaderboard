@@ -65,7 +65,7 @@ const navigation = [
   },
   {
     title: "Clan",
-    href: "/clan",
+    href: "/clans",
     icon: UserCheck,
   },
 ]
