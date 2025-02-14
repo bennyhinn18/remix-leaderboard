@@ -38,7 +38,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url)
     const status = url.searchParams.get("status")
 
-    let query = supabase.from("events").select("*")
+    let query = supabase.from("events").select("*").limit(3)
 
     if (status) {
       query = query.eq("status", status)

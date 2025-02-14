@@ -141,14 +141,14 @@ export default function Clans() {
   const avgAttendance = clans ? clans.reduce((acc, clan) => acc + clan.avg_attendance, 0) / clans.length : 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4 md:p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto space-y-8 pb-[78px]"
       >
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
@@ -159,23 +159,23 @@ export default function Clans() {
             </motion.div>
             <div>
               <motion.h1
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400"
               >
-                Clans
+          Clans
               </motion.h1>
               <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-gray-400"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-gray-400"
               >
-                Explore our coding clans and their achievements
+          Explore our coding clans and their achievements
               </motion.p>
             </div>
           </div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="mt-4 sm:mt-0">
             <CreateClanForm />
           </motion.div>
         </div>

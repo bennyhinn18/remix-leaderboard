@@ -226,7 +226,7 @@ export default function ClanPage() {
   const { clan } = useLoaderData<typeof loader>()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4">
       <div className="max-w-7xl pb-[78px] mx-auto space-y-8">
         {/* Back Button */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
