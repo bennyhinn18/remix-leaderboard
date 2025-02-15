@@ -56,7 +56,7 @@ export async function loader({ params,request }: LoaderFunctionArgs) {
 
   const profile: BasherProfile = {
     ...member,
-    title: "Captain Bash",
+    title: member.title || "Basher",
     joinedDate: new Date(member.created_at),
     basherLevel: member.bash_points >= 2500 ? "Diamond" : member.points >= 2400 ? "Platinum" : "Gold",
     bashPoints: member.bash_points,
@@ -84,7 +84,7 @@ export async function loader({ params,request }: LoaderFunctionArgs) {
     },
     hobbies: ['Photography', 'Chess', 'Guitar', 'Hiking'],
     testimonial: "Being part of this community has transformed my approach to learning and collaboration. The weekly bashes have been instrumental in my growth as a developer.",
-    gpa: 3.8,
+    gpa: 8.6,
     attendance: 92
   }
 
