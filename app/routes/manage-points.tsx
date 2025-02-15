@@ -26,12 +26,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ error: "Missing required fields" })
   }
 
-  const currentPoints = await supabase.from("members").select("points").eq("id", memberId).single()
+  const currentPoints = await supabase.from("members").select("bash_points").eq("id", memberId).single()
 
   const newPoints =
     action === "add"
-      ? (currentPoints.data?.points || 0) + Number(points)
-      : (currentPoints.data?.points || 0) - Number(points)
+      ? (currentPoints.data?.bash_points || 0) + Number(points)
+      : (currentPoints.data?.bash_points || 0) - Number(points)
 
   const { error } = await supabase.from("members").update({ points: newPoints }).eq("id", memberId)
 
