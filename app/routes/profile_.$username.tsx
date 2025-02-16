@@ -7,6 +7,7 @@ import type { BasherProfile } from "~/types/profile"
 import { MainNav } from "~/components/main-nav"
 import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
+import { SocialFooter } from "~/components/social-footer"
 
 
 export async function loader({ params,request }: LoaderFunctionArgs) {
@@ -85,6 +86,11 @@ export async function loader({ params,request }: LoaderFunctionArgs) {
     hobbies: ['Photography', 'Chess', 'Guitar', 'Hiking'],
     testimonial: "Being part of this community has transformed my approach to learning and collaboration. The weekly bashes have been instrumental in my growth as a developer.",
     gpa: 8.6,
+    socials: [
+      { platform: "github", url: `https://github.com/${member.github_username}` },
+      { platform: "linkedin", url:member.linkedin_url },
+      { platform: "instagram", url: `https://instagram.com/${member.instagram_}` },
+    ],
     attendance: 92
   }
 
@@ -95,7 +101,7 @@ export default function Profile() {
   const { profile } = useLoaderData<typeof loader>()
 
   return (
-    <div className="min-h-screen pb-[78px] bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation */}
         <div className="mb-8 flex justify-between items-center">
@@ -353,6 +359,7 @@ export default function Profile() {
                 {profile.testimonial}
               </motion.blockquote>
               </Card>
+              <SocialFooter socials={profile.socials} />
             </motion.div>
       </div>
     </div>

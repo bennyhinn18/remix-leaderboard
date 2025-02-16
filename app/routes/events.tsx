@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node"
 import { useLoaderData, useNavigation, useSubmit, useNavigate, useActionData } from "@remix-run/react"
 import { useState, useEffect, useCallback } from "react"
@@ -26,27 +28,69 @@ import { Input } from "~/components/ui/input"
 import { DialogHeader } from "~/components/ui/dialog"
 import { cn } from "~/lib/utils"
 import { isOrganiser } from "~/utils/currentUser"
+import { useLocalStorage } from "~/hooks/use-local-storage"
+import { parseISO, isAfter, isBefore, startOfDay } from "date-fns"
 
 type Event = Database["public"]["Tables"]["events"]["Row"]
+
+function getEventStatus(date: string, time: string) {
+  const eventDate = parseISO(date)
+  const today = startOfDay(new Date())
+  const [startTime] = time.split("-").map((t) => t.trim())
+  const [hours, minutes] = startTime.split(":").map(Number)
+
+  const eventDateTime = new Date(eventDate)
+  eventDateTime.setHours(hours, minutes)
+
+  if (isBefore(eventDateTime, today)) {
+    return "completed"
+  } else if (isAfter(eventDateTime, today)) {
+    return "upcoming"
+  } else {
+    return "ongoing"
+  }
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const response = new Response()
   const supabase = createServerSupabase(request, response)
-  const organiserStatus = await isOrganiser(request) 
-  
+  const organiserStatus = await isOrganiser(request)
+
   try {
     const url = new URL(request.url)
     const status = url.searchParams.get("status")
 
     let query = supabase.from("events").select("*").limit(3)
 
-    if (status) {
+    if (status && status !== "all") {
       query = query.eq("status", status)
     }
 
-    const { data: events, error } = await query.order("date", { ascending: false })
+    let { data: events, error } = await query.order("date", { ascending: false })
 
     if (error) throw error
+
+    // Update event statuses
+    if (events) {
+      events = events.map((event) => ({
+        ...event,
+        status: getEventStatus(event.date, event.time),
+      }))
+
+      // Update statuses in database
+      for (const event of events) {
+        await supabase.from("events").update({ status: event.status }).eq("id", event.id)
+      }
+
+      // Sort events: ongoing first, then upcoming, then completed
+      events.sort((a, b) => {
+        const statusPriority = { ongoing: 0, upcoming: 1, completed: 2 }
+        return (
+          statusPriority[a.status as keyof typeof statusPriority] -
+          statusPriority[b.status as keyof typeof statusPriority]
+        )
+      })
+    }
 
     return json({
       organiserStatus,
@@ -81,6 +125,26 @@ export async function action({ request }: ActionFunctionArgs) {
         .update({
           attendees: (event.attendees || 0) + 1,
           absentees: (event.absentees || 0) + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", eventId)
+
+      if (updateError) throw updateError
+
+      return json({ success: true })
+    } else if (intent === "unjoin") {
+      const { data: event, error: fetchError } = await supabase
+        .from("events")
+        .select("attendees")
+        .eq("id", eventId)
+        .single()
+
+      if (fetchError) throw new Error("Failed to fetch event")
+
+      const { error: updateError } = await supabase
+        .from("events")
+        .update({
+          attendees: Math.max((event.attendees || 0) - 1, 0),
           updated_at: new Date().toISOString(),
         })
         .eq("id", eventId)
@@ -150,12 +214,11 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function EventsRoute() {
-  const { events, status,organiserStatus } = useLoaderData<typeof loader>()
+  const { events, status, organiserStatus } = useLoaderData<typeof loader>()
   const navigation = useNavigation()
   const submit = useSubmit()
   const navigate = useNavigate()
   const { toast } = useToast()
-  
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(events[0] ?? null)
   const [showAgenda, setShowAgenda] = useState(false)
@@ -169,6 +232,7 @@ export default function EventsRoute() {
     { time: "", title: "", description: "", speaker: "" },
   ])
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [joinedEvents, setJoinedEvents] = useLocalStorage<string[]>("joinedEvents", [])
 
   const isLoading = navigation.state === "loading" || navigation.state === "submitting"
 
@@ -190,16 +254,33 @@ export default function EventsRoute() {
   )
 
   const handleJoin = useCallback(
-    (eventId: string) => {
-      submit({ intent: "join", eventId }, { method: "POST", replace: true })
+    async (eventId: string) => {
+      if (joinedEvents.includes(eventId)) {
+        // Handle unjoin
+        setJoinedEvents((prev) => prev.filter((id) => id !== eventId))
 
-      toast({
-        title: "Success!",
-        description: "You've successfully joined the event.",
-        duration: 5000,
-      })
+        // Update attendees count in database
+        await submit({ intent: "unjoin", eventId }, { method: "POST", replace: true })
+
+        toast({
+          title: "Left event",
+          description: "You've successfully left the event.",
+          duration: 5000,
+        })
+      } else {
+        // Handle join
+        setJoinedEvents((prev) => [...prev, eventId])
+
+        await submit({ intent: "join", eventId }, { method: "POST", replace: true })
+
+        toast({
+          title: "Success!",
+          description: "You've successfully joined the event.",
+          duration: 5000,
+        })
+      }
     },
-    [submit, toast],
+    [submit, toast, joinedEvents, setJoinedEvents],
   )
 
   const handleStatusFilter = useCallback(
@@ -242,7 +323,7 @@ export default function EventsRoute() {
       if (item.speaker) formData.append(`agenda[${index}].speaker`, item.speaker)
     })
 
-    const result = await submit(formData, { method: "POST" }) as unknown as { success?: boolean }
+    const result = (await submit(formData, { method: "POST" })) as unknown as { success?: boolean }
 
     if (result?.success) {
       toast({
@@ -290,18 +371,18 @@ export default function EventsRoute() {
         </Button>
         <div className="max-w-2xl w-full text-center">
           <Alert variant="destructive" className="mb-6">
-        <AlertCircle className="h-6 w-6 mr-2" />
-        <div>
-          <AlertTitle className="text-lg">No events found</AlertTitle>
-          <AlertDescription className="text-sm">There are no events available at the moment.</AlertDescription>
-        </div>
+            <AlertCircle className="h-6 w-6 mr-2" />
+            <div>
+              <AlertTitle className="text-lg">No events found</AlertTitle>
+              <AlertDescription className="text-sm">There are no events available at the moment.</AlertDescription>
+            </div>
           </Alert>
           <Button
-        onClick={() => setShowAddEvent(true)}
-        className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-3 px-6 rounded-lg"
+            onClick={() => setShowAddEvent(true)}
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-3 px-6 rounded-lg"
           >
-        <Plus className="w-5 h-5 mr-2" />
-        Create First Event
+            <Plus className="w-5 h-5 mr-2" />
+            Create First Event
           </Button>
         </div>
       </div>
@@ -317,13 +398,15 @@ export default function EventsRoute() {
           className="flex items-center justify-between mb-8"
         >
           <h1 className="text-3xl font-bold text-white">Weekly Bash Events</h1>
-          {organiserStatus && <Button
-            onClick={() => setShowAddEvent(true)}
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2 text-white" />
-            Add Event
-          </Button>}
+          {organiserStatus && (
+            <Button
+              onClick={() => setShowAddEvent(true)}
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2 text-white" />
+              Add Event
+            </Button>
+          )}
         </motion.div>
 
         <AnimatePresence mode="wait">
@@ -380,7 +463,7 @@ export default function EventsRoute() {
                 onViewAgenda={() => setShowAgenda(!showAgenda)}
                 onJoin={() => handleJoin(selectedEvent.id)}
                 onCantAttend={() => setShowAbsence(true)}
-                isJoined={false}
+                isJoined={joinedEvents.includes(selectedEvent.id)}
                 disabled={isLoading}
               />
             </motion.div>
@@ -407,217 +490,237 @@ export default function EventsRoute() {
             <FeedbackModal event={selectedEvent} isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
 
             <div className="mt-8">
-          <Dialog open={showAddEvent} onOpenChange={() => setShowAddEvent(false)}>
-          <DialogContent className="max-w-full p-8 max-h-[90vh] overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white">
-            <DialogHeader className="flex flex-col items-center text-xl ">
-              <DialogTitle>Add New Event</DialogTitle>
-            </DialogHeader>
+              <Dialog open={showAddEvent} onOpenChange={() => setShowAddEvent(false)}>
+                <DialogContent className="max-w-full p-8 max-h-[90vh] overflow-y-auto bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white">
+                  <DialogHeader className="flex flex-col items-center text-xl ">
+                    <DialogTitle>Add New Event</DialogTitle>
+                  </DialogHeader>
 
-            {actionData && "error" in actionData && actionData.error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-md mb-4"
-              >
-                {actionData.error}
-              </motion.div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="title">Event Title</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    defaultValue="Weekly Bash:  BYTE-BASH-BLITZ 👊"
-                    required
-                    disabled={isSubmitting}
-                    aria-invalid={validationErrors.title ? "true" : undefined}
-                  />
-                  {validationErrors.title && <p className="text-sm text-red-500 mt-1">{validationErrors.title}</p>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={isSubmitting}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !date && "text-muted-foreground",
-                            validationErrors.date && "border-red-500",
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, "PPP") : "Pick a date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
-                        <Calendar
-                          selected={date}
-                          onSelect={setDate}
-                          initialFocus
-                          disabled={(date: Date) => date < new Date()}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    {validationErrors.date && <p className="text-sm text-red-500 mt-1">{validationErrors.date}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="time">Time</Label>
-                    <Input
-                      id="time"
-                      name="time"
-                      placeholder="e.g., 09:30 - 03:00 IST"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="venue">Venue</Label>
-                  <Input
-                    id="venue"
-                    name="venue"
-                    defaultValue="Center for Innovation, Stella Mary's College of Engineering"
-                    required
-                    disabled={isSubmitting}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                <h3 className="font-semibold">Leading Clan Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="clanName">Clan Name</Label>
-                    <Input id="clanName" name="clanName" required disabled={isSubmitting} />
-                  </div>
-                  <div>
-                    <Label htmlFor="clanScore">Clan Score</Label>
-                    <Input id="clanScore" name="clanScore" type="number" required disabled={isSubmitting} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Agenda</h3>
-                  <Button type="button" onClick={addAgendaItem} variant="outline" size="sm" disabled={isSubmitting}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Item
-                  </Button>
-                </div>
-
-                <AnimatePresence>
-                  {agendaItems.map((item, index) => (
+                  {actionData && "error" in actionData && actionData.error && (
                     <motion.div
-                      key={index}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="grid gap-4 p-4 border rounded-lg relative"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-md mb-4"
                     >
-                      {agendaItems.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-2 top-2"
-                          onClick={() => removeAgendaItem(index)}
-                          disabled={isSubmitting}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
+                      {actionData.error}
+                    </motion.div>
+                  )}
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Time Slot</Label>
-                          <Input
-                            value={item.time}
-                            onChange={(e) => updateAgendaItem(index, "time", e.target.value)}
-                            placeholder="e.g., 19:00 - 19:30"
-                            required
-                            disabled={isSubmitting}
-                            aria-invalid={validationErrors[`agenda[${index}].time`] ? "true" : undefined}
-                          />
-                          {validationErrors[`agenda[${index}].time`] && (
-                            <p className="text-sm text-red-500 mt-1">{validationErrors[`agenda[${index}].time`]}</p>
-                          )}
-                        </div>
-                        <div>
-                          <Label>Title</Label>
-                          <Input
-                            value={item.title}
-                            onChange={(e) => updateAgendaItem(index, "title", e.target.value)}
-                            required
-                            disabled={isSubmitting}
-                            aria-invalid={validationErrors[`agenda[${index}].title`] ? "true" : undefined}
-                          />
-                          {validationErrors[`agenda[${index}].title`] && (
-                            <p className="text-sm text-red-500 mt-1">{validationErrors[`agenda[${index}].title`]}</p>
-                          )}
-                        </div>
-                      </div>
-
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid gap-4">
                       <div>
-                        <Label>Description</Label>
+                        <Label htmlFor="title">Event Title</Label>
                         <Input
-                          value={item.description}
-                          onChange={(e) => updateAgendaItem(index, "description", e.target.value)}
+                          id="title"
+                          name="title"
+                          defaultValue="Weekly Bash:  BYTE-BASH-BLITZ 👊"
                           required
                           disabled={isSubmitting}
-                          aria-invalid={validationErrors[`agenda[${index}].description`] ? "true" : undefined}
+                          aria-invalid={validationErrors.title ? "true" : undefined}
                         />
-                        {validationErrors[`agenda[${index}].description`] && (
-                          <p className="text-sm text-red-500 mt-1">
-                            {validationErrors[`agenda[${index}].description`]}
-                          </p>
+                        {validationErrors.title && (
+                          <p className="text-sm text-red-500 mt-1">{validationErrors.title}</p>
                         )}
                       </div>
 
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                disabled={isSubmitting}
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !date && "text-muted-foreground",
+                                  validationErrors.date && "border-red-500",
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date ? format(date, "PPP") : "Pick a date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
+                              <Calendar
+                                selected={date}
+                                onSelect={setDate}
+                                initialFocus
+                                disabled={(date: Date) => date < new Date()}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          {validationErrors.date && (
+                            <p className="text-sm text-red-500 mt-1">{validationErrors.date}</p>
+                          )}
+                        </div>
+                        <div>
+                          <Label htmlFor="time">Time</Label>
+                          <Input
+                            id="time"
+                            name="time"
+                            placeholder="e.g., 09:30 - 03:00 IST"
+                            required
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+
                       <div>
-                        <Label>Speaker (optional)</Label>
+                        <Label htmlFor="venue">Venue</Label>
                         <Input
-                          value={item.speaker}
-                          onChange={(e) => updateAgendaItem(index, "speaker", e.target.value)}
+                          id="venue"
+                          name="venue"
+                          defaultValue="Center for Innovation, Stella Mary's College of Engineering"
+                          required
                           disabled={isSubmitting}
                         />
                       </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+                    </div>
 
-              <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setShowAddEvent(false)} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting} className="min-w-[100px]">
-                  {isSubmitting ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center">
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </motion.div>
-                  ) : (
-                    "Create Event"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-        </div>
+                    <div className="grid gap-4">
+                      <h3 className="font-semibold">Leading Clan Details</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="clanName">Clan Name</Label>
+                          <Input id="clanName" name="clanName" required disabled={isSubmitting} />
+                        </div>
+                        <div>
+                          <Label htmlFor="clanScore">Clan Score</Label>
+                          <Input id="clanScore" name="clanScore" type="number" required disabled={isSubmitting} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">Agenda</h3>
+                        <Button
+                          type="button"
+                          onClick={addAgendaItem}
+                          variant="outline"
+                          size="sm"
+                          disabled={isSubmitting}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Item
+                        </Button>
+                      </div>
+
+                      <AnimatePresence>
+                        {agendaItems.map((item, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="grid gap-4 p-4 border rounded-lg relative"
+                          >
+                            {agendaItems.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-2 top-2"
+                                onClick={() => removeAgendaItem(index)}
+                                disabled={isSubmitting}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>Time Slot</Label>
+                                <Input
+                                  value={item.time}
+                                  onChange={(e) => updateAgendaItem(index, "time", e.target.value)}
+                                  placeholder="e.g., 19:00 - 19:30"
+                                  required
+                                  disabled={isSubmitting}
+                                  aria-invalid={validationErrors[`agenda[${index}].time`] ? "true" : undefined}
+                                />
+                                {validationErrors[`agenda[${index}].time`] && (
+                                  <p className="text-sm text-red-500 mt-1">
+                                    {validationErrors[`agenda[${index}].time`]}
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <Label>Title</Label>
+                                <Input
+                                  value={item.title}
+                                  onChange={(e) => updateAgendaItem(index, "title", e.target.value)}
+                                  required
+                                  disabled={isSubmitting}
+                                  aria-invalid={validationErrors[`agenda[${index}].title`] ? "true" : undefined}
+                                />
+                                {validationErrors[`agenda[${index}].title`] && (
+                                  <p className="text-sm text-red-500 mt-1">
+                                    {validationErrors[`agenda[${index}].title`]}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label>Description</Label>
+                              <Input
+                                value={item.description}
+                                onChange={(e) => updateAgendaItem(index, "description", e.target.value)}
+                                required
+                                disabled={isSubmitting}
+                                aria-invalid={validationErrors[`agenda[${index}].description`] ? "true" : undefined}
+                              />
+                              {validationErrors[`agenda[${index}].description`] && (
+                                <p className="text-sm text-red-500 mt-1">
+                                  {validationErrors[`agenda[${index}].description`]}
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <Label>Speaker (optional)</Label>
+                              <Input
+                                value={item.speaker}
+                                onChange={(e) => updateAgendaItem(index, "speaker", e.target.value)}
+                                disabled={isSubmitting}
+                              />
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowAddEvent(false)}
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting} className="min-w-[100px]">
+                        {isSubmitting ? (
+                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center">
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Creating...
+                          </motion.div>
+                        ) : (
+                          "Create Event"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </>
         )}
       </div>
     </div>
   )
 }
+

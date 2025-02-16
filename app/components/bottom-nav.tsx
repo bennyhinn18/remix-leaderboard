@@ -41,7 +41,9 @@ const navItems = [
 
 export function BottomNav() {
   const location = useLocation()
-
+  if (location.pathname.startsWith("/profile/") || location.pathname.startsWith("/clans/")) {
+    return null;
+  }
   return (
     <>
       {/* Mobile Bottom Navigation */}
