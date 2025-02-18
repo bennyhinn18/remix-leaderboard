@@ -51,10 +51,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     data: { session },
   } = await supabase.auth.getSession()
   
-  const { data: members } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
-
+  
   return json({
-    members: members || [],
+    members:  [],
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   })
@@ -291,14 +290,14 @@ export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState<"overall" | "github" | "leetcode">("overall")
   const [searchQuery, setSearchQuery] = useState("")
 
-  useEffect(() => {
+   useEffect(() => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return
-
+  
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
-
+  
     const fetchMembers = async () => {
       const { data } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
-
+  
       if (data) {
         const membersWithStats = await Promise.all(
           data.map(async (member) => ({
@@ -312,21 +311,20 @@ export default function Leaderboard() {
         setMembers(membersWithStats)
       }
     }
-
+  
     fetchMembers()
-
+  
     const channel = supabase
       .channel("members")
       .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
         fetchMembers()
       })
       .subscribe()
-
+  
     return () => {
       channel.unsubscribe()
     }
   }, [SUPABASE_URL, SUPABASE_ANON_KEY])
-
   useEffect(() => {
     const savedTab = localStorage.getItem("activeTab") as "overall" | "github" | "leetcode" | null
     if (savedTab) {

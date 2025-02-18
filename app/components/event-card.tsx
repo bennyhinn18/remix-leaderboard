@@ -9,6 +9,7 @@ import { Calendar, Clock, MapPin, Users, Trophy, Check } from "lucide-react"
 import type { Event } from "~/types/events"
 import { format } from "date-fns"
 import { motion } from "framer-motion"
+import { cn } from "~/lib/utils"
 
 interface EventCardProps {
   event: Event
@@ -16,16 +17,14 @@ interface EventCardProps {
   onJoin: () => void
   onCantAttend: () => void
   isJoined: boolean
-  disabled: boolean
 }
-
 
 export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined }: EventCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
     <Card
-      className="relative  overflow-hidden transition-all duration-300 hover:shadow-lg bg-gradient-to-br from-blue-900 to-indigo-900 text-white"
+      className="relative overflow-hidden transition-all duration-300 hover:shadow-lg bg-gradient-to-br from-blue-900 to-indigo-900 text-white"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -34,7 +33,6 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="border-2 border-white">
-              {/* <AvatarImage src={event.leadingClan.avatar} /> */}
               <AvatarFallback>{event.leading_clan.name[0]}</AvatarFallback>
             </Avatar>
             <div>
@@ -91,16 +89,20 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
         <div className="mt-6 flex flex-wrap gap-3">
           <Button
             onClick={onJoin}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 relative overflow-hidden"
-            disabled={isJoined}
+            className={cn(
+              "flex-1 relative overflow-hidden",
+              isJoined
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600",
+            )}
           >
             {isJoined ? (
               <span className="flex items-center gap-2">
                 <Check className="w-4 h-4" />
-                Joined
+                Joined ({event.attendees})
               </span>
             ) : (
-              "I'm Joining"
+              <span>Join Event ({event.attendees})</span>
             )}
           </Button>
           <Button
@@ -125,6 +127,12 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
         className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 -z-10"
         animate={{ opacity: isHovered ? 1 : 0 }}
         transition={{ duration: 0.2 }}
+      />
+      <motion.div
+        className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500"
+        initial={{ width: 0 }}
+        animate={{ width: isHovered ? "100%" : "0%" }}
+        transition={{ duration: 0.3 }}
       />
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 transform rotate-45 translate-x-16 -translate-y-16" />
     </Card>

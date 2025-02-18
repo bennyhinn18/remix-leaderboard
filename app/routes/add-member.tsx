@@ -141,7 +141,7 @@ export default function AddMember() {
                   className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-red-400"
                 >
                   <AlertCircle className="w-5 h-5" />
-                  {actionData.error}
+                  Adding Member Failed!
                 </motion.div>
               )}
               {actionData?.success && (

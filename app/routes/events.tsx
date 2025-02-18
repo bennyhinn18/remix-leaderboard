@@ -255,11 +255,26 @@ export default function EventsRoute() {
 
   const handleJoin = useCallback(
     async (eventId: string) => {
-      if (joinedEvents.includes(eventId)) {
+      const event = events.find((e) => e.id === eventId)
+      if (!event) return
+
+      const isCurrentlyJoined = joinedEvents.includes(eventId)
+      const newAttendeeCount = isCurrentlyJoined ? Math.max((event.attendees || 0) - 1, 0) : (event.attendees || 0) + 1
+
+      // Optimistically update the UI
+      setSelectedEvent((prev) =>
+        prev?.id === eventId
+          ? {
+              ...prev,
+              attendees: newAttendeeCount,
+            }
+          : prev,
+      )
+
+      if (isCurrentlyJoined) {
         // Handle unjoin
         setJoinedEvents((prev) => prev.filter((id) => id !== eventId))
 
-        // Update attendees count in database
         await submit({ intent: "unjoin", eventId }, { method: "POST", replace: true })
 
         toast({
@@ -280,7 +295,7 @@ export default function EventsRoute() {
         })
       }
     },
-    [submit, toast, joinedEvents, setJoinedEvents],
+    [submit, toast, joinedEvents, setJoinedEvents, events],
   )
 
   const handleStatusFilter = useCallback(
@@ -464,7 +479,6 @@ export default function EventsRoute() {
                 onJoin={() => handleJoin(selectedEvent.id)}
                 onCantAttend={() => setShowAbsence(true)}
                 isJoined={joinedEvents.includes(selectedEvent.id)}
-                disabled={isLoading}
               />
             </motion.div>
 
