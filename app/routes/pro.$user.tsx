@@ -2,7 +2,6 @@ import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import { ProfileInfo } from "~/components/profile-info";
-import { initSupabase } from "~/utils/supabase.client";
 import { createServerSupabase } from "~/utils/supabase.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -14,19 +13,33 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     .eq("github_username", params.user)
     .single();
 
+    // Fetch Duolingo streak
+    const duolingoResponse = await fetch(
+      `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+    );
+    const duolingoData = await duolingoResponse.json();
+    const userData = duolingoData.users?.[0] || {};
+    const duolingo_streak = Math.max(
+      userData.streak ?? 0,
+      userData.streakData?.currentStreak?.length ?? 0,
+      userData.streakData?.previousStreak?.length ?? 0
+    );
+
+
   if (error || !member) {
     return json({ member: null, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY });
   }
 
   return json({
     member,
+    duolingo_streak,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   });
 };
 
 export default function Profile() {
-  const { SUPABASE_URL, SUPABASE_ANON_KEY, member } = useLoaderData<typeof loader>();
+  const { SUPABASE_URL, SUPABASE_ANON_KEY, member,duolingo_streak } = useLoaderData<typeof loader>();
   interface Profile {
     avatar_url: string;
     title: string;
@@ -59,7 +72,7 @@ export default function Profile() {
   const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !member) return; // Exit early if no member
+    if (!member) return; // Exit early if no member
 
     const fetchProfile = async () => {
       try {
@@ -78,18 +91,7 @@ export default function Profile() {
             )
           : [];
             console.log("dup username = ",member.duolingo_username)
-        // Fetch Duolingo streak
-        const duolingoResponse = await fetch(
-          `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
-        );
-        const duolingoData = await duolingoResponse.json();
-        const userData = duolingoData.users?.[0] || {};
-        const duolingo_streak = Math.max(
-          userData.streak ?? 0,
-          userData.streakData?.currentStreak?.length ?? 0,
-          userData.streakData?.previousStreak?.length ?? 0
-        );
-
+        
         setProfile({
           ...member,
           avatar_url: member.avatar_url || "/default-avatar.png", // Provide default avatar
@@ -129,7 +131,7 @@ export default function Profile() {
     };
 
     fetchProfile();
-  }, [SUPABASE_URL, SUPABASE_ANON_KEY, member]);
+  }, [duolingo_streak,member]);
 
   if (!profile) return <p>Loading...</p>; // Prevent rendering ProfileInfo with null data
 
