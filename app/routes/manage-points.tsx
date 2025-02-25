@@ -1,14 +1,18 @@
 "use client"
 
-import { json, type ActionFunctionArgs } from "@remix-run/node"
+import { json, redirect, type ActionFunctionArgs } from "@remix-run/node"
 import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react"
 import { createServerSupabase } from "~/utils/supabase.server"
 import type { Member } from "~/types/database"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Minus, Users, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { useState } from "react"
+import { isOrganiser } from "~/utils/currentUser"
 
 export const loader = async ({request}) => {
+  const organiserStatus = await isOrganiser(request)
+    if (!organiserStatus)
+    {return redirect('/not-authorised')}
     const response =new  Response()
   const supabase= createServerSupabase(request,response)
   const { data: members } = await supabase.from("members").select("*").order("name")
@@ -33,7 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       ? (currentPoints.data?.bash_points || 0) + Number(points)
       : (currentPoints.data?.bash_points || 0) - Number(points)
 
-  const { error } = await supabase.from("members").update({ points: newPoints }).eq("id", memberId)
+  const { error } = await supabase.from("members").update({ bash_points: newPoints }).eq("id", memberId)
 
   if (error) {
     return json({ error: error.message })

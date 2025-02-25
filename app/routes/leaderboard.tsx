@@ -45,11 +45,6 @@ function getTierStyles(tier: string) {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const response = new Response()
-  const supabase =createServerSupabase(request, response)
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
   
   
   return json({
@@ -126,7 +121,7 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
             <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/40">
               {member.avatar_url ? (
               <img
-                src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
+                src={member.avatar_url}
                 alt={member.name}
                 className="w-full h-full object-cover text-white"
               />
@@ -218,7 +213,7 @@ const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; in
           <div className="relative w-20 h-20 rounded-2xl overflow-hidden ">
             {member.avatar_url ? (
               <img
-                src={`https://api.dicebear.com/9.x/dylan/svg?seed=${member.name}` || member.avatar_url}
+                src={member.avatar_url}
                 alt={member.name}
                 className="w-full h-full object-cover"
               />

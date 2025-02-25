@@ -69,7 +69,7 @@ export async function loader({ params,request }: LoaderFunctionArgs) {
     courses: 15,
     resume_url: member.resume_url || "",
     portfolio_url: member.portfolio_url || "",
-    domains: ['Full Stack Development', 'DevOps & Cloud Computing'],
+    domains:member.primary_domain ||['Full Stack Development', 'DevOps & Cloud Computing'],
     languages: [
       { name: 'TypeScript', level: 'Expert' },
       { name: 'Python', level: 'Advanced' },
@@ -83,8 +83,8 @@ export async function loader({ params,request }: LoaderFunctionArgs) {
       discord: 60,
       books: 12
     },
-    hobbies: ['Photography', 'Chess', 'Guitar', 'Hiking'],
-    testimonial: "Being part of this community has transformed my approach to learning and collaboration. The weekly bashes have been instrumental in my growth as a developer.",
+    hobbies:member.hobbies ||['Photography', 'Chess', 'Guitar', 'Hiking'],
+    testimonial:member.testimony || "No Testimony",
     gpa: 8.6,
     socials: [
       { platform: "github", url: `https://github.com/${member.github_username}` },
