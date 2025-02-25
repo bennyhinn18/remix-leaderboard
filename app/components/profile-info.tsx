@@ -54,7 +54,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
           >
             {profile.avatar_url ? (
               <img
-                src={`https://api.dicebear.com/9.x/dylan/svg?seed=${profile.name}` || profile.avatar_url}
+                src={profile.avatar_url}
                 alt={profile.name}
                 className="w-full h-full object-cover"
               />
@@ -133,7 +133,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-800">
                     {profile.avatar_url ? (
                       <img
-                        src={`https://api.dicebear.com/9.x/dylan/svg?seed=${profile.name}` || profile.avatar_url}
+                        src={profile.avatar_url}
                         alt={profile.name}
                         className="w-full h-full object-cover"
                       />

@@ -9,96 +9,145 @@ import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
 import { SocialFooter } from "~/components/social-footer"
 
+import { useState, useEffect } from "react";
 
-export async function loader({ params,request }: LoaderFunctionArgs) {
-  const { username } = params;
-  const response=new Response()
-  const supabase= createServerSupabase(request,response)
-  const { data: member } = await supabase
-    .from('members')
-    .select('*')
-    .eq('github_username', username)
-    .single()
 
-  if (!member) {
-    throw new Response("Not Found", { status: 404 })
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  const { data: member, error } = await supabase
+    .from("members")
+    .select("*")
+    .eq("github_username", params.username)
+    .single();
+
+    // Fetch Duolingo streak
+    const duolingoResponse = await fetch(
+      `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+    );
+    const duolingoData = await duolingoResponse.json();
+    const userData = duolingoData.users?.[0] || {};
+    const duolingo_streak = Math.max(
+      userData.streak ?? 0,
+      userData.streakData?.currentStreak?.length ?? 0,
+      userData.streakData?.previousStreak?.length ?? 0
+    );
+
+
+  if (error || !member) {
+    return json({ member: null, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY });
   }
 
-  // Fetch GitHub data
-  const githubResponse = await fetch(`https://api.github.com/users/${username}/events/public`)
-  const githubEvents = await githubResponse.json()
-  
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  
-  const contributions = Array.isArray(githubEvents) ? githubEvents.filter((event: any) => {
-    const eventDate = new Date(event.created_at)
-    return eventDate > thirtyDaysAgo && 
-      (event.type === 'PushEvent' || 
-       event.type === 'CreateEvent' || 
-       event.type === 'PullRequestEvent')
-  }) : []
-
-  const duolingo_username = member.duolingo_username;
-
-  const res = await fetch(
-    `https://www.duolingo.com/2017-06-30/users?username=${duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`);
-
-  const data = await res.json();
-
-  const userData = data.users[0];
-  // I didn't know which of these fields matter, so I just get the max of them.
-  const duolingo_streak = Math.max(
-    userData?.streak ?? 0,
-    userData?.streakData?.currentStreak?.length ?? 0,
-    userData?.streakData?.previousStreak?.length ?? 0
-  );
-
-
-  const profile: BasherProfile = {
-    ...member,
-    title: member.title || "Basher",
-    joinedDate: new Date(member.created_at),
-    basherLevel: member.bash_points >= 2500 ? "Diamond" : member.points >= 2400 ? "Platinum" : "Gold",
-    bashPoints: member.bash_points,
-    clanName: member.clan_name || "Byte Basher",
-    basherNo: "BBT2023045",
-    projects: 12,
-    certifications: 5,
-    internships: 2,
-    courses: 15,
-    resume_url: member.resume_url || "",
-    portfolio_url: member.portfolio_url || "",
-    domains: ['Full Stack Development', 'DevOps & Cloud Computing'],
-    languages: [
-      { name: 'TypeScript', level: 'Expert' },
-      { name: 'Python', level: 'Advanced' },
-      { name: 'Rust', level: 'Intermediate' },
-      { name: 'Go', level: 'Beginner' }
-    ],
-    streaks: {
-      github: contributions.length,
-      leetcode: 15,
-      duolingo: duolingo_streak,
-      discord: 60,
-      books: 12
-    },
-    hobbies: ['Photography', 'Chess', 'Guitar', 'Hiking'],
-    testimonial: "Being part of this community has transformed my approach to learning and collaboration. The weekly bashes have been instrumental in my growth as a developer.",
-    gpa: 8.6,
-    socials: [
-      { platform: "github", url: `https://github.com/${member.github_username}` },
-      { platform: "linkedin", url:member.linkedin_url },
-      { platform: "instagram", url: `https://instagram.com/${member.instagram_}` },
-    ],
-    attendance: 92
-  }
-
-  return json({ profile })
-}
+  return json({
+    member,
+    duolingo_streak,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+  });
+};
 
 export default function Profile() {
-  const { profile } = useLoaderData<typeof loader>()
+  const { member,duolingo_streak } = useLoaderData<typeof loader>();
+  interface Profile {
+    avatar_url: string;
+    title: string;
+    joinedDate: Date;
+    basherLevel: string;
+    bashPoints: number;
+    clanName: string;
+    basherNo: string;
+    projects: number;
+    certifications: number;
+    internships: number;
+    courses: number;
+    resume_url: string;
+    portfolio_url: string;
+    domains: string[];
+    streaks: {
+      github: number;
+      leetcode: number;
+      duolingo: number;
+      discord: number;
+      books: number;
+    };
+    hobbies: string[];
+    testimonial: string;
+    gpa: number;
+    socials: { platform: string; url: string }[];
+    attendance: number;
+  }
+
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    if (!member) return; // Exit early if no member
+
+    const fetchProfile = async () => {
+      try {
+        // Fetch GitHub contributions
+        const githubResponse = await fetch(`https://api.github.com/users/${member.github_username}/events/public`);
+        const githubEvents = await githubResponse.json();
+
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const contributions = Array.isArray(githubEvents)
+          ? githubEvents.filter(
+              (event: any) =>
+                new Date(event.created_at) > thirtyDaysAgo &&
+                ["PushEvent", "CreateEvent", "PullRequestEvent"].includes(event.type)
+            )
+          : [];
+
+        
+        setProfile({
+          ...member,
+          avatar_url: member.avatar_url || "/default-avatar.png", // Provide default avatar
+          title: member.title || "Basher",
+          joinedDate: new Date(member.joined_date || Date.now()),
+          basherLevel: member.bash_points >= 2500 ? "Diamond" : member.bash_points >= 2400 ? "Platinum" : "Gold",
+          bashPoints: member.bash_points || 0,
+          clanName: member.clan_name || "Byte Basher",
+          basherNo: member.basher_no || "BBT2023045",
+          projects: member.stats?.projects || 0,
+          certifications: member.stats?.certifications || 0,
+          internships: member.stats?.internships || 0,
+          courses: member.stats?.courses || 0,
+          resume_url: member.resume_url || "",
+          portfolio_url: member.portfolio_url || "",
+          domains: [...(member.primary_domain || []), ...(member.secondary_domain || [])],
+          streaks: {
+            github: contributions.length,
+            leetcode: 15,
+            duolingo: duolingo_streak,
+            discord: 60,
+            books: 12,
+          },
+          languages: [
+            { name: 'TypeScript', level: 'Expert' },
+            { name: 'Python', level: 'Advanced' },
+            { name: 'Rust', level: 'Intermediate' },
+            { name: 'Go', level: 'Beginner' }
+          ],
+          hobbies: member.hobbies || [],
+          testimonial: member.testimony || "No testimonial available.",
+          gpa: member.gpa || 0,
+          socials: [
+            { platform: "github", url: `https://github.com/${member.github_username}` },
+            { platform: "linkedin", url: member.linkedin_url || "#" },
+            { platform: "instagram", url: member.instagram_username ? `https://instagram.com/${member.instagram_username}` : "#" },
+          ],
+          attendance: member.weekly_bash_attendance || 0,
+        });
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      }
+    };
+
+    fetchProfile();
+  }, [duolingo_streak,member]);
+
+  if (!profile) return <p>Loading...</p>; 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
@@ -206,7 +255,7 @@ export default function Profile() {
                 Domains
               </h2>
               <div className="flex flex-wrap gap-2">
-                {profile.domains.map((domain) => (
+                {profile.primary_domain.map((domain) => (
                   <div 
                     key={domain} 
                     className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm"
@@ -318,16 +367,16 @@ export default function Profile() {
             {/* Hobbies & Interests */}
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4">Hobbies & Interests</h2>
-              <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                 {profile.hobbies.map((hobby) => (
                   <span 
-                    key={hobby} 
-                    className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-full text-sm"
+                  key={hobby} 
+                  className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-full text-sm"
                   >
-                    {hobby}
+                  {hobby}
                   </span>
                 ))}
-              </div>
+                </div>
             </div>
           </div>
         </div>
