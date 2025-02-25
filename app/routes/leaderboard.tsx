@@ -1,11 +1,10 @@
 "use client"
 
-import { json, LoaderFunctionArgs } from "@remix-run/node"
+import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
 import { useEffect, useState } from "react"
 import { Trophy, Github, Code, Search, Star, Award, Crown, Medal } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { createServerSupabase } from "~/utils/supabase.server"
 import { initSupabase } from "~/utils/supabase.client"
 import type { Member } from "~/types/database"
 import iconImage from "~/assets/bashers.png"
@@ -14,6 +13,7 @@ interface MemberWithStats extends Member {
   githubStreak?: number
   leetcodeStreak?: number
   tier: "diamond" | "platinum" | "gold"
+  originalRank?: number
 }
 
 function getTier(points: number): MemberWithStats["tier"] {
@@ -45,16 +45,14 @@ function getTierStyles(tier: string) {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  
-  
   return json({
-    members:  [],
+    members: [],
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   })
 }
 
-const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; index: number; activeTab: string }) => {
+const TopThreeCard = ({ member, index, activeTab, searchQuery }: { member: MemberWithStats; index: number; activeTab: string; searchQuery: string }) => {
   const getRankStyles = (rank: number) => {
     switch (rank) {
       case 0:
@@ -112,26 +110,28 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
           {/* Rank */}
           <div className="flex flex-col items-center text-white">
             {styles.icon}
-            <span className={`text-3xl font-bold mt-2 ${styles.text}`}>#{index + 1}</span>
+            <span className={`text-3xl font-bold mt-2 ${styles.text}`}>
+              #{searchQuery ? member.originalRank : index + 1}
+            </span>
           </div>
 
           {/* Avatar */}
-            <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20 hidden sm:block">
+          <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20 hidden sm:block">
             <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
             <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/40">
               {member.avatar_url ? (
-              <img
-                src={member.avatar_url}
-                alt={member.name}
-                className="w-full h-full object-cover text-white"
-              />
+                <img
+                  src={member.avatar_url || "/placeholder.svg"}
+                  alt={member.name}
+                  className="w-full h-full object-cover text-white"
+                />
               ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
-              </div>
+                <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
+                </div>
               )}
             </div>
-            </motion.div>
+          </motion.div>
 
           {/* Info */}
           <div className="flex-1">
@@ -145,7 +145,6 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
                 className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
               >
                 <p className="text-white">{member.name}</p>
-                
               </Link>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-sm hidden sm:block ${styles.text}`}>@{member.github_username}</span>
@@ -185,95 +184,96 @@ const TopThreeCard = ({ member, index, activeTab }: { member: MemberWithStats; i
   )
 }
 
-const RegularCard = ({ member, index, activeTab }: { member: MemberWithStats; index: number; activeTab: string }) => {
+const RegularCard = ({ member, index, activeTab, searchQuery }: { member: MemberWithStats; index: number; activeTab: string; searchQuery: string }) => {
   return (
     <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    transition={{ duration: 0.5, delay: index * 0.1 }}
-    className={`relative overflow-hidden rounded-2xl `}
-  >
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-      
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className={`relative overflow-hidden rounded-2xl `}
     >
-      <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-4 flex items-center gap-4">
-        {/* Rank */}
-        <div className="flex flex-col items-center">
-         
-          <span className={`text-3xl font-bold text-white`}>{index + 1}</span>
-        </div>
-
-        {/* Avatar */}
-        <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20">
-          <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
-          <div className="relative w-20 h-20 rounded-2xl overflow-hidden ">
-            {member.avatar_url ? (
-              <img
-                src={member.avatar_url}
-                alt={member.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
-              </div>
-            )}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+      >
+        <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-4 flex items-center gap-4">
+          {/* Rank */}
+          <div className="flex flex-col items-center">
+            <span className={`text-3xl font-bold text-white`}>{searchQuery ? member.originalRank : index + 1}</span>
           </div>
-        </motion.div>
 
-        {/* Info */}
-        <div className="flex-1">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-          >
-            <Link
-              to={`/profile/${member.github_username}`}
-              className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
+          {/* Avatar */}
+          <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20">
+            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
+            <div className="relative w-20 h-20 rounded-2xl overflow-hidden ">
+              {member.avatar_url ? (
+                <img
+                  src={member.avatar_url || "/placeholder.svg"}
+                  alt={member.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Info */}
+          <div className="flex-1">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
             >
-              <p className="text-white">{member.name}</p>
-              
-            </Link>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`text-sm hidden sm:block text-gray-400`}>@{member.github_username}</span>
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
+              <Link
+                to={`/profile/${member.github_username}`}
+                className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
               >
-                {getTierIcon(member.tier)}
-                {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
-              </motion.div>
+                <p className="text-white">{member.name}</p>
+              </Link>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-sm hidden sm:block text-gray-400`}>@{member.github_username}</span>
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
+                >
+                  {getTierIcon(member.tier)}
+                  {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Score */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+            className="text-center"
+          >
+            <div
+              className={
+                "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
+              }
+            >
+              {activeTab === "overall"
+                ? member.bash_points
+                : activeTab === "github"
+                  ? member.github_streak || 0
+                  : member.leetcodeStreak}{" "}
+            </div>
+            <div className={"text-sm  text-gray-400"}>
+              {" "}
+              {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}
             </div>
           </motion.div>
         </div>
-
-        {/* Score */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-          className="text-center"
-        >
-          <div className={'text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400'}>
-            {activeTab === "overall"
-              ? member.bash_points
-              : activeTab === "github"
-                ? member.github_streak || 0
-                : member.leetcodeStreak}{" "}
-          </div>
-          <div className={"text-sm  text-gray-400"}>
-            {" "}
-            {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}
-          </div>
-        </motion.div>
-      </div>
+      </motion.div>
     </motion.div>
-  </motion.div>
   )
 }
 
@@ -285,14 +285,14 @@ export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState<"overall" | "github" | "leetcode">("overall")
   const [searchQuery, setSearchQuery] = useState("")
 
-   useEffect(() => {
+  useEffect(() => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return
-  
+
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
-  
+
     const fetchMembers = async () => {
       const { data } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
-  
+
       if (data) {
         const membersWithStats = await Promise.all(
           data.map(async (member) => ({
@@ -306,16 +306,16 @@ export default function Leaderboard() {
         setMembers(membersWithStats)
       }
     }
-  
+
     fetchMembers()
-  
+
     const channel = supabase
       .channel("members")
       .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
         fetchMembers()
       })
       .subscribe()
-  
+
     return () => {
       channel.unsubscribe()
     }
@@ -351,11 +351,13 @@ export default function Leaderboard() {
     return 0 // Keeping the original functionality
   }
 
-  const filteredMembers = members.filter(
-    (member) =>
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (member.github_username?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
-  )
+  const filteredMembers = members
+    .map((member, index) => ({ ...member, originalRank: index + 1 }))
+    .filter(
+      (member) =>
+        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (member.github_username?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
+    )
 
   const sortedMembers = [...filteredMembers].sort((a, b) => {
     if (activeTab === "overall") return b.bash_points - a.bash_points
@@ -373,18 +375,18 @@ export default function Leaderboard() {
         className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl "
       >
         <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center">
             <img src={iconImage || "/placeholder.svg"} alt="Basher Logo" className="w-16 h-16" />
             <div className="text-center flex-1">
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-              Leaderboard
+                Leaderboard
               </h1>
             </div>
             <div className="hidden sm:block text-right">
               <div className="text-lg font-semibold text-white">Hello Basher&apos;s</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
-            </div>
+          </div>
 
           {/* Search and Tabs */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -429,16 +431,32 @@ export default function Leaderboard() {
           <motion.div layout className="space-y-6">
             {/* Top 3 Section */}
             <div className="space-y-4">
-              {sortedMembers.slice(0, 3).map((member, index) => (
-                <TopThreeCard key={member.id} member={member} index={index} activeTab={activeTab} />
-              ))}
+              {sortedMembers
+                .filter(member => member.originalRank <= 3)
+                .map((member, index) => (
+                  <TopThreeCard 
+                    key={member.id} 
+                    member={member} 
+                    index={member.originalRank - 1} 
+                    activeTab={activeTab} 
+                    searchQuery={searchQuery} 
+                  />
+                ))}
             </div>
 
             {/* Rest of the Leaderboard */}
             <div className="space-y-4 mt-8">
-              {sortedMembers.slice(3).map((member, index) => (
-                <RegularCard key={member.id} member={member} index={index + 3} activeTab={activeTab} />
-              ))}
+              {sortedMembers
+                .filter(member => member.originalRank > 3)
+                .map((member) => (
+                  <RegularCard 
+                    key={member.id} 
+                    member={member} 
+                    index={member.originalRank} 
+                    activeTab={activeTab} 
+                    searchQuery={searchQuery} 
+                  />
+                ))}
             </div>
           </motion.div>
         </AnimatePresence>
