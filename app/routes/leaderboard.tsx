@@ -3,23 +3,89 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
 import { useEffect, useState } from "react"
-import { Trophy, Github, Code, Search, Star, Award, Crown, Medal } from "lucide-react"
+import { Trophy, Github, Code, Search, Star, Award, Crown, Medal, User, ArrowLeft, ArrowRight, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { initSupabase } from "~/utils/supabase.client"
 import type { Member } from "~/types/database"
+import type { JSX } from "react" // Import JSX
 import iconImage from "~/assets/bashers.png"
+import { createServerSupabase } from "~/utils/supabase.server"
 
 interface MemberWithStats extends Member {
   githubStreak?: number
   leetcodeStreak?: number
-  tier: "diamond" | "platinum" | "gold"
+  tier: "diamond" | "platinum" | "gold" | "silver" | "bronze"
   originalRank?: number
+  league?: string
+}
+
+interface League {
+  name: string
+  color: string
+  minPoints: number
+  icon: JSX.Element
+  background: string
+  textColor: string
+}
+
+const LEAGUES: Record<string, League> = {
+  bronze: {
+    name: "Bronze League",
+    color: "orange",
+    minPoints: 0,
+    icon: <Star className="w-6 h-6" />,
+    background: "bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500",
+    textColor: "text-orange-900",
+  },silver: {
+    name: "Silver League",
+    color: "gray",
+    minPoints: 100,
+    icon: <Award className="w-6 h-6" />,
+    background: "bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500",
+    textColor: "text-gray-900",
+  },gold: {
+    name: "Gold League",
+    color: "amber",
+    minPoints: 200,
+    icon: <Trophy className="w-6 h-6" />,
+    background: "bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600",
+    textColor: "text-amber-900",
+  },
+  
+  platinum: {
+    name: "Platinum League",
+    color: "slate",
+    minPoints: 500,
+    icon: <Medal className="w-6 h-6" />,
+    background: "bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500",
+    textColor: "text-slate-900",
+  },
+  diamond: {
+    name: "Diamond League",
+    color: "cyan",
+    minPoints: 1000,
+    icon: <Crown className="w-6 h-6" />,
+    background: "bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600",
+    textColor: "text-cyan-900",
+  },
+  
+  
+}
+
+function getLeague(points: number): string {
+  if (points >= LEAGUES.diamond.minPoints) return "diamond"
+  if (points >= LEAGUES.platinum.minPoints) return "platinum"
+  if (points >= LEAGUES.gold.minPoints) return "gold"
+  if (points >= LEAGUES.silver.minPoints) return "silver"
+  return "bronze"
 }
 
 function getTier(points: number): MemberWithStats["tier"] {
   if (points >= 1000) return "diamond"
-  if (points >= 5) return "platinum"
-  return "gold"
+  if (points >= 500) return "platinum"
+  if (points >= 200) return "gold"
+  if (points >= 100) return "silver"
+  return "bronze"
 }
 
 function getTierIcon(tier: string) {
@@ -28,6 +94,10 @@ function getTierIcon(tier: string) {
       return <Star className="w-4 h-4" />
     case "platinum":
       return <Award className="w-4 h-4" />
+    case "gold":
+      return <Trophy className="w-4 h-4" />
+    case "silver":
+      return <Medal className="w-4 h-4" />
     default:
       return <Trophy className="w-4 h-4" />
   }
@@ -39,20 +109,43 @@ function getTierStyles(tier: string) {
       return "bg-gradient-to-r from-cyan-300 to-cyan-500 text-cyan-900"
     case "platinum":
       return "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900"
-    default:
+    case "gold":
       return "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900"
+    case "silver":
+      return "bg-gradient-to-r from-gray-300 to-gray-500 text-gray-900"
+    default:
+      return "bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900"
   }
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const response =new  Response()
+  const supabase=createServerSupabase(request,response)
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   return json({
+    user,
     members: [],
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   })
 }
 
-const TopThreeCard = ({ member, index, activeTab, searchQuery }: { member: MemberWithStats; index: number; activeTab: string; searchQuery: string }) => {
+const TopThreeCard = ({
+  member,
+  index,
+  activeTab,
+  searchQuery,
+  isCurrentUser,
+}: {
+  member: MemberWithStats
+  index: number
+  activeTab: string
+  searchQuery: string
+  isCurrentUser: boolean
+}) => {
   const getRankStyles = (rank: number) => {
     switch (rank) {
       case 0:
@@ -98,7 +191,7 @@ const TopThreeCard = ({ member, index, activeTab, searchQuery }: { member: Membe
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className={`relative overflow-hidden rounded-2xl border ${styles.border} ${styles.glow}`}
+      className={`relative overflow-hidden rounded-2xl border ${styles.border} ${isCurrentUser ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-900" : ""} ${styles.glow}`}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -131,6 +224,11 @@ const TopThreeCard = ({ member, index, activeTab, searchQuery }: { member: Membe
                 </div>
               )}
             </div>
+            {isCurrentUser && (
+              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1">
+                <User className="w-4 h-4 text-white" />
+              </div>
+            )}
           </motion.div>
 
           {/* Info */}
@@ -144,7 +242,12 @@ const TopThreeCard = ({ member, index, activeTab, searchQuery }: { member: Membe
                 to={`/profile/${member.github_username}`}
                 className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
               >
-                <p className="text-white">{member.name}</p>
+                <p className="text-white flex items-center gap-2">
+                  {member.name}
+                  {isCurrentUser && (
+                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">You</span>
+                  )}
+                </p>
               </Link>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-sm hidden sm:block ${styles.text}`}>@{member.github_username}</span>
@@ -184,14 +287,26 @@ const TopThreeCard = ({ member, index, activeTab, searchQuery }: { member: Membe
   )
 }
 
-const RegularCard = ({ member, index, activeTab, searchQuery }: { member: MemberWithStats; index: number; activeTab: string; searchQuery: string }) => {
+const RegularCard = ({
+  member,
+  index,
+  activeTab,
+  searchQuery,
+  isCurrentUser,
+}: {
+  member: MemberWithStats
+  index: number
+  activeTab: string
+  searchQuery: string
+  isCurrentUser: boolean
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className={`relative overflow-hidden rounded-2xl `}
+      className={`relative overflow-hidden rounded-2xl ${isCurrentUser ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-900" : ""}`}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -220,6 +335,11 @@ const RegularCard = ({ member, index, activeTab, searchQuery }: { member: Member
                 </div>
               )}
             </div>
+            {isCurrentUser && (
+              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1">
+                <User className="w-4 h-4 text-white" />
+              </div>
+            )}
           </motion.div>
 
           {/* Info */}
@@ -233,7 +353,12 @@ const RegularCard = ({ member, index, activeTab, searchQuery }: { member: Member
                 to={`/profile/${member.github_username}`}
                 className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
               >
-                <p className="text-white">{member.name}</p>
+                <p className="text-white flex items-center gap-2">
+                  {member.name}
+                  {isCurrentUser && (
+                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">You</span>
+                  )}
+                </p>
               </Link>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-sm hidden sm:block text-gray-400`}>@{member.github_username}</span>
@@ -266,7 +391,7 @@ const RegularCard = ({ member, index, activeTab, searchQuery }: { member: Member
                   ? member.github_streak || 0
                   : member.leetcodeStreak}{" "}
             </div>
-            <div className={"text-sm  text-gray-400"}>
+            <div className={"text-sm text-gray-400"}>
               {" "}
               {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : "Problems"}
             </div>
@@ -278,41 +403,96 @@ const RegularCard = ({ member, index, activeTab, searchQuery }: { member: Member
 }
 
 export default function Leaderboard() {
-  const { members: initialMembers, SUPABASE_URL, SUPABASE_ANON_KEY } = useLoaderData<typeof loader>()
+  const { members: initialMembers, SUPABASE_URL, SUPABASE_ANON_KEY,user } = useLoaderData<typeof loader>()
   const [members, setMembers] = useState<MemberWithStats[]>(
-    initialMembers.map((m) => ({ ...m, tier: getTier(m.bash_points) })),
+    initialMembers.map((m) => ({ ...m, tier: getTier(m.bash_points), league: getLeague(m.bash_points) })),
   )
   const [activeTab, setActiveTab] = useState<"overall" | "github" | "leetcode">("overall")
   const [searchQuery, setSearchQuery] = useState("")
+  const [showSearch, setShowSearch] = useState(false)
+  const [currentUser, setCurrentUser] = useState<MemberWithStats | null>(null)
+  const [currentLeague, setCurrentLeague] = useState<string>("bronze")
+  const [leagues, setLeagues] = useState<Record<string, MemberWithStats[]>>({})
 
+  // Fetch members and current user
   useEffect(() => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return
 
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+    const fetchCurrentUser = async () => {
+      
+      
+      if (user) {
+        // Get the GitHub username from the user metadata or identity providers
+        const githubUsername =
+          user.user_metadata?.user_name ||
+          user.identities?.find((i) => i.provider === "github")?.identity_data?.user_name
+
+        if (githubUsername) {
+          // Find the member with matching GitHub username
+          const { data: memberData } = await supabase
+            .from("members")
+            .select("*")
+            .eq("github_username", githubUsername)
+            .single()
+
+          if (memberData) {
+            const userWithTier = {
+              ...memberData,
+              tier: getTier(memberData.bash_points),
+              league: getLeague(memberData.bash_points),
+            }
+            setCurrentUser(userWithTier)
+            setCurrentLeague(userWithTier.league || "bronze")
+          }
+        }
+      }
+    }
 
     const fetchMembers = async () => {
       const { data } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
 
       if (data) {
         const membersWithStats = await Promise.all(
-          data.map(async (member) => ({
-            ...member,
-            tier: getTier(member.bash_points),
-            tierIcon: getTierIcon(getTier(member.bash_points)),
-            githubStreak: await fetchGitHubStreak(member.github_username),
-            leetcodeStreak: 0,
-          })),
+          data.map(async (member) => {
+            const tier = getTier(member.bash_points)
+            const league = getLeague(member.bash_points)
+            return {
+              ...member,
+              tier,
+              league,
+              tierIcon: getTierIcon(tier),
+              githubStreak: await fetchGitHubStreak(member.github_username),
+              leetcodeStreak: 0,
+            }
+          }),
         )
+
         setMembers(membersWithStats)
+
+        // Group members by league
+        const leagueGroups: Record<string, MemberWithStats[]> = {}
+        membersWithStats.forEach((member) => {
+          const league = member.league || "bronze"
+          if (!leagueGroups[league]) {
+            leagueGroups[league] = []
+          }
+          leagueGroups[league].push(member)
+        })
+
+        setLeagues(leagueGroups)
       }
     }
 
+    fetchCurrentUser()
     fetchMembers()
 
     const channel = supabase
       .channel("members")
       .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
         fetchMembers()
+        fetchCurrentUser()
       })
       .subscribe()
 
@@ -320,6 +500,7 @@ export default function Leaderboard() {
       channel.unsubscribe()
     }
   }, [SUPABASE_URL, SUPABASE_ANON_KEY])
+
   useEffect(() => {
     const savedTab = localStorage.getItem("activeTab") as "overall" | "github" | "leetcode" | null
     if (savedTab) {
@@ -351,10 +532,15 @@ export default function Leaderboard() {
     return 0 // Keeping the original functionality
   }
 
-  const filteredMembers = members
+  // Get members for the current league
+  const leagueMembers = leagues[currentLeague] || []
+
+  // Filter and sort members based on search and active tab
+  const filteredMembers = (searchQuery ? members : leagueMembers)
     .map((member, index) => ({ ...member, originalRank: index + 1 }))
     .filter(
       (member) =>
+        !searchQuery ||
         member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (member.github_username?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
     )
@@ -372,7 +558,7 @@ export default function Leaderboard() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl "
+        className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl"
       >
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
@@ -388,38 +574,108 @@ export default function Leaderboard() {
             </div>
           </div>
 
+          {/* League Selection */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  const leagueKeys = Object.keys(LEAGUES)
+                  const currentIndex = leagueKeys.indexOf(currentLeague)
+                  if (currentIndex > 0) {
+                    setCurrentLeague(leagueKeys[currentIndex - 1])
+                  }
+                }}
+                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20"
+                disabled={Object.keys(LEAGUES).indexOf(currentLeague) === 0}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </motion.button>
+
+              <div className={`text-center px-8 py-3 rounded-xl ${LEAGUES[currentLeague]?.background}`}>
+                <div className="flex items-center justify-center gap-2">
+                  {LEAGUES[currentLeague]?.icon}
+                  <h2 className={`text-2xl font-bold ${LEAGUES[currentLeague]?.textColor}`}>
+                    {LEAGUES[currentLeague]?.name}
+                  </h2>
+                </div>
+                <p className={`text-sm ${LEAGUES[currentLeague]?.textColor}`}>{leagueMembers.length} members</p>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  const leagueKeys = Object.keys(LEAGUES)
+                  const currentIndex = leagueKeys.indexOf(currentLeague)
+                  if (currentIndex < leagueKeys.length - 1) {
+                    setCurrentLeague(leagueKeys[currentIndex + 1])
+                  }
+                }}
+                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20"
+                disabled={Object.keys(LEAGUES).indexOf(currentLeague) === Object.keys(LEAGUES).length - 1}
+              >
+                <ArrowRight className="w-5 h-5" />
+              </motion.button>
+            </div>
+          </div>
+
           {/* Search and Tabs */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full sm:w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search members..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex relative w-full  gap-2 overflow-x-auto  ">
-              {["overall", "github", "leetcode"].map((tab) => (
+            <div className="relative w-full sm:w-full flex items-center">
+              {showSearch ? (
+                <div className="w-full flex items-center">
+                  <input
+                    type="text"
+                    placeholder="Search members..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white z-10"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setShowSearch(false)
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                </div>
+              ) : (
                 <motion.button
-                  key={tab}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    setActiveTab(tab as typeof activeTab)
-                    localStorage.setItem("activeTab", tab)
-                  }}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-colors ${
-                    activeTab === tab ? "bg-blue-500 text-white" : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  }`}
+                  onClick={() => setShowSearch(true)}
+                  className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 mr-4"
                 >
-                  {tab === "overall" && <Trophy className="w-4 h-4" />}
-                  {tab === "github" && <Github className="w-4 h-4" />}
-                  {tab === "leetcode" && <Code className="w-4 h-4" />}
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  <Search className="w-5 h-5" />
                 </motion.button>
-              ))}
+              )}
+
+              <div className="flex relative w-full gap-2 overflow-x-auto">
+                {["overall", "github", "leetcode"].map((tab) => (
+                  <motion.button
+                    key={tab}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setActiveTab(tab as typeof activeTab)
+                      localStorage.setItem("activeTab", tab)
+                    }}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-colors ${
+                      activeTab === tab ? "bg-blue-500 text-white" : "bg-white/10 text-gray-300 hover:bg-white/20"
+                    }`}
+                  >
+                    {tab === "overall" && <Trophy className="w-4 h-4" />}
+                    {tab === "github" && <Github className="w-4 h-4" />}
+                    {tab === "leetcode" && <Code className="w-4 h-4" />}
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </motion.button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -431,32 +687,30 @@ export default function Leaderboard() {
           <motion.div layout className="space-y-6">
             {/* Top 3 Section */}
             <div className="space-y-4">
-              {sortedMembers
-                .filter(member => member.originalRank <= 3)
-                .map((member, index) => (
-                  <TopThreeCard 
-                    key={member.id} 
-                    member={member} 
-                    index={member.originalRank - 1} 
-                    activeTab={activeTab} 
-                    searchQuery={searchQuery} 
-                  />
-                ))}
+              {sortedMembers.filter(member => member.originalRank <= 3).map((member, index) => (
+                <TopThreeCard
+                  key={member.id}
+                  member={member}
+                  index={index}
+                  activeTab={activeTab}
+                  searchQuery={searchQuery}
+                  isCurrentUser={currentUser?.id === member.id}
+                />
+              ))}
             </div>
 
             {/* Rest of the Leaderboard */}
             <div className="space-y-4 mt-8">
-              {sortedMembers
-                .filter(member => member.originalRank > 3)
-                .map((member) => (
-                  <RegularCard 
-                    key={member.id} 
-                    member={member} 
-                    index={member.originalRank} 
-                    activeTab={activeTab} 
-                    searchQuery={searchQuery} 
-                  />
-                ))}
+              {sortedMembers.filter(member => member.originalRank > 3).map((member, index) => (
+                <RegularCard
+                  key={member.id}
+                  member={member}
+                  index={index + 3}
+                  activeTab={activeTab}
+                  searchQuery={searchQuery}
+                  isCurrentUser={currentUser?.id === member.id}
+                />
+              ))}
             </div>
           </motion.div>
         </AnimatePresence>
