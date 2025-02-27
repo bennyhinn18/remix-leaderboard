@@ -685,35 +685,45 @@ export default function Leaderboard() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <AnimatePresence mode="popLayout">
           <motion.div layout className="space-y-6">
-            {/* Top 3 Section */}
-            <div className="space-y-4">
-              {sortedMembers
-                .filter(member => member.originalRank <= 3)
-                .map((member, index) => (
-                  <TopThreeCard 
-                    key={member.id} 
-                    member={member} 
-                    index={member.originalRank - 1} 
-                    activeTab={activeTab} 
-                    searchQuery={searchQuery}
-                    isCurrentUser={currentUser?.id === member.id}
-                  />
-                ))}
-            </div>
+        {/* Top 3 Section */}
+        <div className="space-y-4">
+          {sortedMembers
+            .filter(member => member.originalRank <= 3)
+            .map((member, index) => (
+          activeTab === "overall" ? (
+            <TopThreeCard 
+              key={member.id} 
+              member={member} 
+              index={member.originalRank - 1} 
+              activeTab={activeTab} 
+              searchQuery={searchQuery}
+              isCurrentUser={currentUser?.id === member.id}
+            />
+          ) : (
+            <RegularCard
+              key={member.id}
+              member={member}
+              index={index}
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              isCurrentUser={currentUser?.id === member.id}
+            />
+          )
+            ))}
+        </div>
 
             {/* Rest of the Leaderboard */}
             <div className="space-y-4 mt-8">
-              {sortedMembers
-                .filter(member => member.originalRank > 3)
-                .map((member) => (
-                  <RegularCard 
-                    key={member.id} 
-                    member={member} 
-                    index={member.originalRank} 
-                    activeTab={activeTab} 
-                    searchQuery={searchQuery} 
-                  />
-                ))}
+              {sortedMembers.filter(member => member.originalRank > 3).map((member, index) => (
+                <RegularCard
+                  key={member.id}
+                  member={member}
+                  index={index + 3}
+                  activeTab={activeTab}
+                  searchQuery={searchQuery}
+                  isCurrentUser={currentUser?.id === member.id}
+                />
+              ))}
             </div>
           </motion.div>
         </AnimatePresence>
