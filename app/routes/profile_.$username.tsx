@@ -102,7 +102,7 @@ export default function Profile() {
         
         setProfile({
           ...member,
-          avatar_url: member.avatar_url || "/default-avatar.png", // Provide default avatar
+          avatar_url: member.avatar_url , // Provide default avatar
           title: member.title || "Basher",
           joinedDate: new Date(member.joined_date || Date.now()),
           basherLevel: member.bash_points >= 2500 ? "Diamond" : member.bash_points >= 2400 ? "Platinum" : "Gold",
