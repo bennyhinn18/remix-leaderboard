@@ -7,7 +7,7 @@ import { MainNav } from "~/components/main-nav"
 import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
 import { SocialFooter } from "~/components/social-footer"
-
+// import { EditProfileButton } from "~/components/edit-profile"
 import { useState, useEffect } from "react";
 
 
@@ -161,6 +161,7 @@ export default function Profile() {
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
           </Link>
+          {/* <EditProfileButton member={member} /> */}
           <MainNav user={profile} />
         </div>
 
