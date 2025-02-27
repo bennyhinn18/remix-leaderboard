@@ -3,7 +3,6 @@ import { useLoaderData, Link } from "@remix-run/react"
 import { ArrowLeft, Github, Code, Book, MessageSquare, Trophy, Award, Briefcase, Cpu, Code2, BookOpen, Globe, Quote } from 'lucide-react'
 import { createServerSupabase } from "~/utils/supabase.server"
 import { ProfileInfo } from "~/components/profile-info"
-import type { BasherProfile } from "~/types/profile"
 import { MainNav } from "~/components/main-nav"
 import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
@@ -78,6 +77,7 @@ export default function Profile() {
   }
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const calculatePercentage = (value: number, max: number) => (value / max) * 100;
 
   useEffect(() => {
     if (!member) return; // Exit early if no member
@@ -254,16 +254,16 @@ export default function Profile() {
                 <Cpu className="w-5 h-5" />
                 Domains
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.primary_domain.map((domain) => (
+                <div className="flex flex-wrap gap-2">
+                {profile.domains.map((domain, index) => (
                   <div 
-                    key={domain} 
-                    className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm"
+                  key={domain} 
+                  className={`bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm ${index < (member.primary_domain?.length || 0) ? 'font-bold' : ''}`}
                   >
-                    {domain}
+                  {domain} {index < (member.primary_domain?.length || 0) ? '(Primary)' : '(Secondary)'}
                   </div>
                 ))}
-              </div>
+                </div>
             </div>
 
             {/* Programming Languages */}
@@ -294,16 +294,16 @@ export default function Profile() {
               <h2 className="text-lg font-semibold mb-4">Academic Performance</h2>
               <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">GPA</span>
-                    <span className="text-blue-400">{profile.gpa}/4.0</span>
-                  </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500" 
-                      style={{ width: `${(profile.gpa / 4) * 100}%` }} 
-                    />
-                  </div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-gray-400">GPA</span>
+                      <span className="text-blue-400">{profile.gpa}/10.0</span>
+                    </div>
+                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 rounded-full transition-all duration-500" 
+                        style={{ width: `${calculatePercentage(profile.gpa, 10)}%` }} 
+                      />
+                    </div>
                 </div>
                 <div>
                   <div className="flex justify-between mb-2">

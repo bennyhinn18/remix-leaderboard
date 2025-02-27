@@ -432,22 +432,32 @@ export default function Leaderboard() {
             {/* Top 3 Section */}
             <div className="space-y-4">
               {sortedMembers
-                .filter(member => member.originalRank <= 3)
-                .map((member, index) => (
-                  <TopThreeCard 
-                    key={member.id} 
-                    member={member} 
-                    index={member.originalRank - 1} 
-                    activeTab={activeTab} 
-                    searchQuery={searchQuery} 
-                  />
-                ))}
+              .filter(member => member.originalRank <= 3)
+              .map((member, index) => (
+                activeTab === "overall" ? (
+                <TopThreeCard 
+                  key={member.id} 
+                  member={member} 
+                  index={member.originalRank - 1} 
+                  activeTab={activeTab} 
+                  searchQuery={searchQuery} 
+                />
+                ) : (
+                <RegularCard 
+                  key={member.id} 
+                  member={member} 
+                  index={member.originalRank - 1} 
+                  activeTab={activeTab} 
+                  searchQuery={searchQuery} 
+                />
+                )
+              ))}
             </div>
 
             {/* Rest of the Leaderboard */}
             <div className="space-y-4 mt-8">
               {sortedMembers
-                .filter(member => member.originalRank > 3)
+                .filter(member => member.originalRank >= 3)
                 .map((member) => (
                   <RegularCard 
                     key={member.id} 

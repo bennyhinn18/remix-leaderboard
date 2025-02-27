@@ -1,4 +1,14 @@
+import { ReactNode } from 'react';
+
 export interface ClanMember {
+    stats: any;
+    internships: number
+    certifications: number
+    hackathons: number
+    projects: number
+    courses: number
+    joined_date: ReactNode
+    title: ReactNode
     id: number
     name: string
     role: string
