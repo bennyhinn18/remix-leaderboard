@@ -11,7 +11,8 @@ import { Textarea } from "~/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
 
 interface Member {
-  id: number
+  username: string
+  id: string
   name: string
   personal_email: string | null
   academic_email: string | null
@@ -47,7 +48,6 @@ interface Member {
   hobbies: string[] | null
   clan_id: number
   duolingo_username: string | null
-  user_id: string | null
 }
 
 interface EditProfileButtonProps {
@@ -56,34 +56,6 @@ interface EditProfileButtonProps {
 
 export function EditProfileButton({ member }: EditProfileButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    const formData = new FormData(event.currentTarget)
-    const data = Object.fromEntries(formData.entries())
-
-    try {
-      const response = await fetch("/api/update-profile", {
-        method: "POST", // Change to PUT or PATCH if needed
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-
-      if (response.ok) {
-        setIsOpen(false) // Close the dialog on success
-        alert("Profile updated successfully!")
-      } else {
-        console.error("Failed to update profile:", response.statusText)
-        alert("Failed to update profile. Please try again.")
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error)
-      alert("An error occurred. Please try again.")
-    }
-  }
 
   return (
     <>
@@ -103,7 +75,7 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
             <DialogTitle className="text-xl font-bold">Edit Profile</DialogTitle>
           </DialogHeader>
 
-          <Form onSubmit={handleSubmit} className="space-y-6 py-4">
+          <Form method="put" action={`/profile/${member.github_username}`} className="space-y-6 py-4">
             <input type="hidden" name="id" value={member.id} />
             <input type="hidden" name="clan_id" value={member.clan_id} />
 
@@ -410,47 +382,25 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Stats</h3>
 
+              <div className="space-y-2">
+                  <Label htmlFor="courses">Courses</Label>
+                  <Input
+                    id="courses"
+                    name="courses"
+                    type="number"
+                    defaultValue={member.stats?.courses.toString() || "0"}
+                    className="bg-gray-800 border-gray-700"
+                  />
+                </div>
+
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="projects">Projects</Label>
                   <Input
                     id="projects"
-                    name="stats.projects"
+                    name="projects"
                     type="number"
                     defaultValue={member.stats?.projects.toString() || "0"}
-                    className="bg-gray-800 border-gray-700"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="certifications">Certifications</Label>
-                  <Input
-                    id="certifications"
-                    name="stats.certifications"
-                    type="number"
-                    defaultValue={member.stats?.certifications.toString() || "0"}
-                    className="bg-gray-800 border-gray-700"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="internships">Internships</Label>
-                  <Input
-                    id="internships"
-                    name="stats.internships"
-                    type="number"
-                    defaultValue={member.stats?.internships.toString() || "0"}
-                    className="bg-gray-800 border-gray-700"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="courses">Courses</Label>
-                  <Input
-                    id="courses"
-                    name="stats.courses"
-                    type="number"
-                    defaultValue={member.stats?.courses.toString() || "0"}
                     className="bg-gray-800 border-gray-700"
                   />
                 </div>
@@ -459,9 +409,31 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                   <Label htmlFor="hackathons">Hackathons</Label>
                   <Input
                     id="hackathons"
-                    name="stats.hackathons"
+                    name="hackathons"
                     type="number"
                     defaultValue={member.stats?.hackathons.toString() || "0"}
+                    className="bg-gray-800 border-gray-700"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="internships">Internships</Label>
+                  <Input
+                    id="internships"
+                    name="internships"
+                    type="number"
+                    defaultValue={member.stats?.internships.toString() || "0"}
+                    className="bg-gray-800 border-gray-700"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="certifications">Certifications</Label>
+                  <Input
+                    id="certifications"
+                    name="certifications"
+                    type="number"
+                    defaultValue={member.stats?.certifications.toString() || "0"}
                     className="bg-gray-800 border-gray-700"
                   />
                 </div>

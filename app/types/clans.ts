@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
 export interface ClanMember {
+    github_username: any;
     stats: any;
     internships: number
     certifications: number

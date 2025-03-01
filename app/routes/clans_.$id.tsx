@@ -122,32 +122,32 @@ function MemberList({ members }: { members: Clan["members"] }) {
   return (
     <div className="space-y-4">
       {members.map((member, index) => (
-        <motion.div
-          key={member.id}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.05 }}
-          className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-              {/* Add member avatar here if available */}
-              <div className="w-full h-full flex items-center justify-center text-xl font-bold">
-                {member.name.charAt(0)}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-white group-hover:text-blue-400 transition-colors">{member.name}</div>
-              <div className="text-sm text-gray-400">{member.title}</div>
-            </div>
+      <motion.div
+        key={member.id}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.05 }}
+        className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+      >
+        <Link to={`/profile/${member.github_username}`} className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+          {/* Add member avatar here if available */}
+          <div className="w-full h-full flex items-center justify-center text-xl font-bold">
+          {member.name.charAt(0)}
           </div>
-            <Badge
-            variant="secondary"
-            className={"bg-green-500/20 text-green-400"}
-            >
-            {member.joined_date}
-            </Badge>
-        </motion.div>
+        </div>
+        <div>
+          <div className="font-medium text-white group-hover:text-blue-400 transition-colors">{member.name}</div>
+          <div className="text-sm text-gray-400">{member.title}</div>
+        </div>
+        </Link>
+        <Badge
+        variant="secondary"
+        className={"bg-green-500/20 text-green-400"}
+        >
+        {member.joined_date}
+        </Badge>
+      </motion.div>
       ))}
     </div>
   )
