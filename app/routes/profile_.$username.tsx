@@ -1,15 +1,14 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
+import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
 import { ArrowLeft, Github, Code, Book, MessageSquare, Trophy, Award, Briefcase, Cpu, Code2, BookOpen, Globe, Quote } from 'lucide-react'
 import { createServerSupabase } from "~/utils/supabase.server"
 import { ProfileInfo } from "~/components/profile-info"
-import type { BasherProfile } from "~/types/profile"
 import { MainNav } from "~/components/main-nav"
 import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
 import { SocialFooter } from "~/components/social-footer"
-
 import { useState, useEffect } from "react";
+import { EditProfileButton } from "~/components/edit-profile"
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -46,6 +45,74 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 };
 
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  try {
+    const formData = await request.formData();
+    const data = Object.fromEntries(formData.entries());
+
+    // Prepare the stats object
+    const stats = {
+      courses: Number(data.courses) || 0,
+      projects: Number(data.projects) || 0,
+      hackathons: Number(data.hackathons) || 0,
+      internships: Number(data.internships) || 0,
+      certifications: Number(data.certifications) || 0,
+    };
+
+    // Prepare the updated member object
+    const updatedMember = {
+      id: Number(data.id) || null,
+      clan_id: Number(data.clan_id) || null,
+      name: data.name || null,
+      personal_email: data.personal_email || null,
+      academic_email: data.academic_email || null,
+      mobile_number: data.mobile_number || null,
+      whatsapp_number: data.whatsapp_number || null,
+      avatar_url: data.avatar_url || null,
+      joined_date: data.joined_date || null,
+      testimony: data.testimony || null,
+      hobbies: typeof data.hobbies === "string" ? data.hobbies.split(",") : [],
+      title: data.title || null,
+      basher_level: data.basher_level || null,
+      bash_points: Number(data.bash_points) || 0,
+      clan_name: data.clan_name || null,
+      basher_no: data.basher_no || null,
+      primary_domain: typeof data.primary_domain === "string" ? data.primary_domain.split(",") : [],
+      secondary_domain: typeof data.secondary_domain === "string" ? data.secondary_domain.split(",") : [],
+      gpa: Number(data.gpa) || 0,
+      weekly_bash_attendance: Number(data.weekly_bash_attendance) || 0,
+      github_username: data.github_username || null,
+      discord_username: data.discord_username || null,
+      hackerrank_username: data.hackerrank_username || null,
+      instagram_username: data.instagram_username || null,
+      linkedin_url: data.linkedin_url || null,
+      personal_website: data.personal_website || null,
+      portfolio_url: data.portfolio_url || null,
+      resume_url: data.resume_url || null,
+      duolingo_username: data.duolingo_username || null,
+      stats,
+    };
+    
+await supabase.from('members').select('*').eq("github_username",params.usename)
+    // Update the member's profile in the database
+    const { error } = await supabase
+      .from("members")
+      .update(updatedMember)
+      .eq("github_username", params.username);
+    if (error) {
+      console.error("Supabase Error:", error);
+      return json({ error: error.message }, { status: 500 });
+    }
+
+    return redirect(`/profile/${params.username}`);
+  } catch (error) {
+    console.error("Action Function Error:", error);
+    return json({ error: "An unexpected error occurred." }, { status: 500 });
+  }
+};
+
 export default function Profile() {
   const { member,duolingo_streak } = useLoaderData<typeof loader>();
   interface Profile {
@@ -78,6 +145,7 @@ export default function Profile() {
   }
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const calculatePercentage = (value: number, max: number) => (value / max) * 100;
 
   useEffect(() => {
     if (!member) return; // Exit early if no member
@@ -161,6 +229,9 @@ export default function Profile() {
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
           </Link>
+          {(member.title === "mentor") && (
+            <EditProfileButton member={member} />
+          )}
           <MainNav user={profile} />
         </div>
 
@@ -254,16 +325,16 @@ export default function Profile() {
                 <Cpu className="w-5 h-5" />
                 Domains
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.primary_domain.map((domain) => (
+                <div className="flex flex-wrap gap-2">
+                {profile.domains.map((domain, index) => (
                   <div 
-                    key={domain} 
-                    className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm"
+                  key={domain} 
+                  className={`bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm ${index < (member.primary_domain?.length || 0) ? 'font-bold' : ''}`}
                   >
-                    {domain}
+                  {domain} {index < (member.primary_domain?.length || 0) ? '(Primary)' : '(Secondary)'}
                   </div>
                 ))}
-              </div>
+                </div>
             </div>
 
             {/* Programming Languages */}
@@ -294,16 +365,16 @@ export default function Profile() {
               <h2 className="text-lg font-semibold mb-4">Academic Performance</h2>
               <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">GPA</span>
-                    <span className="text-blue-400">{profile.gpa}/4.0</span>
-                  </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500" 
-                      style={{ width: `${(profile.gpa / 4) * 100}%` }} 
-                    />
-                  </div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-gray-400">GPA</span>
+                      <span className="text-blue-400">{profile.gpa}/10.0</span>
+                    </div>
+                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 rounded-full transition-all duration-500" 
+                        style={{ width: `${calculatePercentage(profile.gpa, 10)}%` }} 
+                      />
+                    </div>
                 </div>
                 <div>
                   <div className="flex justify-between mb-2">

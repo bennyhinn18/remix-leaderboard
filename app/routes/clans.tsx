@@ -88,6 +88,15 @@ export const loader = async ({ request }: ActionFunctionArgs) => {
   const response = new Response()
   const supabase = createServerSupabase(request, response)
   const { data: clans } = await supabase.from("clans").select("*")
+  if (clans) {
+    for (const clan of clans) {
+      const { data: members } = await supabase
+        .from("members")
+        .select("*")
+        .eq("clan_id", clan.id)
+      clan.members = members || []
+    }
+  }
   return json({ clans })
 }
 
