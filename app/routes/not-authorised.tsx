@@ -134,7 +134,7 @@ export default function NotAuthorized() {
             asChild
             className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white"
           >
-            <Link to="/login" className="flex items-center gap-2">
+            <Link to="/leaderboard" className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" />
               Back to Safety
             </Link>

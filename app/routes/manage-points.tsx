@@ -7,15 +7,22 @@ import type { Member } from "~/types/database"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Minus, Users, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { useState } from "react"
-import { isOrganiser } from "~/utils/currentUser"
+import { isOrganiser, isMentor } from "~/utils/currentUser"
 
-export const loader = async ({request}) => {
+import type { LoaderFunctionArgs } from "@remix-run/node"
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request)
-    if (!organiserStatus)
-    {return redirect('/not-authorised')}
-    const response =new  Response()
-  const supabase= createServerSupabase(request,response)
+  const mentorStatus = await isMentor(request)
+  
+  if (!organiserStatus && !mentorStatus) {
+    return redirect('/not-authorised')
+  }
+
+  const response = new Response()
+  const supabase = createServerSupabase(request, response)
   const { data: members } = await supabase.from("members").select("*").order("name")
+  
   return json({ members })
 }
 

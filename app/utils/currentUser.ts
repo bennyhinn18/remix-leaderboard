@@ -3,7 +3,7 @@
 import { createServerSupabase } from "./supabase.server";
 
 interface User {
-    id: number;
+    id: string;
     title: string;
 }
 
@@ -38,4 +38,9 @@ async function isOrganiser(request: Request): Promise<boolean> {
     return user?.title === "Organiser";
 }
 
-export { getCurrentUser, isOrganiser };
+async function isMentor(request: Request): Promise<boolean> {
+    const user = await getCurrentUser(request);
+    return user?.title === "Mentor";
+}
+
+export { getCurrentUser, isOrganiser, isMentor };

@@ -61,12 +61,12 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        variant="outline"
+        variant="ghost"
         size="sm"
-        className="gap-2 bg-white/10 hover:bg-white/20 text-white border-white/20"
+        className="relative h-14 w-30 rounded-full bg-[#4dc4f9]/10 hover:bg-[#4dc4f9]/20 transition-colors"
       >
-        <Edit className="w-4 h-4" />
-        Edit Profile
+        <Edit className="h-8 w-8 text-[#4dc4f9]" />
+        <span className="text-[#4dc4f9]">Edit Profile</span>
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -449,9 +449,13 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => setIsOpen(false)}
+                >
                 Save Changes
-              </Button>
+                </Button>
             </DialogFooter>
           </Form>
         </DialogContent>

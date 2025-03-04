@@ -8,7 +8,7 @@ import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
 import { SocialFooter } from "~/components/social-footer"
 import { useState, useEffect } from "react";
-// import { EditProfileButton } from "~/components/edit-profile"
+import { EditProfileButton } from "~/components/edit-profile"
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -48,7 +48,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
-
   try {
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
@@ -95,13 +94,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       duolingo_username: data.duolingo_username || null,
       stats,
     };
-
+    
+await supabase.from('members').select('*').eq("github_username",params.usename)
     // Update the member's profile in the database
     const { error } = await supabase
       .from("members")
       .update(updatedMember)
       .eq("github_username", params.username);
-
     if (error) {
       console.error("Supabase Error:", error);
       return json({ error: error.message }, { status: 500 });
@@ -230,7 +229,9 @@ export default function Profile() {
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
           </Link>
-          {/* <EditProfileButton member={member} /> */}
+          {(member.title === "mentor") && (
+            <EditProfileButton member={member} />
+          )}
           <MainNav user={profile} />
         </div>
 
