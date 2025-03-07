@@ -3,82 +3,105 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
 import { useEffect, useState } from "react"
-import { Trophy, Github, Code, Search, Star, Award, Crown, Medal, User, ArrowLeft, ArrowRight, X } from "lucide-react"
+import { Trophy, Github, Code, Search, Star, Award, Crown, Medal, User,  X, Building, Feather } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { initSupabase } from "~/utils/supabase.client"
-import type { Member } from "~/types/database"
-import type { JSX } from "react" // Import JSX
+// import type { Member } from "~/types/database"
+// import type { JSX } from "react" // Import JSX
 import iconImage from "~/assets/bashers.png"
 import { createServerSupabase } from "~/utils/supabase.server"
 
-interface MemberWithStats extends Member {
+interface MemberWithStats {
+  id: string
+  name: string
+  github_username: string
+  avatar_url: string
+  bash_points: number
   githubStreak?: number
   leetcodeStreak?: number
+  bashClanPoints?: number 
+  duolingoStreak?: number
   tier: "diamond" | "platinum" | "gold" | "silver" | "bronze"
   originalRank?: number
-  league?: string
+  stats?: {
+    projects?: number
+  }
+  // league?: string
 }
 
-interface League {
-  name: string
-  color: string
-  minPoints: number
-  icon: JSX.Element
-  background: string
-  textColor: string
+interface Clan {
+  id: string
+  clan_name: string
+  members: MemberWithStats[]
+  logo_url?: string
 }
 
-const LEAGUES: Record<string, League> = {
-  bronze: {
-    name: "Bronze League",
-    color: "orange",
-    minPoints: 0,
-    icon: <Star className="w-6 h-6" />,
-    background: "bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500",
-    textColor: "text-orange-900",
-  },silver: {
-    name: "Silver League",
-    color: "gray",
-    minPoints: 100,
-    icon: <Award className="w-6 h-6" />,
-    background: "bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500",
-    textColor: "text-gray-900",
-  },gold: {
-    name: "Gold League",
-    color: "amber",
-    minPoints: 200,
-    icon: <Trophy className="w-6 h-6" />,
-    background: "bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600",
-    textColor: "text-amber-900",
-  },
-  
-  platinum: {
-    name: "Platinum League",
-    color: "slate",
-    minPoints: 500,
-    icon: <Medal className="w-6 h-6" />,
-    background: "bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500",
-    textColor: "text-slate-900",
-  },
-  diamond: {
-    name: "Diamond League",
-    color: "cyan",
-    minPoints: 1000,
-    icon: <Crown className="w-6 h-6" />,
-    background: "bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600",
-    textColor: "text-cyan-900",
-  },
-  
-  
+interface ClanCardProps {
+  clan: Clan;
+  index: number;
 }
 
-function getLeague(points: number): string {
-  if (points >= LEAGUES.diamond.minPoints) return "diamond"
-  if (points >= LEAGUES.platinum.minPoints) return "platinum"
-  if (points >= LEAGUES.gold.minPoints) return "gold"
-  if (points >= LEAGUES.silver.minPoints) return "silver"
-  return "bronze"
-}
+
+// interface League {
+//   name: string
+//   color: string
+//   minPoints: number
+//   icon: JSX.Element
+//   background: string
+//   textColor: string
+// }
+
+// const LEAGUES: Record<string, League> = {
+//   bronze: {
+//     name: "Bronze League",
+//     color: "orange",
+//     minPoints: 0,
+//     icon: <Star className="w-6 h-6" />,
+//     background: "bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500",
+//     textColor: "text-orange-900",
+//   },silver: {
+//     name: "Silver League",
+//     color: "gray",
+//     minPoints: 100,
+//     icon: <Award className="w-6 h-6" />,
+//     background: "bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500",
+//     textColor: "text-gray-900",
+//   },gold: {
+//     name: "Gold League",
+//     color: "amber",
+//     minPoints: 200,
+//     icon: <Trophy className="w-6 h-6" />,
+//     background: "bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600",
+//     textColor: "text-amber-900",
+//   },
+  
+//   platinum: {
+//     name: "Platinum League",
+//     color: "slate",
+//     minPoints: 500,
+//     icon: <Medal className="w-6 h-6" />,
+//     background: "bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500",
+//     textColor: "text-slate-900",
+//   },
+//   diamond: {
+//     name: "Diamond League",
+//     color: "cyan",
+//     minPoints: 1000,
+//     icon: <Crown className="w-6 h-6" />,
+//     background: "bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600",
+//     textColor: "text-cyan-900",
+//   },
+  
+  
+// }
+
+// function getLeague(points: number): string {
+//   if (points >= LEAGUES.diamond.minPoints) return "diamond"
+//   if (points >= LEAGUES.platinum.minPoints) return "platinum"
+//   if (points >= LEAGUES.gold.minPoints) return "gold"
+//   if (points >= LEAGUES.silver.minPoints) return "silver"
+//   return "bronze"
+// }
 
 function getTier(points: number): MemberWithStats["tier"] {
   if (points >= 1000) return "diamond"
@@ -271,10 +294,14 @@ const TopThreeCard = ({
           >
             <div className={`text-4xl font-bold ${styles.text}`}>
               {activeTab === "overall"
-                ? member.bash_points
-                : activeTab === "github"
-                  ? member.github_streak || 0
-                  : member.leetcodeStreak}{" "}
+              ? member.bash_points
+              : activeTab === "github"
+              ? member.githubStreak || 0
+              : activeTab === "leetcode"
+              ? member.leetcodeStreak
+              : activeTab === "duolingo"
+              ? member.duolingoStreak || 0
+              : member.bashClanPoints || 0}{" "}
             </div>
             <div className={`text-sm ${styles.text}`}>
               {" "}
@@ -385,11 +412,15 @@ const RegularCard = ({
                 "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
               }
             >
-              {activeTab === "overall"
+                {activeTab === "overall"
                 ? member.bash_points
                 : activeTab === "github"
-                  ? member.github_streak || 0
-                  : member.leetcodeStreak}{" "}
+                  ? member.githubStreak || 0
+                  : activeTab === "leetcode"
+                  ? member.leetcodeStreak
+                  : activeTab === "duolingo"
+                  ? member.duolingoStreak || 0
+                  : member.bashClanPoints || 0}{" "}
             </div>
             <div className={"text-sm text-gray-400"}>
               {" "}
@@ -402,17 +433,120 @@ const RegularCard = ({
   )
 }
 
+const ClanCard = ({ clan, index }: ClanCardProps) => {
+  // Calculate total projects for the clan
+  const totalProjects = clan.members.reduce(
+    (acc, member) => acc + (member.stats?.projects ?? 0),
+    0
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-lg p-4"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+      >
+        <div className="relative rounded-xl p-4 flex items-center gap-4">
+          {/* Rank */}
+          <div className="flex flex-col items-center">
+            <span className="text-3xl font-bold text-white">{index + 1}</span>
+          </div>
+
+          {/* Clan Logo */}
+          <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20">
+            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
+            <div className="relative w-20 h-20 rounded-2xl overflow-hidden">
+              {clan.logo_url ? (
+                <img
+                  src={clan.logo_url || "/placeholder.svg"}
+                  alt={clan.clan_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">{clan.clan_name.charAt(0)}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Clan Name */}
+          <div className="flex-1">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+            >
+              <Link to={`/clans/${clan.id}`} className="text-xl font-bold text-white hover:underline">
+                {clan.clan_name}
+              </Link>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm text-gray-400">
+                  {clan.members.length} members
+                </span>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Total Projects */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+            className="text-center"
+          >
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                {totalProjects}
+              </span>
+              <div className="text-sm text-gray-400">Projects</div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Clan Members
+        <div className="space-y-4 mt-4">
+          {clan.members.map((member, memberIndex) => (
+            <RegularCard
+              key={member.id}
+              member={member}
+              index={memberIndex}
+              activeTab="bashclan"
+              searchQuery=""
+              isCurrentUser={false}
+            />
+          ))}
+        </div> */}
+      </motion.div>
+    </motion.div>
+  );
+};
+
 export default function Leaderboard() {
-  const { members: initialMembers, SUPABASE_URL, SUPABASE_ANON_KEY,user } = useLoaderData<typeof loader>()
+  const { members: initialMembers, SUPABASE_URL, SUPABASE_ANON_KEY } = useLoaderData<typeof loader>()
   const [members, setMembers] = useState<MemberWithStats[]>(
-    initialMembers.map((m) => ({ ...m, tier: getTier(m.bash_points), league: getLeague(m.bash_points) })),
+    initialMembers.map((m) => ({ ...m, tier: getTier(m.bash_points) }))
   )
-  const [activeTab, setActiveTab] = useState<"overall" | "github" | "leetcode">("overall")
+  const [activeTab, setActiveTab] = useState<"overall" | "github" | "leetcode" | "bashclan" | "duolingo">("overall")
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const [currentUser, setCurrentUser] = useState<MemberWithStats | null>(null)
-  const [currentLeague, setCurrentLeague] = useState<string>("bronze")
-  const [leagues, setLeagues] = useState<Record<string, MemberWithStats[]>>({})
+  // const [currentLeague, setCurrentLeague] = useState<string>("bronze")
+  // const [leagues, setLeagues] = useState<Record<string, MemberWithStats[]>>({})
+  interface Clan {
+    id: string
+    name: string
+    members: MemberWithStats[]
+  }
+
+  const [clans, setClans] = useState<Clan[]>([])
 
   // Fetch members and current user
   useEffect(() => {
@@ -421,13 +555,14 @@ export default function Leaderboard() {
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     const fetchCurrentUser = async () => {
-      
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (user) {
         // Get the GitHub username from the user metadata or identity providers
         const githubUsername =
           user.user_metadata?.user_name ||
-          user.identities?.find((i) => i.provider === "github")?.identity_data?.user_name
+          user.identities?.find((i: any) => i.provider === "github")?.identity_data?.user_name
 
         if (githubUsername) {
           // Find the member with matching GitHub username
@@ -441,10 +576,10 @@ export default function Leaderboard() {
             const userWithTier = {
               ...memberData,
               tier: getTier(memberData.bash_points),
-              league: getLeague(memberData.bash_points),
+              // league: getLeague(memberData.bash_points),
             }
             setCurrentUser(userWithTier)
-            setCurrentLeague(userWithTier.league || "bronze")
+            // setCurrentLeague(userWithTier.league || "bronze")
           }
         }
       }
@@ -455,54 +590,64 @@ export default function Leaderboard() {
 
       if (data) {
         const membersWithStats = await Promise.all(
-          data.map(async (member) => {
-            const tier = getTier(member.bash_points)
-            const league = getLeague(member.bash_points)
-            return {
-              ...member,
-              tier,
-              league,
-              tierIcon: getTierIcon(tier),
-              githubStreak: await fetchGitHubStreak(member.github_username),
-              leetcodeStreak: 0,
-            }
-          }),
+          data.map(async (member) => ({
+            ...member,
+            tier: getTier(member.bash_points),
+            tierIcon: getTierIcon(getTier(member.bash_points)),
+            githubStreak: await fetchGitHubStreak(member.github_username),
+            leetcodeStreak: 0,
+          }))
         )
-
         setMembers(membersWithStats)
-
-        // Group members by league
-        const leagueGroups: Record<string, MemberWithStats[]> = {}
-        membersWithStats.forEach((member) => {
-          const league = member.league || "bronze"
-          if (!leagueGroups[league]) {
-            leagueGroups[league] = []
-          }
-          leagueGroups[league].push(member)
-        })
-
-        setLeagues(leagueGroups)
       }
+
+        // // Group members by league
+        // const leagueGroups: Record<string, MemberWithStats[]> = {}
+        // membersWithStats.forEach((member) => {
+        //   const league = member.league || "bronze"
+        //   if (!leagueGroups[league]) {
+        //     leagueGroups[league] = []
+        //   }
+        //   leagueGroups[league].push(member)
+        // })
+
+        // setLeagues(leagueGroups)
     }
+
+    const fetchClans = async () => {
+      const { data: clans } = await supabase.from("clans").select("*");
+      if (clans) {
+        for (const clan of clans) {
+          const { data: members } = await supabase
+            .from("members")
+            .select("*")
+            .eq("clan_id", clan.id);
+          clan.members = members || [];
+        }
+        setClans(clans);
+      }
+    };
 
     fetchCurrentUser()
     fetchMembers()
+    fetchClans()
 
     const channel = supabase
       .channel("members")
       .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
         fetchMembers()
         fetchCurrentUser()
+        fetchClans()
       })
       .subscribe()
 
-    return () => {
+   return () => {
       channel.unsubscribe()
     }
   }, [SUPABASE_URL, SUPABASE_ANON_KEY])
 
   useEffect(() => {
-    const savedTab = localStorage.getItem("activeTab") as "overall" | "github" | "leetcode" | null
+    const savedTab = localStorage.getItem("activeTab") as "overall" | "github" | "leetcode" | "bashclan" | "duolingo" | null
     if (savedTab) {
       setActiveTab(savedTab)
     }
@@ -533,14 +678,13 @@ export default function Leaderboard() {
   }
 
   // Get members for the current league
-  const leagueMembers = leagues[currentLeague] || []
+  // const leagueMembers = leagues[currentLeague] || []
 
   // Filter and sort members based on search and active tab
-  const filteredMembers = (searchQuery ? members : leagueMembers)
+  const filteredMembers = members
     .map((member, index) => ({ ...member, originalRank: index + 1 }))
     .filter(
       (member) =>
-        !searchQuery ||
         member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (member.github_username?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
     )
@@ -549,6 +693,8 @@ export default function Leaderboard() {
     if (activeTab === "overall") return b.bash_points - a.bash_points
     if (activeTab === "github") return (b.githubStreak || 0) - (a.githubStreak || 0)
     if (activeTab === "leetcode") return (b.leetcodeStreak || 0) - (a.leetcodeStreak || 0)
+    if (activeTab === "bashclan") return (b.bashClanPoints || 0) - (a.bashClanPoints || 0)
+    if (activeTab === "duolingo") return (b.duolingoStreak || 0) - (a.duolingoStreak || 0)
     return 0
   })
 
@@ -575,7 +721,7 @@ export default function Leaderboard() {
           </div>
 
           {/* League Selection */}
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <div className="flex items-center justify-between">
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -619,7 +765,7 @@ export default function Leaderboard() {
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </div>
-          </div>
+          </div> */}
 
           {/* Search and Tabs */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -655,23 +801,25 @@ export default function Leaderboard() {
                 </motion.button>
               )}
 
-              <div className="flex relative w-full gap-2 overflow-x-auto">
-                {["overall", "github", "leetcode"].map((tab) => (
+                <div className="flex relative w-full gap-2 overflow-x-auto">
+                {["overall", "github", "leetcode", "bashclan", "duolingo"].map((tab) => (
                   <motion.button
-                    key={tab}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setActiveTab(tab as typeof activeTab)
-                      localStorage.setItem("activeTab", tab)
-                    }}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-colors ${
-                      activeTab === tab ? "bg-blue-500 text-white" : "bg-white/10 text-gray-300 hover:bg-white/20"
-                    }`}
+                  key={tab}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setActiveTab(tab as typeof activeTab)
+                    localStorage.setItem("activeTab", tab)
+                  }}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-colors ${
+                    activeTab === tab ? "bg-blue-500 text-white" : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  }`}
                   >
-                    {tab === "overall" && <Trophy className="w-4 h-4" />}
-                    {tab === "github" && <Github className="w-4 h-4" />}
-                    {tab === "leetcode" && <Code className="w-4 h-4" />}
+                  {tab === "overall" && <Trophy className="w-4 h-4" />}
+                  {tab === "github" && <Github className="w-4 h-4" />}
+                  {tab === "leetcode" && <Code className="w-4 h-4" />}
+                  {tab === "bashclan" && <Building className="w-4 h-4" />}
+                  {tab === "duolingo" && <Feather className="w-4 h-4" />}
                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </motion.button>
                 ))}
@@ -685,21 +833,41 @@ export default function Leaderboard() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <AnimatePresence mode="popLayout">
           <motion.div layout className="space-y-6">
-        {/* Top 3 Section */}
-        <div className="space-y-4">
+        {activeTab === "bashclan" ? (
+          <div className="space-y-4">
+            {clans
+          .sort((a, b) => {
+            const totalProjectsA = a.members.reduce(
+              (acc, member) => acc + (member.stats?.projects ?? 0),
+              0
+            );
+            const totalProjectsB = b.members.reduce(
+              (acc, member) => acc + (member.stats?.projects ?? 0),
+              0
+            );
+            return totalProjectsB - totalProjectsA;
+          })
+          .map((clan, index) => (
+            <ClanCard key={clan.id} clan={clan} index={index} />
+          ))}
+          </div>
+        ) : (
+          <>
+            {/* Top 3 Section */}
+            <div className="space-y-4">
           {sortedMembers
-            .filter(member => member.originalRank <= 3)
-            .map((member, index) => (
-          activeTab === "overall" ? (
-            <TopThreeCard 
-              key={member.id} 
-              member={member} 
-              index={member.originalRank - 1} 
-              activeTab={activeTab} 
+            .filter((member) => member.originalRank <= 3)
+            .map((member, index) =>
+              activeTab === "overall" ? (
+            <TopThreeCard
+              key={member.id}
+              member={member}
+              index={member.originalRank - 1}
+              activeTab={activeTab}
               searchQuery={searchQuery}
               isCurrentUser={currentUser?.id === member.id}
             />
-          ) : (
+              ) : (
             <RegularCard
               key={member.id}
               member={member}
@@ -708,23 +876,27 @@ export default function Leaderboard() {
               searchQuery={searchQuery}
               isCurrentUser={currentUser?.id === member.id}
             />
-          )
-            ))}
-        </div>
+              )
+            )}
+            </div>
 
             {/* Rest of the Leaderboard */}
             <div className="space-y-4 mt-8">
-              {sortedMembers.filter(member => member.originalRank > 3).map((member, index) => (
-                <RegularCard
-                  key={member.id}
-                  member={member}
-                  index={index + 3}
-                  activeTab={activeTab}
-                  searchQuery={searchQuery}
-                  isCurrentUser={currentUser?.id === member.id}
-                />
-              ))}
+          {sortedMembers
+            .filter((member) => member.originalRank > 3)
+            .map((member, index) => (
+              <RegularCard
+            key={member.id}
+            member={member}
+            index={index + 3}
+            activeTab={activeTab}
+            searchQuery={searchQuery}
+            isCurrentUser={currentUser?.id === member.id}
+              />
+            ))}
             </div>
+          </>
+        )}
           </motion.div>
         </AnimatePresence>
       </div>
