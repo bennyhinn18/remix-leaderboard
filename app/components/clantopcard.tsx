@@ -4,141 +4,144 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Trophy, Sparkles, Rocket, Crown, Star} from "lucide-react";
 import { Link } from "@remix-run/react";
 
-const ClanTopOneCard = ({ clan, index }: ClanCardProps) => {
-  const [sparklePositions, setSparklePositions] = useState<
-    Array<{ x: number; y: number; size: number; delay: number }>
-  >([]);
-  const [isHovered, setIsHovered] = useState(false);
-  const isMobile = useMobile(); // Add this to detect mobile screens
-
-  // Calculate total projects for the clan
-  const totalProjects = clan.members.reduce((acc, member) => acc + (member.stats?.projects ?? 0), 0);
-
-  // Generate random sparkle positions
-  useEffect(() => {
-    const newPositions = Array.from({ length: 20 }, () => ({
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      delay: Math.random() * 5,
-    }));
-    setSparklePositions(newPositions);
-  }, []);
 
   // Mobile version of the component
-  if (isMobile) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, delay: 0.5 }}
-        className="relative z-20 w-full max-w-sm mx-auto"
-      >
-        {/* Title Banner at the top with curve */}
+  const ClanTopOneCard = ({ clan, index }: ClanCardProps) => {
+    const [sparklePositions, setSparklePositions] = useState<
+      Array<{ x: number; y: number; size: number; delay: number }>
+    >([]);
+    const [isHovered, setIsHovered] = useState(false);
+    const isMobile = useMobile(); // Ensure this hook works
+  
+    // Calculate total projects for the clan
+    const totalProjects = clan.members.reduce((acc, member) => acc + (member.stats?.projects ?? 0), 0);
+  
+    // Generate random sparkle positions
+    useEffect(() => {
+      const newPositions = Array.from({ length: 20 }, () => ({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 3 + 1,
+        delay: Math.random() * 5,
+      }));
+      setSparklePositions(newPositions);
+    }, []);
+
+  
+    // Mobile version of the component
+    if (isMobile) {
+      return (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
-          className="bg-gradient-to-r from-purple-900/80 via-indigo-900/80 to-purple-900/80 py-3 px-4 text-center absolute top-0 w-full z-10 rounded-t-xl"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="relative z-20 w-full max-w-sm mx-auto"
         >
-          <motion.p
-            animate={{
-              scale: [1, 1.02, 1],
-            }}
-            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-            className="text-sm font-medium text-purple-100"
-          >
-            <span className="font-bold text-xl text-yellow-300">Alpha</span>
-            <span className="ml-2 text-lg text-purple-200">Clan</span>
-          </motion.p>
-        </motion.div>
-
-        {/* Main Card Content */}
-        <motion.div className="relative rounded-2xl overflow-hidden backdrop-blur-sm bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-purple-900/60 border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.3)]">
-          <div className="p-6 flex flex-col items-center gap-6">
-            {/* Rank Trophy and Clan Name */}
-            <div className="flex items-center gap-4 w-full mt-10">
-              <motion.div whileTap={{ scale: 0.95 }} className="flex flex-col items-center">
-                <div className="relative">
-                  <motion.div
-                    animate={{
-                      boxShadow: "0 0 20px 5px rgba(250,204,21,0.3)",
-                    }}
-                    className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center"
+  
+          {/* Main Card Content */}
+          <motion.div className="relative rounded-2xl overflow-hidden backdrop-blur-sm bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-purple-900/60 border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.3)]">
+            <div className="p-6 flex flex-col items-center gap-6">
+              {/* Rank Trophy and Clan Name */}
+              <div className="flex items-center gap-4 w-full">
+                <motion.div whileTap={{ scale: 0.95 }} className="flex flex-col items-center">
+                  <div className="relative">
+                    <motion.div
+                      animate={{
+                        boxShadow: "0 0 20px 5px rgba(250,204,21,0.3)",
+                      }}
+                      className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center"
+                    >
+                      <Trophy className="w-8 h-8 text-yellow-900" />
+                    </motion.div>
+                    <motion.div
+                      animate={{
+                        rotate: 360,
+                        opacity: 0.5,
+                      }}
+                      transition={{
+                        rotate: { duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                      }}
+                      className="absolute inset-0 rounded-full border-2 border-dashed border-yellow-400/50"
+                    />
+                  </div>
+                  <motion.span className="text-3xl font-bold mt-1 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500">
+                    #1
+                  </motion.span>
+                </motion.div>
+  
+                <div className="flex-1">
+                  <Link
+                    href={`/clans/${clan.id}`}
+                    className="inline-block text-3xl font-extrabold hover:underline bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300"
                   >
-                    <Trophy className="w-8 h-8 text-yellow-900" />
-                  </motion.div>
-                  <motion.div
-                    animate={{
-                      rotate: 360,
-                      opacity: 0.5,
-                    }}
-                    transition={{
-                      rotate: { duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
-                    }}
-                    className="absolute inset-0 rounded-full border-2 border-dashed border-yellow-400/50"
-                  />
-                </div>
-                <motion.span className="text-3xl font-bold mt-1 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500">
-                  #1
-                </motion.span>
-              </motion.div>
-
-              <div className="flex-1">
-                <Link
-                  href={`/clans/${clan.id}`}
-                  className="inline-block text-3xl font-extrabold hover:underline bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300"
-                >
-                  {clan.clan_name}
-                </Link>
-
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="flex items-center gap-1 bg-purple-900/50 px-2 py-1 rounded-full">
-                    <Sparkles className="w-3 h-3 text-purple-300" />
-                    <span className="text-sm text-purple-200">{clan.members.length} members</span>
+                    {clan.clan_name}
+                  </Link>
+  
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-1 bg-purple-900/50 px-2 py-1 rounded-full">
+                      <Sparkles className="w-3 h-3 text-purple-300" />
+                      <span className="text-sm text-purple-200">{clan.members.length} members</span>
+                    </div>
                   </div>
                 </div>
               </div>
+  
+              {/* Total Projects */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full"
+              >
+                <motion.div
+                  animate={{
+                    boxShadow: [
+                      "0 0 20px 0px rgba(139,92,246,0.3)",
+                      "0 0 30px 5px rgba(139,92,246,0.5)",
+                      "0 0 20px 0px rgba(139,92,246,0.3)",
+                    ],
+                  }}
+                  transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
+                  className="bg-gradient-to-br from-indigo-600/50 to-purple-700/50 backdrop-blur-sm p-4 rounded-xl border border-indigo-500/30 flex justify-between items-center"
+                >
+                  <div className="flex items-center gap-3">
+                    <Rocket className="w-6 h-6 text-indigo-300" />
+                    <div className="text-lg text-indigo-200">Projects</div>
+                  </div>
+                  <motion.span
+                    animate={{
+                      textShadow: "0 0 8px rgba(139,92,246,0.8)",
+                    }}
+                    className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300"
+                  >
+                    {totalProjects}
+                  </motion.span>
+                </motion.div>
+              </motion.div>
             </div>
 
-            {/* Total Projects */}
+            {/* Bottom Banner */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+              className="bg-gradient-to-r from-purple-900/80 via-indigo-900/80 to-purple-900/80 py-3 px-4 text-center"
             >
-              <motion.div
+                <motion.p
                 animate={{
-                  boxShadow: [
-                    "0 0 20px 0px rgba(139,92,246,0.3)",
-                    "0 0 30px 5px rgba(139,92,246,0.5)",
-                    "0 0 20px 0px rgba(139,92,246,0.3)",
-                  ],
+                  scale: [1, 1.02, 1],
                 }}
-                transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
-                className="bg-gradient-to-br from-indigo-600/50 to-purple-700/50 backdrop-blur-sm p-4 rounded-xl border border-indigo-500/30 flex justify-between items-center"
-              >
-                <div className="flex items-center gap-3">
-                  <Rocket className="w-6 h-6 text-indigo-300" />
-                  <div className="text-lg text-indigo-200">Projects</div>
-                </div>
-                <motion.span
-                  animate={{
-                    textShadow: "0 0 8px rgba(139,92,246,0.8)",
-                  }}
-                  className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300"
+                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+                className="text-2xl font-medium text-purple-100"
                 >
-                  {totalProjects}
-                </motion.span>
-              </motion.div>
+                <span className="font-bold text-yellow-300">Alpha</span> Clan
+                </motion.p>
             </motion.div>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
-    );
-  }
+      );
+    }
 
   // Desktop version
   return (
