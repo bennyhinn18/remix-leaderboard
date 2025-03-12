@@ -10,7 +10,7 @@ async function getCurrentUser(request: Request): Promise<User | null> {
     
     const supabase = createServerSupabase(request, response);
     const { data: { user }, error } = await supabase.auth.getUser();
-    console.log("USer",user);
+    
     if (error || !user) {
         console.error("Error fetching user:", error);
         return null;
@@ -19,9 +19,10 @@ async function getCurrentUser(request: Request): Promise<User | null> {
     const { data, error: roleError } = await supabase
         .from("members")
         .select("title")
-        .eq("user_id", user.id)
+        .eq("github_username", user?.user_metadata.user_name)
         .single();
-    
+        
+    console.log("Data",data);
     if (roleError || !data) {
         console.error("Error fetching user role:", roleError);
         return null;
@@ -32,7 +33,6 @@ async function getCurrentUser(request: Request): Promise<User | null> {
 
 async function isOrganiser(request: Request): Promise<boolean> {
     const user = await getCurrentUser(request);
-    console.log(user);
     return user?.title === "Organiser";
 }
 

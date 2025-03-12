@@ -6,35 +6,22 @@ import type { Member } from "~/types/database"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Minus, Users, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { useState } from "react"
+import { isOrganiser } from "~/utils/currentUser"
 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    const response = new Response();
     
-    const supabase = createServerSupabase(request, response);
-    const { data: { user }, error } = await supabase.auth.getUser();
-    console.log("User", user);
-    if (error || !user) {
-        console.error("Error fetching user:", error);
-        return redirect("/login");
-    }
+    const roleData = await isOrganiser(request);
+    console.log("Role Data",roleData);  
     
-    const { data: roleData, error: roleError } = await supabase
-        .from("members")
-        .select("title")
-        .eq("user_id", user.id);
-    
-    if (roleError || !roleData) {
-        console.error("Error fetching user role:", roleError);
-        return redirect("/login");
-    }
-
-    const userTitle = roleData.title;
-    if (userTitle !== "Organiser" && userTitle !== "Mentor") {
+    if (!roleData) {
         console.log("Not an organiser or mentor");
         return redirect("/not-authorised");
     }
-
+    
+    const response = new Response();
+    
+    const supabase = createServerSupabase(request, response);
     const { data: members } = await supabase.from("members").select("*").order("name");
   
     return json({ members });

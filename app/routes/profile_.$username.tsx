@@ -333,7 +333,7 @@ export default function Profile() {
                 <div className="flex flex-wrap gap-2">
                 {profile.domains.map((domain, index) => (
                   <div 
-                  key={domain} 
+                  key={index} 
                   className={`bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm ${index < (member.primary_domain?.length || 0) ? 'font-bold' : ''}`}
                   >
                   {domain} {index < (member.primary_domain?.length || 0) ? '(Primary)' : '(Secondary)'}
