@@ -10,6 +10,7 @@ export interface Member {
   name: string
   bash_points: number
   avatar_url?: string
+  description?: string
 }
 
 export interface MemberWithStats {

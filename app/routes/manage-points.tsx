@@ -1,29 +1,25 @@
-
-import { json, redirect, type ActionFunctionArgs ,type LoaderFunctionArgs } from "@remix-run/node"
-import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react"
-import { createServerSupabase } from "~/utils/supabase.server"
-import type { Member } from "~/types/database"
-import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Minus, Users, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
-import { useState } from "react"
-import { isOrganiser } from "~/utils/currentUser"
-
+import { json, redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
+import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import { createServerSupabase } from "~/utils/supabase.server";
+import type { Member } from "~/types/database";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Minus, Users, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { isOrganiser } from "~/utils/currentUser";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    
     const roleData = await isOrganiser(request);
-    console.log("Role Data",roleData);  
-    
+    // console.log("Role Data", roleData);
+
     if (!roleData) {
         console.log("Not an organiser or mentor");
         return redirect("/not-authorised");
     }
-    
+
     const response = new Response();
-    
     const supabase = createServerSupabase(request, response);
     const { data: members } = await supabase.from("members").select("*").order("name");
-  
+
     return json({ members });
 }
 
@@ -32,6 +28,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const memberId = formData.get("memberId");
     const points = formData.get("points");
     const action = formData.get("action");
+    const description = formData.get("description");
     const response = new Response();
     const supabase = createServerSupabase(request, response);
 
@@ -41,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const { data: currentPoints, error: pointsError } = await supabase
         .from("members")
-        .select("bash_points")
+        .select("bash_points, description")
         .eq("id", memberId)
         .single();
 
@@ -56,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const { error } = await supabase
         .from("members")
-        .update({ bash_points: newPoints })
+        .update({ bash_points: newPoints, description: description || currentPoints.description })
         .eq("id", memberId);
 
     if (error) {
@@ -144,6 +141,9 @@ export default function ManagePoints() {
                                         <div>
                                             <h3 className="font-medium text-white">{selectedMember.name}</h3>
                                             <p className="text-sm text-gray-400">Current Points: {selectedMember.bash_points}</p>
+                                            {selectedMember.description && (
+                                                <p className="text-sm text-gray-400 mt-2">{selectedMember.description}</p>
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>
@@ -169,6 +169,26 @@ export default function ManagePoints() {
                                 className="block w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-white 
                                     placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 placeholder="Enter points amount"
+                            />
+                        </motion.div>
+
+                        {/* Description Input */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="space-y-2"
+                        >
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-300">
+                                Description
+                            </label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                className="block w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-white 
+                                    placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                placeholder="Enter a description"
+                                rows={3}
                             />
                         </motion.div>
 
