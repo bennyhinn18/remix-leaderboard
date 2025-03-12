@@ -10,7 +10,7 @@ async function getCurrentUser(request: Request): Promise<User | null> {
     
     const supabase = createServerSupabase(request, response);
     const { data: { user }, error } = await supabase.auth.getUser();
-    
+    console.log("USer",user);
     if (error || !user) {
         console.error("Error fetching user:", error);
         return null;
@@ -32,6 +32,7 @@ async function getCurrentUser(request: Request): Promise<User | null> {
 
 async function isOrganiser(request: Request): Promise<boolean> {
     const user = await getCurrentUser(request);
+    console.log(user);
     return user?.title === "Organiser";
 }
 
