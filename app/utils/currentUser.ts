@@ -1,5 +1,3 @@
-
-// Adjust the import based on your actual database setup
 import { createServerSupabase } from "./supabase.server";
 
 interface User {
@@ -7,26 +5,26 @@ interface User {
     title: string;
 }
 
-
-
 async function getCurrentUser(request: Request): Promise<User | null> {
     const response = new Response();
     
-    const supabase = createServerSupabase(request, response); // Assuming it initializes Supabase correctly
+    const supabase = createServerSupabase(request, response);
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
+        console.error("Error fetching user:", error);
         return null;
     }
     
     const { data, error: roleError } = await supabase
         .from("members")
         .select("title")
-        .eq("user_id", user.id)
+        .eq("github_username", user?.user_metadata.user_name)
         .single();
-    
-
+        
+    console.log("Data",data);
     if (roleError || !data) {
+        console.error("Error fetching user role:", roleError);
         return null;
     }
 

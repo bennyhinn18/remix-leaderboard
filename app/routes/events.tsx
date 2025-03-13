@@ -55,6 +55,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const response = new Response()
   const supabase = createServerSupabase(request, response)
   const organiserStatus = await isOrganiser(request)
+  console.log("Organiser status:", organiserStatus)
 
   try {
     const url = new URL(request.url)

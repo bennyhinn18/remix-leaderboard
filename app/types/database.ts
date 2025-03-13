@@ -1,30 +1,31 @@
 export interface Member {
-  tier(tier: any): import("clsx").ClassValue
-  duolingo_streak: boolean
-  discord_messages: boolean
-  leetcode_streak: boolean
-  github_streak: boolean
-  github_username: ReactNode
-  tier: any
-  tier: any
-  github_username: any
-  discord_messages: number
-  discord_messages: number
-  duolingo_streak: number
-  duolingo_streak: number
-  [x: string]: number
-  github_username: any
+  tier(tier: string): import("clsx").ClassValue
   duolingo_streak: number
   discord_messages: number
-  tier(tier: any): import("clsx").ClassValue
   leetcode_streak: number
   github_streak: number
-  github_streak: number
+  github_username: string
   id: number
   created_at: string
   name: string
   bash_points: number
   avatar_url?: string
+  description?: string
+}
+
+export interface MemberWithStats {
+  id: string
+  name: string
+  github_username: string
+  avatar_url: string
+  bash_points: number
+  githubStreak?: number
+  leetcodeStreak?: number
+  bashClanPoints?: number 
+  duolingoStreak?: number
+  tier: "diamond" | "platinum" | "gold" | "silver" | "bronze"
+  originalRank?: number
+  // league?: string
 }
 
 export type MemberInput = Pick<Member, "name">
@@ -62,4 +63,3 @@ export type Database = {
     }
   }
 }
-
