@@ -26,7 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
-      redirectTo: `${process.env.PUBLIC_URL || "https://effective-rotary-phone-pjjgpqwpx7wjcr7p9-5173.app.github.dev"}/auth/callback`,
+      redirectTo: `${process.env.PUBLIC_URL || "https://terminal.bytebashblitz.org"}/auth/callback`,
       scopes: "read:org",
     },
   })
