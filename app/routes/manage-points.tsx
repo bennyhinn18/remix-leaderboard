@@ -46,6 +46,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return json({ error: "Failed to fetch current points" });
     }
 
+    // Append the new description to the existing array
+    const descriptionArray = currentPoints.description || []; // Use existing array or initialize as empty
+    if (description) {
+        descriptionArray.push(description); // Append the new description
+    }
+
     const newPoints =
         action === "add"
             ? (currentPoints.bash_points || 0) + Number(points)
@@ -53,7 +59,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const { error } = await supabase
         .from("members")
-        .update({ bash_points: newPoints, description: description || currentPoints.description })
+        .update({ 
+            bash_points: newPoints, 
+            description: descriptionArray // Use the updated array
+        })
         .eq("id", memberId);
 
     if (error) {
@@ -61,7 +70,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     return json({ success: true });
-}
+};
 
 export default function ManagePoints() {
     const { members } = useLoaderData<typeof loader>();
