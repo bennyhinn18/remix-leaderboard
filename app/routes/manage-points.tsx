@@ -16,6 +16,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         return redirect("/not-authorised");
     }
 
+    
     const response = new Response();
     const supabase = createServerSupabase(request, response);
     const { data: members } = await supabase.from("members").select("*").order("name");
