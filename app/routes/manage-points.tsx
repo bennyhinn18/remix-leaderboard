@@ -46,11 +46,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return json({ error: "Failed to fetch current points" });
     }
 
+    // Format the new description to include points and action
+    const formattedDescription = `${action === "add" ? "+" : "-"}${points} points: ${description}`;
+
     // Append the new description to the existing array
     const descriptionArray = currentPoints.description || []; // Use existing array or initialize as empty
-    if (description) {
-        descriptionArray.push(description); // Append the new description
-    }
+    descriptionArray.push(formattedDescription); // Append the new formatted description
 
     const newPoints =
         action === "add"
@@ -129,7 +130,7 @@ export default function ManagePoints() {
                                     ))}
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                    <Users className="h-5 w-5 text-gray-400" />
+                                    <Users className="h-5 h-5 text-gray-400" />
                                 </div>
                             </div>
                         </motion.div>
@@ -151,7 +152,9 @@ export default function ManagePoints() {
                                             <h3 className="font-medium text-white">{selectedMember.name}</h3>
                                             <p className="text-sm text-gray-400">Current Points: {selectedMember.bash_points}</p>
                                             {selectedMember.description && (
-                                                <p className="text-sm text-gray-400 mt-2">{selectedMember.description}</p>
+                                                <p className="text-sm text-gray-400 mt-2">
+                                                    {selectedMember.description[selectedMember.description.length - 1]}
+                                                </p>
                                             )}
                                         </div>
                                     </div>
