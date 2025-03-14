@@ -9,6 +9,7 @@ import { Input } from "~/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
 import { Skeleton } from "~/components/ui/skeleton"
 
+
 interface Attendee {
     id: string
     name: string
