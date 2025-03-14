@@ -1,17 +1,18 @@
 "use client"
 
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
-import { useLoaderData, Link } from "@remix-run/react"
+import { useLoaderData } from "@remix-run/react"
 import { useEffect, useState } from "react"
-import { Trophy, Github, Code, Search, Star, Award, Crown, Medal, User,  X, Building, Feather, MessageCircle, Book, Sparkles, Rocket } from "lucide-react"
+import { Trophy, Github, Code, Search, Award, Medal,  X, Building, Feather, MessageCircle, Book, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { initSupabase } from "~/utils/supabase.client"
-// import type { Member } from "~/types/database"
-// import type { JSX } from "react" // Import JSX
 import iconImage from "~/assets/bashers.png"
 import { createServerSupabase } from "~/utils/supabase.server"
 
-import ClanTopOneCard from "~/components/clantopcard"
+import ClanTopOneCard from "~/components/leaderboard/clantopcard"
+import TopThreeCard from "~/components/leaderboard/topthreecard"
+import ClanCard from "~/components/leaderboard/clancard"
+import RegularCard from "~/components/leaderboard/regularcard"
 
 interface MemberWithStats {
   id: string
@@ -25,130 +26,85 @@ interface MemberWithStats {
   discordPoints?: number
   bookRead?: number
   duolingoStreak?: number
-  tier: "diamond" | "platinum" | "gold" | "silver" | "bronze"
+  tier: "diamond" | "obsidian" | "pearl" | "amethyst" | "emerald" | "ruby" | "sapphire" | "gold" | "silver" | "bronze"
   originalRank?: number
   stats?: {
     projects?: number
   }
-  // league?: string
 }
-
-interface Clan {
-  id: string
-  clan_name: string
-  members: MemberWithStats[]
-  logo_url?: string
-}
-
-interface ClanCardProps {
-  clan: Clan;
-  index: number;
-}
-
-
-// interface League {
-//   name: string
-//   color: string
-//   minPoints: number
-//   icon: JSX.Element
-//   background: string
-//   textColor: string
-// }
-
-// const LEAGUES: Record<string, League> = {
-//   bronze: {
-//     name: "Bronze League",
-//     color: "orange",
-//     minPoints: 0,
-//     icon: <Star className="w-6 h-6" />,
-//     background: "bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500",
-//     textColor: "text-orange-900",
-//   },silver: {
-//     name: "Silver League",
-//     color: "gray",
-//     minPoints: 100,
-//     icon: <Award className="w-6 h-6" />,
-//     background: "bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500",
-//     textColor: "text-gray-900",
-//   },gold: {
-//     name: "Gold League",
-//     color: "amber",
-//     minPoints: 200,
-//     icon: <Trophy className="w-6 h-6" />,
-//     background: "bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600",
-//     textColor: "text-amber-900",
-//   },
-  
-//   platinum: {
-//     name: "Platinum League",
-//     color: "slate",
-//     minPoints: 500,
-//     icon: <Medal className="w-6 h-6" />,
-//     background: "bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500",
-//     textColor: "text-slate-900",
-//   },
-//   diamond: {
-//     name: "Diamond League",
-//     color: "cyan",
-//     minPoints: 1000,
-//     icon: <Crown className="w-6 h-6" />,
-//     background: "bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600",
-//     textColor: "text-cyan-900",
-//   },
-  
-  
-// }
-
-// function getLeague(points: number): string {
-//   if (points >= LEAGUES.diamond.minPoints) return "diamond"
-//   if (points >= LEAGUES.platinum.minPoints) return "platinum"
-//   if (points >= LEAGUES.gold.minPoints) return "gold"
-//   if (points >= LEAGUES.silver.minPoints) return "silver"
-//   return "bronze"
-// }
 
 function getTier(points: number): MemberWithStats["tier"] {
-  if (points >= 1000) return "diamond"
-  if (points >= 500) return "platinum"
-  if (points >= 200) return "gold"
-  if (points >= 100) return "silver"
+  if (points >= 3000) return "diamond"
+  if (points >= 2600) return "obsidian"
+  if (points >= 2200) return "pearl"
+  if (points >= 1750) return "amethyst"
+  if (points >= 1350) return "emerald"
+  if (points >= 1000) return "ruby"
+  if (points >= 700) return "sapphire"
+  if (points >= 450) return "gold"
+  if (points >= 250) return "silver"
   return "bronze"
 }
 
 function getTierIcon(tier: string) {
   switch (tier) {
     case "diamond":
-      return <Star className="w-4 h-4" />
-    case "platinum":
-      return <Award className="w-4 h-4" />
+      return <GemIcon className="w-4 h-4" />
+    case "obsidian":
+      return <Boxes className="w-4 h-4" />
+    case "pearl":
+      return <CircleDot className="w-4 h-4" />
+    case "amethyst":
+      return <Sparkles className="w-4 h-4" />
+    case "emerald":
+      return <Leaf className="w-4 h-4" />
+    case "ruby":
+      return <Flame className="w-4 h-4" />
+    case "sapphire":
+      return <Droplets className="w-4 h-4" />
     case "gold":
       return <Trophy className="w-4 h-4" />
     case "silver":
       return <Medal className="w-4 h-4" />
-    default:
-      return <Trophy className="w-4 h-4" />
-  }
-}
-
-function getTierStyles(tier: string) {
-  switch (tier) {
-    case "diamond":
-      return "bg-gradient-to-r from-cyan-300 to-cyan-500 text-cyan-900"
     case "platinum":
-      return "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900"
-    case "gold":
-      return "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900"
-    case "silver":
-      return "bg-gradient-to-r from-gray-300 to-gray-500 text-gray-900"
+      return <Crown className="w-4 h-4" />
     default:
-      return "bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900"
+      return <Award className="w-4 h-4" />
   }
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const response =new  Response()
-  const supabase=createServerSupabase(request,response)
-  
+  const response = new Response()
+  const supabase = createServerSupabase(request, response)
+
+  // Fetch all members
+  // const { data: members } = await supabase.from("members").select("*")
+
+  // Fetch Duolingo streaks for each member
+  // const membersWithDuolingoStreaks = await Promise.all(
+  //   members.map(async (member) => {
+  //     if (member.duolingo_username) {
+  //       try {
+  //         const duolingoResponse = await fetch(
+  //           `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+  //         )
+  //         const duolingoData = await duolingoResponse.json()
+  //         const userData = duolingoData.users?.[0] || {}
+  //         const duolingo_streak = Math.max(
+  //           userData.streak ?? 0,
+  //           userData.streakData?.currentStreak?.length ?? 0,
+  //           userData.streakData?.previousStreak?.length ?? 0
+  //         )
+  //         return { ...member, duolingoStreak: duolingo_streak }
+  //       } catch (error) {
+  //         console.error(`Error fetching Duolingo streak for ${member.duolingo_username}:`, error)
+  //         return { ...member, duolingoStreak: 0 }
+  //       }
+  //     }
+  //     return { ...member, duolingoStreak: 0 }
+  //   })
+  // )
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -160,390 +116,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   })
 }
 
-const TopThreeCard = ({
-  member,
-  index,
-  activeTab,
-  searchQuery,
-  isCurrentUser,
-}: {
-  member: MemberWithStats
-  index: number
-  activeTab: string
-  searchQuery: string
-  isCurrentUser: boolean
-}) => {
-  const getRankStyles = (rank: number) => {
-    switch (rank) {
-      case 0:
-        return {
-          background: "bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600",
-          icon: <Crown className="w-6 h-6 text-cyan-900" />,
-          text: "text-cyan-900",
-          glow: "shadow-lg shadow-cyan-500/50",
-          border: "border-cyan-400",
-        }
-      case 1:
-        return {
-          background: "bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500",
-          icon: <Medal className="w-6 h-6 text-slate-900" />,
-          text: "text-slate-900",
-          glow: "shadow-lg shadow-slate-500/50",
-          border: "border-slate-400",
-        }
-      case 2:
-        return {
-          background: "bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700",
-          icon: <Trophy className="w-6 h-6 text-amber-100" />,
-          text: "text-amber-100",
-          glow: "shadow-lg shadow-amber-500/50",
-          border: "border-amber-500",
-        }
-      default:
-        return {
-          background: "bg-white/10",
-          icon: null,
-          text: "text-gray-400",
-          glow: "",
-          border: "border-white/20",
-        }
-    }
-  }
-
-  const styles = getRankStyles(index)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className={`relative overflow-hidden rounded-2xl border ${styles.border} ${isCurrentUser ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-900" : ""} ${styles.glow}`}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-        className={`${styles.background} p-6`}
-      >
-        <div className="flex items-center gap-6">
-          {/* Rank */}
-          <div className="flex flex-col items-center text-white">
-            {styles.icon}
-            <span className={`text-3xl font-bold mt-2 ${styles.text}`}>
-              #{searchQuery ? member.originalRank : index + 1}
-            </span>
-          </div>
-
-          {/* Avatar */}
-          <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20 hidden sm:block">
-            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
-            <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/40">
-              {member.avatar_url ? (
-                <img
-                  src={member.avatar_url || "/placeholder.svg"}
-                  alt={member.name}
-                  className="w-full h-full object-cover text-white"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
-                </div>
-              )}
-            </div>
-            {isCurrentUser && (
-              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1">
-                <User className="w-4 h-4 text-white" />
-              </div>
-            )}
-          </motion.div>
-
-          {/* Info */}
-          <div className="flex-1">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-            >
-              <Link
-                to={`/profile/${member.github_username}`}
-                className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
-              >
-                <p className="text-white flex items-center gap-2">
-                  {member.name}
-                  {isCurrentUser && (
-                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">You</span>
-                  )}
-                </p>
-              </Link>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`text-sm hidden sm:block ${styles.text}`}>@{member.github_username}</span>
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
-                >
-                  {getTierIcon(member.tier)}
-                  {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Score */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-            className="text-center"
-          >
-            <div className={`text-4xl font-bold ${styles.text}`}>
-              {activeTab === "overall"
-              ? member.bash_points
-              : activeTab === "bashclan"
-              ? member.bashClanPoints || 0
-              : activeTab === "github"
-              ? member.githubStreak || 0
-              : activeTab === "leetcode"
-              ? member.leetcodeStreak
-              : activeTab === "duolingo"
-              ? member.duolingoStreak || 0
-              : activeTab === "discord"
-              ? member.discordPoints || 0
-              : activeTab === "books"
-              ? member.bookRead || 0
-              : 0}{" "}
-            </div>
-            <div className={`text-sm ${styles.text}`}>
-              {" "}
-              {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : activeTab === "leetcode" ? "Problems" : activeTab === "duolingo" ? "Streak" : activeTab === "discord" ? "Activity" : "Read" }
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-const RegularCard = ({
-  member,
-  index,
-  activeTab,
-  searchQuery,
-  isCurrentUser,
-}: {
-  member: MemberWithStats
-  index: number
-  activeTab: string
-  searchQuery: string
-  isCurrentUser: boolean
-}) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className={`relative overflow-hidden rounded-2xl ${isCurrentUser ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-900" : ""}`}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-      >
-        <div className="relative bg-white/10 backdrop-blur-lg rounded-xl p-4 flex items-center gap-4">
-          {/* Rank */}
-          <div className="flex flex-col items-center">
-            <span className={`text-3xl font-bold text-white`}>{searchQuery ? member.originalRank : index + 1}</span>
-          </div>
-
-          {/* Avatar */}
-          <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20">
-            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
-            <div className="relative w-20 h-20 rounded-2xl overflow-hidden ">
-              {member.avatar_url ? (
-                <img
-                  src={member.avatar_url || "/placeholder.svg"}
-                  alt={member.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">{member.name.charAt(0)}</span>
-                </div>
-              )}
-            </div>
-            {isCurrentUser && (
-              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1">
-                <User className="w-4 h-4 text-white" />
-              </div>
-            )}
-          </motion.div>
-
-          {/* Info */}
-          <div className="flex-1">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-            >
-              <Link
-                to={`/profile/${member.github_username}`}
-                className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
-              >
-                <p className="text-white flex items-center gap-2">
-                  {member.name}
-                  {isCurrentUser && (
-                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">You</span>
-                  )}
-                </p>
-              </Link>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`text-sm hidden sm:block text-gray-400`}>@{member.github_username}</span>
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
-                >
-                  {getTierIcon(member.tier)}
-                  {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Score */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-            className="text-center"
-          >
-            <div
-              className={
-                "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
-              }
-            >
-                {activeTab === "overall"
-                ? member.bash_points
-                : activeTab === "bashclan"
-                ? member.bashClanPoints || 0
-                : activeTab === "github"
-                ? member.githubStreak || 0
-                : activeTab === "leetcode"
-                ? member.leetcodeStreak
-                : activeTab === "duolingo"
-                ? member.duolingoStreak || 0
-                : activeTab === "discord"
-                ? member.discordPoints || 0
-                : activeTab === "books"
-                ? member.bookRead || 0
-                : 0}{" "}
-            </div>
-            <div className={"text-sm text-gray-400"}>
-              {" "}
-              {activeTab === "overall" ? "Points" : activeTab === "github" ? "Commits" : activeTab === "leetcode" ? "Problems" : activeTab === "duolingo" ? "Streak" : activeTab === "discord" ? "Activity" : "Read" }
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-const ClanCard = ({ clan, index }: ClanCardProps) => {
-  // Calculate total projects for the clan
-  const totalProjects = clan.members.reduce(
-    (acc, member) => acc + (member.stats?.projects ?? 0),
-    0
-  );
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-lg p-4"
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-      >
-        <div className="relative rounded-xl p-4 flex items-center gap-4">
-          {/* Rank */}
-          <div className="flex flex-col items-center">
-            <span className="text-3xl font-bold text-white">{index + 1}</span>
-          </div>
-
-          {/* Clan Logo */}
-          <motion.div whileHover={{ scale: 1.1 }} className="relative w-20 h-20">
-            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
-            <div className="relative w-20 h-20 rounded-2xl overflow-hidden">
-              {clan.logo_url ? (
-                <img
-                  src={clan.logo_url || "/placeholder.svg"}
-                  alt={clan.clan_name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">{clan.clan_name.charAt(0)}</span>
-                </div>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Clan Name */}
-          <div className="flex-1">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-            >
-              <Link to={`/clans/${clan.id}`} className="text-xl font-bold text-white hover:underline">
-                {clan.clan_name}
-              </Link>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-gray-400">
-                  {clan.members.length} members
-                </span>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Total Projects */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-            className="text-center"
-          >
-            <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                {totalProjects}
-              </span>
-              <div className="text-sm text-gray-400">Projects</div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Clan Members
-        <div className="space-y-4 mt-4">
-          {clan.members.map((member, memberIndex) => (
-            <RegularCard
-              key={member.id}
-              member={member}
-              index={memberIndex}
-              activeTab="bashclan"
-              searchQuery=""
-              isCurrentUser={false}
-            />
-          ))}
-        </div> */}
-      </motion.div>
-    </motion.div>
-  );
-};
 
 
 
@@ -556,11 +128,10 @@ export default function Leaderboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const [currentUser, setCurrentUser] = useState<MemberWithStats | null>(null)
-  // const [currentLeague, setCurrentLeague] = useState<string>("bronze")
-  // const [leagues, setLeagues] = useState<Record<string, MemberWithStats[]>>({})
   interface Clan {
     id: string
     name: string
+    clan_name: string
     members: MemberWithStats[]
   }
 
@@ -695,9 +266,6 @@ export default function Leaderboard() {
     return 0 // Keeping the original functionality
   }
 
-  // Get members for the current league
-  // const leagueMembers = leagues[currentLeague] || []
-
   // Filter and sort members based on search and active tab
   const filteredMembers = members
     .map((member, index) => ({ ...member, originalRank: index + 1 }))
@@ -739,53 +307,6 @@ export default function Leaderboard() {
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
           </div>
-
-          {/* League Selection */}
-          {/* <div className="mt-6">
-            <div className="flex items-center justify-between">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  const leagueKeys = Object.keys(LEAGUES)
-                  const currentIndex = leagueKeys.indexOf(currentLeague)
-                  if (currentIndex > 0) {
-                    setCurrentLeague(leagueKeys[currentIndex - 1])
-                  }
-                }}
-                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20"
-                disabled={Object.keys(LEAGUES).indexOf(currentLeague) === 0}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </motion.button>
-
-              <div className={`text-center px-8 py-3 rounded-xl ${LEAGUES[currentLeague]?.background}`}>
-                <div className="flex items-center justify-center gap-2">
-                  {LEAGUES[currentLeague]?.icon}
-                  <h2 className={`text-2xl font-bold ${LEAGUES[currentLeague]?.textColor}`}>
-                    {LEAGUES[currentLeague]?.name}
-                  </h2>
-                </div>
-                <p className={`text-sm ${LEAGUES[currentLeague]?.textColor}`}>{leagueMembers.length} members</p>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  const leagueKeys = Object.keys(LEAGUES)
-                  const currentIndex = leagueKeys.indexOf(currentLeague)
-                  if (currentIndex < leagueKeys.length - 1) {
-                    setCurrentLeague(leagueKeys[currentIndex + 1])
-                  }
-                }}
-                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20"
-                disabled={Object.keys(LEAGUES).indexOf(currentLeague) === Object.keys(LEAGUES).length - 1}
-              >
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
-            </div>
-          </div> */}
 
           {/* Search and Tabs */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">

@@ -5,6 +5,35 @@ import { Trophy, Sparkles, Rocket, Crown, Star} from "lucide-react";
 import { Link } from "@remix-run/react";
 
 
+type MemberWithStats = {
+  originalRank: number;
+  avatar_url: string | null;
+  name: string;
+  github_username: string;
+  tier: string;
+  bash_points: number;
+  bashClanPoints?: number;
+  githubStreak?: number;
+  leetcodeStreak?: number;
+  duolingoStreak?: number;
+  discordPoints?: number;
+  bookRead?: number;
+}
+
+interface Clan {
+  id: string
+  clan_name: string
+  members: MemberWithStats[]
+  logo_url?: string
+}
+
+interface ClanCardProps {
+  clan: Clan;
+  index: number;
+}
+
+
+
   // Mobile version of the component
   const ClanTopOneCard = ({ clan, index }: ClanCardProps) => {
     const [sparklePositions, setSparklePositions] = useState<
@@ -13,8 +42,12 @@ import { Link } from "@remix-run/react";
     const [isHovered, setIsHovered] = useState(false);
     const isMobile = useMobile(); // Ensure this hook works
   
-    // Calculate total projects for the clan
-    const totalProjects = clan.members.reduce((acc, member) => acc + (member.stats?.projects ?? 0), 0);
+    // Calculate points percentage for the clan
+    const totalPoints = clan.members.reduce(
+      (acc, member) => acc + member.bash_points,
+      0
+    );
+    const pointsPercentage = totalPoints / (clan.members.length * 100) * 100;
   
     // Generate random sparkle positions
     useEffect(() => {
@@ -71,7 +104,7 @@ import { Link } from "@remix-run/react";
   
                 <div className="flex-1">
                   <Link
-                    href={`/clans/${clan.id}`}
+                    to={`/clans/${clan.id}`}
                     className="inline-block text-3xl font-extrabold hover:underline bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300"
                   >
                     {clan.clan_name}
@@ -86,7 +119,7 @@ import { Link } from "@remix-run/react";
                 </div>
               </div>
   
-              {/* Total Projects */}
+              {/* Total Points */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -107,7 +140,7 @@ import { Link } from "@remix-run/react";
                 >
                   <div className="flex items-center gap-3">
                     <Rocket className="w-6 h-6 text-indigo-300" />
-                    <div className="text-lg text-indigo-200">Projects</div>
+                    <div className="text-lg text-indigo-200">Points</div>
                   </div>
                   <motion.span
                     animate={{
@@ -115,7 +148,7 @@ import { Link } from "@remix-run/react";
                     }}
                     className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300"
                   >
-                    {totalProjects}
+                    {pointsPercentage.toFixed(0)}
                   </motion.span>
                 </motion.div>
               </motion.div>
@@ -135,7 +168,7 @@ import { Link } from "@remix-run/react";
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                 className="text-2xl font-medium text-purple-100"
                 >
-                <span className="font-bold text-yellow-300">Alpha</span> Clan
+                <span className="font-bold text-yellow-300">Master</span> Clan
                 </motion.p>
             </motion.div>
           </motion.div>
@@ -342,7 +375,7 @@ import { Link } from "@remix-run/react";
                 transition={{ duration: 0.5, delay: 0.9 }}
               >
                 <Link
-                  href={`/clans/${clan.id}`}
+                  to={`/clans/${clan.id}`}
                   className="inline-block text-5xl font-extrabold hover:underline bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300"
                 >
                   {clan.clan_name}
@@ -368,7 +401,7 @@ import { Link } from "@remix-run/react";
               </motion.div>
             </div>
 
-            {/* Total Projects */}
+            {/* Total Points */}
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -397,9 +430,9 @@ import { Link } from "@remix-run/react";
                     transition={{ duration: 1, repeat: isHovered ? Number.POSITIVE_INFINITY : 0 }}
                     className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300"
                   >
-                    {totalProjects}
+                    {pointsPercentage.toFixed(0)}
                   </motion.span>
-                  <div className="text-xl text-indigo-200 mt-1">Projects</div>
+                  <div className="text-xl text-indigo-200 mt-1">Points</div>
                 </div>
               </motion.div>
             </motion.div>
@@ -419,7 +452,7 @@ import { Link } from "@remix-run/react";
               transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
               className="text-xl font-medium text-purple-100"
             >
-              <span className="font-bold text-yellow-300">Alpha</span> Clan
+              <span className="font-bold text-yellow-300">Master</span> Clan
             </motion.p>
           </motion.div>
         </motion.div>
