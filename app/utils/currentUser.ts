@@ -22,7 +22,7 @@ async function getCurrentUser(request: Request): Promise<User | null> {
         .eq("github_username", user?.user_metadata.user_name)
         .single();
         
-    console.log("Data",data);
+    
     if (roleError || !data) {
         console.error("Error fetching user role:", roleError);
         return null;

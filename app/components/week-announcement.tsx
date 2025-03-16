@@ -81,9 +81,7 @@ export function WeekAnnouncement({ leadingClan, isLoading }: WeekAnnouncementPro
                   stiffness: 100,
                 }}
                 className="text-6xl md:text-8xl font-bold text-center text-white mb-4"
-              >
-                This Week is{" "}
-                <motion.span
+              ><motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
@@ -91,6 +89,8 @@ export function WeekAnnouncement({ leadingClan, isLoading }: WeekAnnouncementPro
                 >
                   {leadingClan?.name || "Loading..."}
                 </motion.span>
+                {""}'s Week
+                
               </motion.h2>
 
               {/* Score display */}
