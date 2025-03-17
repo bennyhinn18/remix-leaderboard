@@ -101,6 +101,8 @@ export default function EventsRoute() {
   const [selectedEvent, setSelectedEvent] = useState(events[0])
   const [showAgenda, setShowAgenda] = useState(false)
   const [filterStatus, setFilterStatus] = useState("all")
+  const [showAbsence, setShowAbsence] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
   const submit = useSubmit()
   const { toast } = useToast()
   const [joinedEvents, setJoinedEvents] = useLocalStorage<string[]>("joinedEvents", [])
@@ -189,11 +191,11 @@ export default function EventsRoute() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {location.pathname !== "/events/new" && (
-          <>
-            <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold text-white">Weekly Events</h1>
-              {isOrganiser && (
+      {location.pathname !== "/events/new" && (
+        <>
+        <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-white text-center w-full">Weekly Events</h1>
+          {isOrganiser && (
           <Button 
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
             onClick={() => navigate("/events/new")}
@@ -201,74 +203,80 @@ export default function EventsRoute() {
             <Plus className="mr-2" />
             Add Event
           </Button>
-              )}
-            </div>
+          )}
+        </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
-              <Select value={selectedEvent?.id} onValueChange={id => 
-          setSelectedEvent(events.find(e => e.id === id))
-              }>
-          <SelectTrigger className="bg-blue-800/50 border-blue-700 text-white">
-            <SelectValue placeholder="Select event" />
-          </SelectTrigger>
-          <SelectContent className="bg-blue-900 border-blue-700">
-            {filteredEvents.map(event => (
-              <SelectItem key={event.id} value={event.id} className="hover:bg-blue-800">
-                {event.title} - {new Date(event.date).toLocaleDateString()}
-              </SelectItem>
-            ))}
-          </SelectContent>
-              </Select>
-
-              <Select value={filterStatus} onValueChange={handleStatusFilter}>
-          <SelectTrigger className="bg-blue-800/50 border-blue-700 text-white">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent className="bg-blue-900 border-blue-700">
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="upcoming">Upcoming</SelectItem>
-            <SelectItem value="ongoing">Ongoing</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-              </Select>
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <AnimatePresence mode="wait">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <WeekAnnouncement leadingClan={selectedEvent.leading_clan} isLoading={false} />
-              </motion.div>
-            </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
 
-            <AnimatePresence mode="wait">
-              <motion.div
+        <AnimatePresence mode="wait">
+          <motion.div
           key={selectedEvent?.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-              >
-          {selectedEvent && (
+          >
+          <div className="flex flex-col md:flex-row gap-4">
+            <Select value={selectedEvent?.id} onValueChange={id => 
+            setSelectedEvent(events.find(e => e.id === id))
+            }>
+            <SelectTrigger className="bg-blue-800/50 border-blue-700 text-white">
+              <SelectValue placeholder="Select event" />
+            </SelectTrigger>
+            <SelectContent className="bg-blue-900 border-blue-700">
+              {filteredEvents.map(event => (
+              <SelectItem key={event.id} value={event.id} className="hover:bg-blue-800">
+                {event.title} - {new Date(event.date).toLocaleDateString()}
+              </SelectItem>
+              ))}
+            </SelectContent>
+            </Select>
+
+            <Select value={filterStatus} onValueChange={handleStatusFilter}>
+            <SelectTrigger className="bg-blue-800/50 border-blue-700 text-white">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent className="bg-blue-900 border-blue-700">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="ongoing">Ongoing</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+            </Select>
+          </div>
+          <div className="mt-6">
+            {selectedEvent && (
             <>
               <EventCard
-                event={selectedEvent}
-                onJoin={() => handleJoin(selectedEvent.id)}
-                onViewAgenda={() => setShowAgenda(!showAgenda)}
-                isJoined={joinedEvents.includes(selectedEvent.id)}
-                isOrganiser={isOrganiser}
+              event={selectedEvent}
+              onJoin={() => handleJoin(selectedEvent.id)}
+              onViewAgenda={() => setShowAgenda(!showAgenda)}
+              onCantAttend={() => console.log("Can't attend event")}
+              isJoined={joinedEvents.includes(selectedEvent.id)}
+              isOrganiser={isOrganiser}
               />
               <AgendaSection 
-                event={selectedEvent} 
-                isVisible={showAgenda}
+              event={selectedEvent} 
+              isVisible={showAgenda}
               />
+              <AbsenceModal event={selectedEvent} isOpen={showAbsence} onClose={() => setShowAbsence(false)} />
+
+              <FeedbackModal event={selectedEvent} isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
             </>
-          )}
-              </motion.div>
-            </AnimatePresence>
-          </>
-        )}
+            )}
+          </div>
+          </motion.div>
+        </AnimatePresence>
+        </>
+      )}
       {location.pathname === "/events/new" && (
         <div id="create-event-section" className="mt-6 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold">Create New Event</h2>
-          {/* Create Event Form or content goes here */}
-          <Outlet />
+        <h2 className="text-2xl font-semibold">Create New Event</h2>
+        {/* Create Event Form or content goes here */}
+        <Outlet />
         </div>
       )}
       </div>
