@@ -10,6 +10,8 @@ import type { Event } from "~/types/events"
 import { format } from "date-fns"
 import { motion } from "framer-motion"
 import { cn } from "~/lib/utils"
+import { Link } from "@remix-run/react"
+import { Pencil } from "lucide-react" 
 
 interface EventCardProps {
   event: Event
@@ -17,9 +19,10 @@ interface EventCardProps {
   onJoin: () => void
   onCantAttend: () => void
   isJoined: boolean
+  isOrganiser: boolean
 }
 
-export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined }: EventCardProps) {
+export function EventCard({ event, onViewAgenda, onJoin, onCantAttend,isOrganiser, isJoined }: EventCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
@@ -41,10 +44,27 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isJoined 
             </div>
           </div>
           <div className="flex items-center gap-2 bg-blue-700 px-3 py-1 rounded-full">
+          {isOrganiser && (
+        <div className="relative">
+          <Link 
+            to={`/events/${event.id}/edit`}
+            className=""
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-400 hover:text-white hover:bg-blue-800/50"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      )}
+          <div className="flex items-center gap-2 bg-blue-700 px-3 py-1 rounded-full">
             <Trophy className="w-5 h-5 text-yellow-400" />
             <span className="font-bold">{event.leading_clan.score}</span>
           </div>
-        </div>
+        </div></div>
       </div>
 
       {/* Event Details */}
