@@ -17,7 +17,7 @@ import { useToast } from "~/hooks/use-toast"
 import { cn } from "~/lib/utils"
 import { parseISO, isAfter, isBefore, startOfDay } from "date-fns"
 import { isOrganiser } from "~/utils/currentUser"
-import { WeekAnnouncement } from "~/components/week-announcement"
+import { WeekAnnouncement } from "~/components/events/week-announcement"
 import { useLocalStorage } from "~/hooks/use-local-storage"
 
 export async function loader({ request }: LoaderFunctionArgs) {
