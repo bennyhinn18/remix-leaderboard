@@ -10,15 +10,15 @@ import { AgendaSection } from "~/components/events/agenda-section"
 import { AbsenceModal } from "~/components/events/absence-modal"
 import { FeedbackModal } from "~/components/events/feedback-modal"
 import { Button } from "~/components/ui/button"
-import { Plus, AlertCircle, CalendarIcon, Loader2, X, ArrowLeft } from "lucide-react"
+import { Plus, AlertCircle } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
 import { Alert } from "~/components/ui/alert"
 import { useToast } from "~/hooks/use-toast"
-import { cn } from "~/lib/utils"
 import { parseISO, isAfter, isBefore, startOfDay } from "date-fns"
 import { isOrganiser } from "~/utils/currentUser"
 import { WeekAnnouncement } from "~/components/events/week-announcement"
 import { useLocalStorage } from "~/hooks/use-local-storage"
+
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const response = new Response()
@@ -79,6 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ error: "Failed to update attendance" }, { status: 500 })
   }
 }
+
 function getEventStatus(date: string, time: string) {
   const eventDate = parseISO(date)
   const today = startOfDay(new Date())
@@ -190,11 +191,12 @@ export default function EventsRoute() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 p-4">
+      <div>
       <div className="max-w-4xl mx-auto space-y-6">
       {location.pathname !== "/events/new" && (
         <>
         <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-white text-center w-full">Weekly Events</h1>
+            <h1 className="text-5xl font-bold text-white text-center w-full mt-6">Weekly Events</h1>
           {isOrganiser && (
           <Button 
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -206,7 +208,7 @@ export default function EventsRoute() {
           )}
         </div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <WeekAnnouncement leadingClan={selectedEvent.leading_clan} isLoading={false} />
           </motion.div>
@@ -226,7 +228,7 @@ export default function EventsRoute() {
             <SelectTrigger className="bg-blue-800/50 border-blue-700 text-white">
               <SelectValue placeholder="Select event" />
             </SelectTrigger>
-            <SelectContent className="bg-blue-900 border-blue-700">
+            <SelectContent className="bg-blue-900 border-blue-700 text-white">
               {filteredEvents.map(event => (
               <SelectItem key={event.id} value={event.id} className="hover:bg-blue-800">
                 {event.title} - {new Date(event.date).toLocaleDateString()}
@@ -239,7 +241,7 @@ export default function EventsRoute() {
             <SelectTrigger className="bg-blue-800/50 border-blue-700 text-white">
               <SelectValue placeholder="Filter status" />
             </SelectTrigger>
-            <SelectContent className="bg-blue-900 border-blue-700">
+            <SelectContent className="bg-blue-900 border-blue-700 text-white">
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="upcoming">Upcoming</SelectItem>
               <SelectItem value="ongoing">Ongoing</SelectItem>
@@ -247,7 +249,7 @@ export default function EventsRoute() {
             </SelectContent>
             </Select>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 mb-8">
             {selectedEvent && (
             <>
               <EventCard
@@ -257,6 +259,7 @@ export default function EventsRoute() {
               onCantAttend={() => console.log("Can't attend event")}
               isJoined={joinedEvents.includes(selectedEvent.id)}
               isOrganiser={isOrganiser}
+              members={selectedEvent.leading_clan.members}
               />
               <AgendaSection 
               event={selectedEvent} 
@@ -279,6 +282,7 @@ export default function EventsRoute() {
         <Outlet />
         </div>
       )}
+      </div>
       </div>
     </div>
     

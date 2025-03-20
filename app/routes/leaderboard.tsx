@@ -378,15 +378,13 @@ export default function Leaderboard() {
         <div className="space-y-4">
         {clans
           .sort((a, b) => {
-          const totalPointsA = a.members.reduce(
-            (acc, member) => acc + member.bash_points,
-            0
-          );
-          const totalPointsB = b.members.reduce(
-            (acc, member) => acc + member.bash_points,
-            0
-          );
-          return totalPointsB - totalPointsA;
+          const averagePointsA =
+            a.members.reduce((acc, member) => acc + member.bash_points, 0) /
+            (a.members.length);
+          const averagePointsB =
+            b.members.reduce((acc, member) => acc + member.bash_points, 0) /
+            (b.members.length);
+          return averagePointsB - averagePointsA;
           })
           .map((clan, index) => {
             const totalPoints = clan.members.reduce(

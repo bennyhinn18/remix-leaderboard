@@ -34,7 +34,7 @@ const ClanCard = ({ clan, index }: ClanCardProps) => {
       (acc, member) => acc + member.bash_points,
       0
     );
-    const pointsPercentage = (totalPoints / (clan.members.length * 100)) * 100;
+    const pointsPercentage = totalPoints / clan.members.length;
   
     return (
       <motion.div
