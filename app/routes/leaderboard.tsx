@@ -165,10 +165,8 @@ export default function Leaderboard() {
             const userWithTier = {
               ...memberData,
               tier: getTier(memberData.bash_points),
-              // league: getLeague(memberData.bash_points),
             }
             setCurrentUser(userWithTier)
-            // setCurrentLeague(userWithTier.league || "bronze")
           }
         }
       }
@@ -303,7 +301,7 @@ export default function Leaderboard() {
               </h1>
             </div>
             <div className="hidden sm:block text-right">
-              <div className="text-lg font-semibold text-white">Hello Basher&apos;s</div>
+              <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher's"}</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
           </div>
@@ -377,27 +375,30 @@ export default function Leaderboard() {
         <AnimatePresence mode="popLayout">
           <motion.div layout className="space-y-6">
         {activeTab === "bashclan" ? (
-            <div className="space-y-4">
-            {clans
-              .sort((a, b) => {
-              const totalProjectsA = a.members.reduce(
-                (acc, member) => acc + (member.stats?.projects ?? 0),
-                0
-              );
-              const totalProjectsB = b.members.reduce(
-                (acc, member) => acc + (member.stats?.projects ?? 0),
-                0
-              );
-              return totalProjectsB - totalProjectsA;
-              })
-              .map((clan, index) =>
-              index === 0 ? (
-                <ClanTopOneCard key={clan.id} clan={clan} index={index} />
-              ) : (
-                <ClanCard key={clan.id} clan={clan} index={index} />
-              )
-              )}
-            </div>
+        <div className="space-y-4">
+        {clans
+          .sort((a, b) => {
+          const averagePointsA =
+            a.members.reduce((acc, member) => acc + member.bash_points, 0) /
+            (a.members.length);
+          const averagePointsB =
+            b.members.reduce((acc, member) => acc + member.bash_points, 0) /
+            (b.members.length);
+          return averagePointsB - averagePointsA;
+          })
+          .map((clan, index) => {
+            const totalPoints = clan.members.reduce(
+          (acc, member) => acc + member.bash_points,
+          0
+            );
+            const pointsPercentage = totalPoints / (clan.members.length * 100) * 100;
+            return index === 0 ? (
+          <ClanTopOneCard key={clan.id} clan={clan} index={index} pointsPercentage={pointsPercentage} />
+            ) : (
+          <ClanCard key={clan.id} clan={clan} index={index} pointsPercentage={pointsPercentage} />
+            );
+          })}
+        </div>
         ) : (
           <>
             {/* Top 3 Section */}
@@ -421,6 +422,7 @@ export default function Leaderboard() {
               index={index}
               activeTab={activeTab}
               searchQuery={searchQuery}
+              duolingoStreak={member.duolingoStreak || 0}
               isCurrentUser={currentUser?.id === member.id}
             />
               )
@@ -432,13 +434,14 @@ export default function Leaderboard() {
           {sortedMembers
             .filter((member) => member.originalRank > 3)
             .map((member, index) => (
-              <RegularCard
-            key={member.id}
-            member={member}
-            index={index + 3}
-            activeTab={activeTab}
-            searchQuery={searchQuery}
-            isCurrentUser={currentUser?.id === member.id}
+            <RegularCard
+              key={member.id}
+              member={member}
+              index={index + 3}
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              duolingoStreak={member.duolingoStreak || 0}
+              isCurrentUser={currentUser?.id === member.id}
               />
             ))}
             </div>

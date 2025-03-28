@@ -5,13 +5,12 @@ import { Card } from "~/components/ui/card"
 import { Button } from "~/components/ui/button"
 import { Avatar, AvatarFallback } from "~/components/ui/avatar"
 import { Badge } from "~/components/ui/badge"
-import { Calendar, Clock, MapPin, Users, Trophy, Check } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, Trophy, Check, Pencil } from "lucide-react"
 import type { Event } from "~/types/events"
 import { format } from "date-fns"
 import { motion } from "framer-motion"
 import { cn } from "~/lib/utils"
 import { Link } from "@remix-run/react"
-import { Pencil } from "lucide-react" 
 
 interface EventCardProps {
   event: Event
@@ -20,10 +19,16 @@ interface EventCardProps {
   onCantAttend: () => void
   isJoined: boolean
   isOrganiser: boolean
+  members: { bash_points: number }[]
 }
 
-export function EventCard({ event, onViewAgenda, onJoin, onCantAttend,isOrganiser, isJoined }: EventCardProps) {
+export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganiser, isJoined, members }: EventCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+
+    const averagePoints = (members?.reduce(
+      (acc: number, member: { bash_points: number }) => acc + member.bash_points,
+      0
+    ) || 0) / (members?.length || 1);
 
   return (
     <Card
@@ -62,7 +67,7 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend,isOrganise
       )}
           <div className="flex items-center gap-2 bg-blue-700 px-3 py-1 rounded-full">
             <Trophy className="w-5 h-5 text-yellow-400" />
-            <span className="font-bold">{event.leading_clan.score}</span>
+            <span className="font-bold">{averagePoints}</span>
           </div>
         </div></div>
       </div>
@@ -132,13 +137,17 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend,isOrganise
           >
             View Agenda
           </Button>
-          <Button
+            <Button
             variant="ghost"
             onClick={onCantAttend}
-            className="flex-1 text-blue-200 hover:text-white hover:bg-blue-800"
-          >
+            className={cn(
+              "flex-1 text-blue-200 hover:text-white hover:bg-blue-800",
+              new Date(event.date) < new Date() && "cursor-not-allowed opacity-50 pointer-events-none"
+            )}
+            disabled={new Date(event.date) < new Date()}
+            >
             Can&apos;t Attend
-          </Button>
+            </Button>
         </div>
       </div>
 

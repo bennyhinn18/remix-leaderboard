@@ -27,7 +27,7 @@ export default defineConfig({
       manifest: {
         id: "/",
         name: "Byte Bash Blitz",
-        short_name: "ByteBashBlitz",
+        short_name: "Basher Terminal",
         description: "Manage points",
         theme_color: "#ffffff",
         background_color: "#ffffff",
