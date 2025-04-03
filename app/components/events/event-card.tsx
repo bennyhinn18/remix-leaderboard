@@ -17,6 +17,7 @@ interface EventCardProps {
   onViewAgenda: () => void
   onJoin: () => void
   onCantAttend: () => void
+  onFeedback: () => void
   isJoined: boolean
   isOrganiser: boolean
   members: { bash_points: number }[]
