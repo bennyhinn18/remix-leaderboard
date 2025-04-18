@@ -1,6 +1,12 @@
 import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData, Link } from "@remix-run/react"
-import { ArrowLeft, Github, Code, Book, MessageSquare, Trophy, Award, Briefcase, Cpu, Code2, BookOpen, Globe, Quote } from 'lucide-react'
+import { 
+  ArrowLeft, Github, Code, Book, MessageSquare, Trophy, Award, 
+  Briefcase, Cpu, Code2, BookOpen, Globe, Quote,
+  // Add these new imports
+  GemIcon, Boxes, CircleDot, Sparkles, Leaf, Flame, 
+  Droplets, Medal, Crown 
+} from 'lucide-react'
 import { createServerSupabase } from "~/utils/supabase.server"
 import { ProfileInfo } from "~/components/profile-info"
 import { MainNav } from "~/components/main-nav"
@@ -10,6 +16,49 @@ import { SocialFooter } from "~/components/social-footer"
 import { useState, useEffect } from "react";
 import { EditProfileButton } from "~/components/edit-profile"
 import { isOrganiser } from "~/utils/currentUser"
+
+// Add this function at the top level of your file, after imports
+function getTier(points: number): string {
+  if (points >= 3000) return "Diamond"
+  if (points >= 2600) return "Obsidian"
+  if (points >= 2200) return "Pearl"
+  if (points >= 1750) return "Amethyst"
+  if (points >= 1350) return "Emerald"
+  if (points >= 1000) return "Ruby"
+  if (points >= 700) return "Sapphire"
+  if (points >= 450) return "Gold"
+  if (points >= 250) return "Silver"
+  return "Bronze"
+}
+
+// Add the tier icon function 
+function getTierIcon(tier: string) {
+  switch (tier.toLowerCase()) {
+    case "diamond":
+      return <GemIcon className="w-4 h-4" />
+    case "obsidian":
+      return <Boxes className="w-4 h-4" />
+    case "pearl":
+      return <CircleDot className="w-4 h-4" />
+    case "amethyst":
+      return <Sparkles className="w-4 h-4" />
+    case "emerald":
+      return <Leaf className="w-4 h-4" />
+    case "ruby":
+      return <Flame className="w-4 h-4" />
+    case "sapphire":
+      return <Droplets className="w-4 h-4" />
+    case "gold":
+      return <Trophy className="w-4 h-4" />
+    case "silver":
+      return <Medal className="w-4 h-4" />
+    case "bronze":
+      return <Award className="w-4 h-4" />
+    default:
+      return <Award className="w-4 h-4" />
+  }
+}
+
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -123,6 +172,7 @@ export default function Profile() {
     title: string;
     joinedDate: Date;
     basherLevel: string;
+    tierIcon?: string;
     bashPoints: number;
     clanName: string;
     basherNo: string;
@@ -170,13 +220,17 @@ export default function Profile() {
             )
           : [];
 
+        // Calculate tier based on bash points
+        const tier = getTier(member.bash_points || 0);
+        const tierIcon = getTierIcon(tier);
         
         setProfile({
           ...member,
-          avatar_url: member.avatar_url , // Provide default avatar
+          avatar_url: member.avatar_url, // Provide default avatar
           title: member.title || "Basher",
           joinedDate: new Date(member.joined_date || Date.now()),
-          basherLevel: member.bash_points >= 2500 ? "Diamond" : member.bash_points >= 2400 ? "Platinum" : "Gold",
+          basherLevel: tier, // Use the dynamic tier
+          tierIcon: tierIcon, // Add the tier icon
           bashPoints: member.bash_points || 0,
           clanName: member.clan_name || "Byte Basher",
           basherNo: member.basher_no || "BBT2023045",
@@ -216,7 +270,7 @@ export default function Profile() {
     };
 
     fetchProfile();
-  }, [duolingo_streak,member]);
+  }, [duolingo_streak, member]);
 
   if (!profile) return <p>Loading...</p>; 
 

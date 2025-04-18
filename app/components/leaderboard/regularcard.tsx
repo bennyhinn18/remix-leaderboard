@@ -152,6 +152,7 @@ const RegularCard = ({
               </Link>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-sm hidden sm:block text-gray-400`}>@{member.github_username}</span>
+                {member.bash_points > 0 && (
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm ${getTierStyles(member.tier)}`}
@@ -159,6 +160,7 @@ const RegularCard = ({
                   {getTierIcon(member.tier)}
                   {member.tier.charAt(0).toUpperCase() + member.tier.slice(1)}
                 </motion.div>
+                )}
               </div>
             </motion.div>
           </div>

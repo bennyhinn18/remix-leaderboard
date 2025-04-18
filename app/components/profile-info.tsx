@@ -8,9 +8,40 @@ import type { BasherProfile } from "~/types/profile"
 import { format } from "date-fns"
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog"
 import { useState } from "react"
+import { Link } from "@remix-run/react"
 
 interface ProfileInfoProps {
   profile: BasherProfile
+}
+
+// Add this function at the top of your file, after imports
+function getTierColorScheme(tier: string) {
+  const lowerTier = tier.toLowerCase();
+  
+  switch (lowerTier) {
+    case "diamond":
+      return "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20";
+    case "obsidian":
+      return "bg-slate-500/10 text-slate-400 hover:bg-slate-500/20";
+    case "pearl":
+      return "bg-pink-500/10 text-pink-400 hover:bg-pink-500/20";
+    case "amethyst":
+      return "bg-violet-500/10 text-violet-400 hover:bg-violet-500/20";
+    case "emerald":
+      return "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20";
+    case "ruby":
+      return "bg-red-500/10 text-red-400 hover:bg-red-500/20";
+    case "sapphire":
+      return "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20";
+    case "gold":
+      return "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20";
+    case "silver":
+      return "bg-slate-400/10 text-slate-300 hover:bg-slate-400/20";
+    case "bronze":
+      return "bg-yellow-700/10 text-yellow-600 hover:bg-yellow-700/20";
+    default:
+      return "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20";
+  }
 }
 
 export function ProfileInfo({ profile }: ProfileInfoProps) {
@@ -18,7 +49,7 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
 
   const handleShare = async () => {
     const url = window.location.href
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -48,24 +79,24 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
         className="flex justify-between items-center px-4 sm:px-8 py-6 sm:py-10 rounded-2xl bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
       >
         <div className="flex flex-col sm:flex-row items-center justify-center sm:items-start gap-4 sm:gap-6 sm:justify-between"><motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-800"
-          >
-            {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={profile.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-amber-500/20">
-                <span className="text-3xl font-bold text-white">
-                  {profile.name.charAt(0)}
-                </span>
-              </div>
-            )}
-          </motion.div>
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-800"
+        >
+          {profile.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={profile.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-amber-500/20">
+              <span className="text-3xl font-bold text-white">
+                {profile.name.charAt(0)}
+              </span>
+            </div>
+          )}
+        </motion.div>
 
           <div className="text-center sm:text-left w-full sm:w-auto">
             <motion.h1
@@ -86,8 +117,11 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               <Badge variant="secondary" className="bg-[#4dc4f9]/10  text-[#4dc4f9] hover:bg-[#4dc4f9]/20">
                 {profile.title}
               </Badge>
-              <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 hover:bg-purple-500/20">
-                {profile.basherLevel} Basher
+              <Badge variant="secondary"  className={getTierColorScheme(profile.basherLevel)}>
+                <div className="flex items-center gap-2">
+                  {profile.tierIcon} {/* Display the tier icon */}
+                  <span className="font-medium">{profile.basherLevel} Basher</span>
+                </div>
               </Badge>
             </motion.div>
 
@@ -98,10 +132,15 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               className="flex flex-col hidden sm:block sm:flex-row items-center gap-2 sm:gap-4"
             >
               <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-500" />
+                
                 <span className="text-amber-500 font-semibold">
-                  {profile.bashPoints.toLocaleString()} Points
+                {profile.tierIcon}
                 </span>
+                <Link to={`points-history`} className="flex items-center gap-2">
+                  <span className="text-amber-500 font-semibold">
+                    {profile.bashPoints.toLocaleString()} Points
+                  </span>
+                </Link>
               </div>
               <div className="text-gray-500">
                 Joined {format(new Date(profile.joinedDate), "MMMM yyyy")}
@@ -180,21 +219,21 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
               {profile.clanName}
             </div>
           </div>
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col md:hidden sm:flex-row items-end text-right gap-2 sm:gap-4"
-            >
-              <div className="flex text-amber-500 font-semibold gap-2">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col md:hidden sm:flex-row items-end text-right gap-2 sm:gap-4"
+          >
+            <div className="flex text-amber-500 font-semibold gap-2">
               <Star className="w-5 h-5 text-amber-500" />
               {profile.bashPoints.toLocaleString()} Points
-              </div>
-              
-                <div className="text-gray-500">
-                Joined {format(new Date(profile.joinedDate), "MMM''yy")}
-                </div>
-            </motion.div>
+            </div>
+
+            <div className="text-gray-500">
+              Joined {format(new Date(profile.joinedDate), "MMM''yy")}
+            </div>
+          </motion.div>
         </motion.div>
       </motion.div>
 
