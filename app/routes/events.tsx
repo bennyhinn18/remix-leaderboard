@@ -15,13 +15,10 @@ import { WeekAnnouncement } from "~/components/events/week-announcement";
 import { useLocalStorage } from "~/hooks/use-local-storage";
 
 // Import your client-side Supabase client initialization
-import { createServerSupabase } from "~/utils/supabase.server";
 import { json, useLoaderData } from "@remix-run/react";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { initSupabase } from "~/utils/supabase.client";
 import { isOrganiser } from "~/utils/currentUser";
-import { i } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
-import { is } from "date-fns/locale";
 
 // Helper function to determine event status
 function getEventStatus(date, time) {
@@ -260,7 +257,8 @@ export default function Events() {
                         event={selectedEvent}
                         onJoin={() => handleJoin(selectedEvent.id)}
                         onViewAgenda={() => setShowAgenda(!showAgenda)}
-                        onCantAttend={() => console.log("Can't attend event")}
+                        onCantAttend={() => setShowAbsence(true)}
+                        onFeedback={() => setShowFeedback(true)}
                         isJoined={joinedEvents.includes(selectedEvent.id)}
                         isOrganiser={isOrganiser}
                         members={selectedEvent.leading_clan?.members}

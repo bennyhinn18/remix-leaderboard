@@ -9,12 +9,11 @@ import { Card } from "~/components/ui/card"
 import { SocialFooter } from "~/components/social-footer"
 import { useState, useEffect } from "react";
 import { EditProfileButton } from "~/components/edit-profile"
-import { isOrganiser, isMentor } from "~/utils/currentUser"
+import { isOrganiser } from "~/utils/currentUser"
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request)
-  const mentorStatus = await isMentor(request)
   const response = new Response();
   const supabase = createServerSupabase(request, response);
   const { data: member, error } = await supabase
@@ -37,7 +36,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
   if (error || !member) {
-    return json({ member: null, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, organiserStatus: false, mentorStatus: false });
+    return json({ member: null, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, organiserStatus: false });
   }
 
   return json({
@@ -45,8 +44,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     duolingo_streak,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-    organiserStatus,
-    mentorStatus
+    organiserStatus
   });
 };
 
@@ -119,7 +117,7 @@ await supabase.from('members').select('*').eq("github_username",params.usename)
 };
 
 export default function Profile() {
-  const { member, duolingo_streak, organiserStatus, mentorStatus } = useLoaderData<typeof loader>();
+  const { member, duolingo_streak, organiserStatus } = useLoaderData<typeof loader>();
   interface Profile {
     avatar_url: string;
     title: string;
@@ -234,7 +232,7 @@ export default function Profile() {
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
           </Link>
-          {(organiserStatus || mentorStatus) && (
+          {(organiserStatus) && (
             <EditProfileButton member={member} />
           )}
           <MainNav user={profile} />

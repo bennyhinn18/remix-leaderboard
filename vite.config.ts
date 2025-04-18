@@ -26,7 +26,7 @@ export default defineConfig({
       includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
       manifest: {
         id: "/",
-        name: "Byte Bash Blitz",
+        name: "Basher Terminal",
         short_name: "Basher Terminal",
         description: "Manage points",
         theme_color: "#ffffff",

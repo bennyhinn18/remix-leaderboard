@@ -49,7 +49,7 @@ export function AbsenceModal({ event, isOpen, onClose }: AbsenceModalProps) {
   }, [fetcher.data, isSent, onClose])
 
   const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@(stellamaryscoe\.edu\.in|gmail\.com)$/
     return emailRegex.test(email)
   }
 
@@ -74,7 +74,7 @@ export function AbsenceModal({ event, isOpen, onClose }: AbsenceModalProps) {
                 )}
 
                 {/* Hidden fields */}
-                <input type="hidden" name="to" value="michalnithesh@gmail.com" />
+                <input type="hidden" name="to" value="bashers@stellamaryscoe.edu.in" />
                 <input type="hidden" name="eventId" value={event.id} />
                 <input type="hidden" name="eventTitle" value={event.title} />
                 <input type="hidden" name="date" value={event.date.toString()} />
