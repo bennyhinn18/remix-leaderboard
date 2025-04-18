@@ -37,39 +37,51 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return json({ error: "Missing required fields" });
     }
 
-    const { data: currentPoints, error: pointsError } = await supabase
-        .from("members")
-        .select("bash_points, description")
-        .eq("id", memberId)
-        .single();
-
-    if (pointsError || !currentPoints) {
-        return json({ error: "Failed to fetch current points" });
+    const {error:InsertionError}=await supabase
+    .from("points")
+    .insert({
+        member_id: memberId,
+        points: action === "add" ? Number(points) : -Number(points),
+        description: description || "",
+    });
+    if (InsertionError) {
+        console.error("Error inserting points:", InsertionError);
+        return json({ error: "Failed to insert points" });
     }
 
-    // Format the new description to include points and action
-    const formattedDescription = `${action === "add" ? "+" : "-"}${points} points: ${description}`;
+    // const { data: currentPoints, error: pointsError } = await supabase
+    //     .from("members")
+    //     .select("bash_points, description")
+    //     .eq("id", memberId)
+    //     .single();
 
-    // Append the new description to the existing array
-    const descriptionArray = currentPoints.description || []; // Use existing array or initialize as empty
-    descriptionArray.push(formattedDescription); // Append the new formatted description
+    // if (pointsError || !currentPoints) {
+    //     return json({ error: "Failed to fetch current points" });
+    // }
 
-    const newPoints =
-        action === "add"
-            ? (currentPoints.bash_points || 0) + Number(points)
-            : (currentPoints.bash_points || 0) - Number(points);
+    // // Format the new description to include points and action
+    // const formattedDescription = `${action === "add" ? "+" : "-"}${points} points: ${description}`;
 
-    const { error } = await supabase
-        .from("members")
-        .update({ 
-            bash_points: newPoints, 
-            description: descriptionArray // Use the updated array
-        })
-        .eq("id", memberId);
+    // // Append the new description to the existing array
+    // const descriptionArray = currentPoints.description || []; // Use existing array or initialize as empty
+    // descriptionArray.push(formattedDescription); // Append the new formatted description
 
-    if (error) {
-        return json({ error: error.message });
-    }
+    // const newPoints =
+    //     action === "add"
+    //         ? (currentPoints.bash_points || 0) + Number(points)
+    //         : (currentPoints.bash_points || 0) - Number(points);
+
+    // const { error } = await supabase
+    //     .from("members")
+    //     .update({ 
+    //         bash_points: newPoints, 
+    //         description: descriptionArray // Use the updated array
+    //     })
+    //     .eq("id", memberId);
+
+    // if (error) {
+    //     return json({ error: error.message });
+    // }
 
     return json({ success: true });
 };
