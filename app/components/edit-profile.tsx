@@ -63,7 +63,7 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
         onClick={() => setIsOpen(true)}
         variant="ghost"
         size="sm"
-        className="relative h-14 w-30 rounded-full bg-[#4dc4f9]/10 hover:bg-[#4dc4f9]/20 transition-colors"
+        className="relative h-14 w-30  bg-[#4dc4f9]/10 hover:bg-[#4dc4f9]/20 transition-colors"
       >
         <Edit className="h-8 w-8 text-[#4dc4f9]" />
         <span className="text-[#4dc4f9]">Edit Profile</span>

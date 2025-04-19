@@ -2,11 +2,14 @@ import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { motion, AnimatePresence } from "framer-motion";
-import { History, Users, ArrowLeft, ChevronDown, ChevronUp, Filter, ChevronRight, ChevronLeft } from "lucide-react";
-import { useState, useMemo } from "react";
-import { isOrganiser, getCurrentUser } from "~/utils/currentUser";
+import { 
+  History, Users, ArrowLeft, ChevronDown, ChevronUp, 
+  Filter, ChevronRight, ChevronLeft, Search, X 
+} from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { isOrganiser } from "~/utils/currentUser";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request,params }: LoaderFunctionArgs) => {
     // Check if user is organiser
     const isUserOrganiser = await isOrganiser(request);
     
@@ -23,9 +26,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Get member information for the current user
     const { data: currentMember, error: memberError } = await supabase
         .from("members")
-        .select("id,bash_points")
-        .eq("github_username", user.user_metadata.user_name)
+        .select("id,bash_points,name")
+        .eq("github_username",params.github_username || user.user_metadata.user_name)
         .single();
+    
     if (memberError || !currentMember) {
         console.error("Error fetching current member:", memberError);
         return redirect("/login");
@@ -39,38 +43,56 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         .order("updated_at", { ascending: false });
     
     let allPointsHistory = null;
+    let allMembers = null;
     
-    // If user is organiser, fetch all points history
+    // If user is organiser, fetch all points history and all members for filtering
     if (isUserOrganiser) {
-        const { data: allHistory,error } = await supabase
+        const { data: allHistory, error } = await supabase
             .from("points")
             .select("*, member:members!points_member_id_fkey(id,name)")
             .order("updated_at", { ascending: false });
+        
         allPointsHistory = allHistory;
+        
         if (error) {
             console.error("Error fetching all points history:", error);
             return json({ error: "Failed to fetch all points history" });
         }
+        
+        // Fetch all members for the filter dropdown
+        const { data: members } = await supabase
+            .from("members")
+            .select("id,name")
+            .order("name");
+            
+        allMembers = members;
     }
-    
     
     return json({
         isOrganiser: isUserOrganiser,
         currentMember,
         userPointsHistory,
-        allPointsHistory
+        allPointsHistory,
+        allMembers
     });
 };
 
 export default function PointsHistory() {
-    const { isOrganiser, currentMember, userPointsHistory, allPointsHistory } = useLoaderData<typeof loader>();
+    const { isOrganiser, currentMember, userPointsHistory, allPointsHistory, allMembers } = useLoaderData<typeof loader>();
     const [showAllHistory, setShowAllHistory] = useState(false);
     const [sortField, setSortField] = useState("updated_at");
     const [sortDirection, setSortDirection] = useState("desc");
+    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedMemberId, searchQuery, showAllHistory]);
     
     // Function to handle sorting
     const handleSort = (field: string) => {
@@ -84,11 +106,31 @@ export default function PointsHistory() {
         setCurrentPage(1);
     };
     
-    // Function to sort points history
-    const sortPointsHistory = (history: any[]) => {
+    // Function to sort and filter points history
+    const processPointsHistory = (history: any[]) => {
         if (!history) return [];
         
-        return [...history].sort((a, b) => {
+        // First apply member filtering if a member is selected
+        let filtered = history;
+        
+        if (isOrganiser && showAllHistory) {
+            // Apply member filter if selected
+            if (selectedMemberId) {
+                filtered = filtered.filter(entry => entry.member_id === selectedMemberId);
+            }
+            
+            // Apply search query if provided
+            if (searchQuery.trim()) {
+                const query = searchQuery.toLowerCase();
+                filtered = filtered.filter(entry => 
+                    (entry.description && entry.description.toLowerCase().includes(query)) ||
+                    (entry.member?.name && entry.member.name.toLowerCase().includes(query))
+                );
+            }
+        }
+        
+        // Then apply sorting
+        return [...filtered].sort((a, b) => {
             if (sortField === "points") {
                 return sortDirection === "asc" ? a.points - b.points : b.points - a.points;
             } else if (sortField === "updated_at") {
@@ -102,8 +144,8 @@ export default function PointsHistory() {
     
     // Get the appropriate points history based on user role and selection
     const sortedData = isOrganiser && showAllHistory 
-        ? sortPointsHistory(allPointsHistory)
-        : sortPointsHistory(userPointsHistory);
+        ? processPointsHistory(allPointsHistory)
+        : processPointsHistory(userPointsHistory);
     
     // Calculate total pages
     const totalPages = Math.ceil((sortedData?.length || 0) / itemsPerPage);
@@ -115,29 +157,38 @@ export default function PointsHistory() {
         return sortedData?.slice(startIndex, endIndex) || [];
     }, [sortedData, currentPage, itemsPerPage]);
     
-    // Pagination controls
-    const nextPage = () => {
-        if (currentPage < totalPages) {
-            setCurrentPage(currentPage + 1);
-        }
+    // Handle member selection
+    const handleMemberSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const memberId = e.target.value;
+        setSelectedMemberId(memberId === "all" ? null : memberId);
     };
     
-    const prevPage = () => {
+    // Clear all filters
+    const clearFilters = () => {
+        setSelectedMemberId(null);
+        setSearchQuery("");
+    };
+
+    function handleItemsPerPageChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+        const newItemsPerPage = parseInt(event.target.value, 10);
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(1); // Reset to the first page when items per page changes
+    }
+    function prevPage(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
         if (currentPage > 1) {
             setCurrentPage(currentPage - 1);
         }
-    };
-    
-    const goToPage = (page: number) => {
-        const pageNumber = Math.max(1, Math.min(page, totalPages));
-        setCurrentPage(pageNumber);
-    };
-    
-    const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setItemsPerPage(Number(e.target.value));
-        setCurrentPage(1); // Reset to first page
-    };
-
+    }
+    function goToPage(pageNumber: number): void {
+        if (pageNumber >= 1 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+        }
+    }
+    function nextPage(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    }
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white py-12 px-4">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
@@ -198,6 +249,70 @@ export default function PointsHistory() {
                                 {showAllHistory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                             </div>
                         </button>
+                    </motion.div>
+                )}
+                
+                {/* Filter Controls for Organizers */}
+                {isOrganiser && showAllHistory && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 space-y-3"
+                    >
+                        <div className="flex items-center">
+                            <Filter className="w-5 h-5 mr-2 text-blue-400" />
+                            <h3 className="text-lg font-medium">Filters</h3>
+                            
+                            {(selectedMemberId || searchQuery) && (
+                                <button 
+                                    onClick={clearFilters}
+                                    className="ml-auto text-sm text-gray-400 hover:text-white flex items-center"
+                                >
+                                    <X className="w-4 h-4 mr-1" />
+                                    Clear filters
+                                </button>
+                            )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Member Filter */}
+                            <div>
+                                <label htmlFor="member-filter" className="block text-sm font-medium text-gray-400 mb-1">
+                                    Filter by Member
+                                </label>
+                                <select
+                                    id="member-filter"
+                                    value={selectedMemberId || "all"}
+                                    onChange={handleMemberSelect}
+                                    className="w-full  border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="all">All Members</option>
+                                    {allMembers && allMembers.map((member: any) => (
+                                        <option key={member.id} value={member.name}>
+                                            {member.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            {/* Search Filter */}
+                            <div>
+                                <label htmlFor="search-filter" className="block text-sm font-medium text-gray-400 mb-1">
+                                    Search
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        id="search-filter"
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search by description or member name"
+                                        className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                </div>
+                            </div>
+                        </div>
                     </motion.div>
                 )}
                 

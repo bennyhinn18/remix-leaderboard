@@ -2,8 +2,8 @@
 
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
-import { useEffect, useState } from "react"
-import { Trophy, Github, Code, Search, Award, Medal,  X, Building, Feather, MessageCircle, Book, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
+import { Trophy, Github, Code, Search, Award, Medal, X, Building, Feather, MessageCircle, Book, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown, User, ArrowDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { initSupabase } from "~/utils/supabase.client"
 import iconImage from "~/assets/bashers.png"
@@ -77,34 +77,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response()
   const supabase = createServerSupabase(request, response)
 
-  // Fetch all members
-  // const { data: members } = await supabase.from("members").select("*")
-
-  // Fetch Duolingo streaks for each member
-  // const membersWithDuolingoStreaks = await Promise.all(
-  //   members.map(async (member) => {
-  //     if (member.duolingo_username) {
-  //       try {
-  //         const duolingoResponse = await fetch(
-  //           `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
-  //         )
-  //         const duolingoData = await duolingoResponse.json()
-  //         const userData = duolingoData.users?.[0] || {}
-  //         const duolingo_streak = Math.max(
-  //           userData.streak ?? 0,
-  //           userData.streakData?.currentStreak?.length ?? 0,
-  //           userData.streakData?.previousStreak?.length ?? 0
-  //         )
-  //         return { ...member, duolingoStreak: duolingo_streak }
-  //       } catch (error) {
-  //         console.error(`Error fetching Duolingo streak for ${member.duolingo_username}:`, error)
-  //         return { ...member, duolingoStreak: 0 }
-  //       }
-  //     }
-  //     return { ...member, duolingoStreak: 0 }
-  //   })
-  // )
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -116,11 +88,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   })
 }
 
-
-
-
 export default function Leaderboard() {
-  const { members: initialMembers, SUPABASE_URL, SUPABASE_ANON_KEY } = useLoaderData<typeof loader>()
+  const { members: initialMembers, SUPABASE_URL, SUPABASE_ANON_KEY,user } = useLoaderData<typeof loader>()
   const [members, setMembers] = useState<MemberWithStats[]>(
     initialMembers.map((m) => ({ ...m, tier: getTier(m.bash_points) }))
   )
@@ -128,6 +97,9 @@ export default function Leaderboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const [currentUser, setCurrentUser] = useState<MemberWithStats | null>(null)
+  const [showScrollButton, setShowScrollButton] = useState(true);
+  const currentUserRef = useRef<HTMLDivElement>(null);
+
   interface Clan {
     id: string
     name: string
@@ -137,6 +109,21 @@ export default function Leaderboard() {
 
   const [clans, setClans] = useState<Clan[]>([])
 
+  const scrollToCurrentUser = () => {
+    if (currentUserRef.current) {
+      currentUserRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'center'
+      });
+      
+      // Flash animation effect
+      currentUserRef.current.classList.add('highlight-pulse');
+      setTimeout(() => {
+        currentUserRef.current?.classList.remove('highlight-pulse');
+      }, 2000);
+    }
+  };
+
   // Fetch members and current user
   useEffect(() => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return
@@ -144,17 +131,13 @@ export default function Leaderboard() {
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     const fetchCurrentUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      
       if (user) {
-        // Get the GitHub username from the user metadata or identity providers
         const githubUsername =
           user.user_metadata?.user_name ||
           user.identities?.find((i: any) => i.provider === "github")?.identity_data?.user_name
 
         if (githubUsername) {
-          // Find the member with matching GitHub username
           const { data: memberData } = await supabase
             .from("members")
             .select("*")
@@ -171,7 +154,8 @@ export default function Leaderboard() {
         }
       }
     }
-
+    console.log("Fetching current user...")
+    console.log(currentUser)
     const fetchMembers = async () => {
       const { data } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
 
@@ -187,18 +171,6 @@ export default function Leaderboard() {
         )
         setMembers(membersWithStats)
       }
-
-        // // Group members by league
-        // const leagueGroups: Record<string, MemberWithStats[]> = {}
-        // membersWithStats.forEach((member) => {
-        //   const league = member.league || "bronze"
-        //   if (!leagueGroups[league]) {
-        //     leagueGroups[league] = []
-        //   }
-        //   leagueGroups[league].push(member)
-        // })
-
-        // setLeagues(leagueGroups)
     }
 
     const fetchClans = async () => {
@@ -241,30 +213,9 @@ export default function Leaderboard() {
   }, [])
 
   async function fetchGitHubStreak(username: string) {
-    /*try {
-      const response = await fetch(`https://api.github.com/users/${username}/events/public`)
-      const events = await response.json()
-
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-      const contributions = events.filter((event: any) => {
-        const eventDate = new Date(event.created_at)
-        return (
-          eventDate > thirtyDaysAgo &&
-          (event.type === "PushEvent" || event.type === "CreateEvent" || event.type === "PullRequestEvent")
-        )
-      })
-
-      return contributions.length
-    } catch (error) {
-      console.error(`Error fetching GitHub stats for ${username}:`, error)
-      return 0
-    }*/
-    return 0 // Keeping the original functionality
+    return 0
   }
 
-  // Filter and sort members based on search and active tab
   const filteredMembers = members
     .map((member, index) => ({ ...member, originalRank: index + 1 }))
     .filter(
@@ -286,7 +237,6 @@ export default function Leaderboard() {
 
   return (
     <div className="min-h-screen pb-[78px] bg-gradient-to-b from-gray-900 to-black dark:from-white dark:to-gray-50">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -306,7 +256,6 @@ export default function Leaderboard() {
             </div>
           </div>
 
-          {/* Search and Tabs */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:w-full flex items-center">
               {showSearch ? (
@@ -370,7 +319,21 @@ export default function Leaderboard() {
         </div>
       </motion.div>
 
-      {/* Leaderboard */}
+      {currentUser && showScrollButton && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => scrollToCurrentUser()}
+          className="fixed bottom-20 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full shadow-lg"
+        >
+          <User className="w-4 h-4" />
+          <span>Find Me</span>
+          <ArrowDown className="w-4 h-4" />
+        </motion.button>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         <AnimatePresence mode="popLayout">
           <motion.div layout className="space-y-6">
@@ -401,7 +364,6 @@ export default function Leaderboard() {
         </div>
         ) : (
           <>
-            {/* Top 3 Section */}
             <div className="space-y-4">
           {sortedMembers
             .filter((member) => member.originalRank <= 3)
@@ -414,6 +376,7 @@ export default function Leaderboard() {
               activeTab={activeTab}
               searchQuery={searchQuery}
               isCurrentUser={currentUser?.id === member.id}
+              ref={currentUser?.id === member.id ? currentUserRef : null}
             />
               ) : (
             <RegularCard
@@ -424,12 +387,12 @@ export default function Leaderboard() {
               searchQuery={searchQuery}
               duolingoStreak={member.duolingoStreak || 0}
               isCurrentUser={currentUser?.id === member.id}
+              ref={currentUser?.id === member.id ? currentUserRef : null}
             />
               )
             )}
             </div>
 
-            {/* Rest of the Leaderboard */}
             <div className="space-y-4 mt-8">
           {sortedMembers
             .filter((member) => member.originalRank > 3)
@@ -442,6 +405,7 @@ export default function Leaderboard() {
               searchQuery={searchQuery}
               duolingoStreak={member.duolingoStreak || 0}
               isCurrentUser={currentUser?.id === member.id}
+              ref={currentUser?.id === member.id ? currentUserRef : null}
               />
             ))}
             </div>
