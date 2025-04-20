@@ -3,15 +3,19 @@
 import { motion } from "framer-motion"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
-import { Briefcase, FileText, Star, Share2, Github } from 'lucide-react'
+import { Briefcase, FileText, Star, Share2, Github, Edit } from 'lucide-react'
 import type { BasherProfile } from "~/types/profile"
 import { format } from "date-fns"
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog"
 import { useState } from "react"
 import { Link } from "@remix-run/react"
+import { EditProfileButton } from "~/components/edit-profile"
 
 interface ProfileInfoProps {
   profile: BasherProfile
+  canEdit?: boolean
+  member?: any
+  isOrganiser?: boolean // Add this new prop
 }
 
 // Add this function at the top of your file, after imports
@@ -44,7 +48,7 @@ function getTierColorScheme(tier: string) {
   }
 }
 
-export function ProfileInfo({ profile }: ProfileInfoProps) {
+export function ProfileInfo({ profile, canEdit = false, member, isOrganiser = false }: ProfileInfoProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
@@ -155,61 +159,72 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
           transition={{ delay: 0.4 }}
           className="flex flex-col items-end gap-3"
         >
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-white/10"
-              >
-                <Share2 className="w-5 h-5 text-gray-400" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <div className="w-[90vw] sm:max-w-md p-4 sm:p-8 relative bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-xl">
-                {/* Share Card Content */}
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-800">
-                    {profile.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt={profile.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-2xl font-bold">{profile.name.charAt(0)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">{profile.name}</h3>
-                    <div className="text-sm text-gray-400">{profile.basherLevel} Basher</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-white/10 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-amber-500">
-                      {profile.bashPoints.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-gray-400">Points</div>
-                  </div>
-                  <div className="bg-white/10 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-purple-500">
-                      {profile.projects}
-                    </div>
-                    <div className="text-sm text-gray-400">Projects</div>
-                  </div>
-                </div>
+          <div className="flex items-center gap-2">
+            {/* Edit Button - Show if user can edit (organiser OR own profile) */}
+            {canEdit && member && (
+              <EditProfileButton 
+                member={member} 
+                isOrganiser={isOrganiser} // Pass this prop to EditProfileButton
+              />
+            )}
+            
+            {/* Share Button - Keep existing */}
+            <Dialog>
+              <DialogTrigger asChild>
                 <Button
-                  className="w-full"
-                  onClick={handleShare}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full hover:bg-white/10"
                 >
-                  {copied ? 'Copied!' : 'Share Profile'}
+                  <Share2 className="w-5 h-5 text-gray-400" />
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <div className="w-[90vw] sm:max-w-md p-4 sm:p-8 relative bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-xl">
+                  {/* Share Card Content */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-800">
+                      {profile.avatar_url ? (
+                        <img
+                          src={profile.avatar_url}
+                          alt={profile.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-2xl font-bold">{profile.name.charAt(0)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{profile.name}</h3>
+                      <div className="text-sm text-gray-400">{profile.basherLevel} Basher</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-white/10 rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-amber-500">
+                        {profile.bashPoints.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-gray-400">Points</div>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-purple-500">
+                        {profile.projects}
+                      </div>
+                      <div className="text-sm text-gray-400">Projects</div>
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={handleShare}
+                  >
+                    {copied ? 'Copied!' : 'Share Profile'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           <div className="text-right">
             <div className="text-sm text-emerald-500">
@@ -226,7 +241,8 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
             className="flex flex-col md:hidden sm:flex-row items-end text-right gap-2 sm:gap-4"
           >
             <div className="flex text-amber-500 font-semibold gap-2">
-              <Star className="w-5 h-5 text-amber-500" />
+            {profile.tierIcon}
+              {/* <Star className="w-5 h-5 text-amber-500" /> */}
               {profile.bashPoints.toLocaleString()} Points
             </div>
 

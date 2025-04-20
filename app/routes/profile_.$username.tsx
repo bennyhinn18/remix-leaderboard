@@ -62,30 +62,43 @@ function getTierIcon(tier: string) {
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const organiserStatus = await isOrganiser(request)
+  const organiserStatus = await isOrganiser(request);
   const response = new Response();
   const supabase = createServerSupabase(request, response);
+  
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Fetch the profile being viewed
   const { data: member, error } = await supabase
     .from("members")
     .select("*")
     .eq("github_username", params.username)
     .single();
-
-    // Fetch Duolingo streak
-    const duolingoResponse = await fetch(
-      `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
-    );
-    const duolingoData = await duolingoResponse.json();
-    const userData = duolingoData.users?.[0] || {};
-    const duolingo_streak = Math.max(
-      userData.streak ?? 0,
-      userData.streakData?.currentStreak?.length ?? 0,
-      userData.streakData?.previousStreak?.length ?? 0
-    );
-
+  
+  // Check if current user is viewing their own profile
+  const isOwnProfile = user && member && user.user_metadata?.user_name === member.github_username;
+  
+  // Fetch Duolingo streak
+  const duolingoResponse = await fetch(
+    `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+  );
+  const duolingoData = await duolingoResponse.json();
+  const userData = duolingoData.users?.[0] || {};
+  const duolingo_streak = Math.max(
+    userData.streak ?? 0,
+    userData.streakData?.currentStreak?.length ?? 0,
+    userData.streakData?.previousStreak?.length ?? 0
+  );
 
   if (error || !member) {
-    return json({ member: null, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, organiserStatus: false });
+    return json({ 
+      member: null, 
+      SUPABASE_URL: process.env.SUPABASE_URL, 
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, 
+      organiserStatus: false,
+      isOwnProfile: false 
+    });
   }
 
   return json({
@@ -93,7 +106,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     duolingo_streak,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-    organiserStatus
+    organiserStatus,
+    isOwnProfile:false
   });
 };
 
@@ -166,7 +180,7 @@ await supabase.from('members').select('*').eq("github_username",params.usename)
 };
 
 export default function Profile() {
-  const { member, duolingo_streak, organiserStatus } = useLoaderData<typeof loader>();
+  const { member, duolingo_streak, organiserStatus, isOwnProfile } = useLoaderData<typeof loader>();
   interface Profile {
     avatar_url: string;
     title: string;
@@ -286,14 +300,16 @@ export default function Profile() {
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
           </Link>
-          {(organiserStatus) && (
-            <EditProfileButton member={member} />
-          )}
           <MainNav user={profile} />
         </div>
 
-        {/* Profile Info Section */}
-        <ProfileInfo profile={profile} />
+        {/* Profile Info Section - Pass canEdit and member props */}
+        <ProfileInfo 
+          profile={profile} 
+          canEdit={organiserStatus || isOwnProfile} 
+          member={member}
+          isOrganiser={organiserStatus}
+        />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">

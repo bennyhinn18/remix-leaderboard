@@ -120,7 +120,9 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganis
               isJoined
                 ? "bg-green-600 hover:bg-green-700"
                 : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600",
-            )}
+            )
+          }
+          disabled={new Date(event.date) < new Date()}
           >
             {isJoined ? (
               <span className="flex items-center gap-2">

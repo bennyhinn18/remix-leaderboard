@@ -1,6 +1,7 @@
 import { motion } from "framer-motion"
 import { User, Award, Trophy, Medal, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown } from "lucide-react"
 import { Link } from "@remix-run/react"
+import { forwardRef } from "react" // Add this import
 
 type MemberWithStats = {
   originalRank: number;
@@ -71,27 +72,29 @@ function getTierStyles(tier: string) {
   }
 }
 
-
-const RegularCard = ({
+// Convert to forwardRef pattern
+const RegularCard = forwardRef<
+  HTMLDivElement,
+  {
+    member: MemberWithStats
+    index: number
+    activeTab: string
+    searchQuery: string
+    duolingoStreak?: number
+    isCurrentUser: boolean
+  }
+>(({
   member,
   index,
   activeTab,
   searchQuery,
+  duolingoStreak,
   isCurrentUser,
-}: {
-  member: MemberWithStats
-  index: number
-  activeTab: string
-  searchQuery: string
-  duolingoStreak: number
-  isCurrentUser: boolean
-}) => {
-  // console.log("Active Tab:", activeTab);
-  // console.log("Member Duolingo Streak:", member.duolingoStreak);
-  // console.log("Member Object:", member);
+}, ref) => {
 
   return (
     <motion.div
+      ref={ref} // Use ref here directly
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -146,7 +149,7 @@ const RegularCard = ({
                 <p className="text-white flex items-center gap-2">
                   {member.name}
                   {isCurrentUser && (
-                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">You</span>
+                    <span className="text-xs hidden sm:block bg-blue-500 text-white px-2 py-0.5 rounded-full">You</span>
                   )}
                 </p>
               </Link>
@@ -208,6 +211,7 @@ const RegularCard = ({
       </motion.div>
     </motion.div>
   )
-}
+});
+
 
 export default RegularCard;

@@ -20,6 +20,7 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import { initSupabase } from "~/utils/supabase.client";
 import { isOrganiser } from "~/utils/currentUser";
 
+
 // Helper function to determine event status
 function getEventStatus(date, time) {
   const eventDate = parseISO(date);
@@ -34,8 +35,9 @@ function getEventStatus(date, time) {
   return "ongoing";
 }
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  
   return json({
-    isOrganiser: isOrganiser(request),
+    isOrganiser:await isOrganiser(request),
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   })
@@ -193,7 +195,7 @@ export default function Events() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 p-4">
+    <div className="min-h-screen pb-[78px] bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {location.pathname !== "/events/new" && (
           <>

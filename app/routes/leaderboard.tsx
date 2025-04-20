@@ -98,7 +98,7 @@ export default function Leaderboard() {
   const [showSearch, setShowSearch] = useState(false)
   const [currentUser, setCurrentUser] = useState<MemberWithStats | null>(null)
   const [showScrollButton, setShowScrollButton] = useState(true);
-  const currentUserRef = useRef<HTMLDivElement>(null);
+  const currentUserRef = useRef<HTMLElement | null>(null);
 
   interface Clan {
     id: string
@@ -154,8 +154,7 @@ export default function Leaderboard() {
         }
       }
     }
-    console.log("Fetching current user...")
-    console.log(currentUser)
+
     const fetchMembers = async () => {
       const { data } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
 
@@ -326,11 +325,11 @@ export default function Leaderboard() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => scrollToCurrentUser()}
-          className="fixed bottom-20 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full shadow-lg"
+          className="fixed bottom-28 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full shadow-lg"
         >
           <User className="w-4 h-4" />
           <span>Find Me</span>
-          <ArrowDown className="w-4 h-4" />
+          {/* <ArrowDown className="w-4 h-4" /> */}
         </motion.button>
       )}
 
