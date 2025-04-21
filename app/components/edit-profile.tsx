@@ -62,11 +62,12 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
       <Button
         onClick={() => setIsOpen(true)}
         variant="ghost"
-        size="sm"
-        className="relative h-14 w-30  bg-[#4dc4f9]/10 hover:bg-[#4dc4f9]/20 transition-colors"
+        size="icon"
+        className="rounded-full hover:bg-white/10"
+        // className="relative h-14 w-30  bg-[#4dc4f9]/10 hover:bg-[#4dc4f9]/20 transition-colors"
       >
-        <Edit className="h-8 w-8 text-[#4dc4f9]" />
-        <span className="text-[#4dc4f9]">Edit Profile</span>
+        <Edit className="h-5 w-5 text-grey-400" />
+        {/* <span className="text-[#4dc4f9]">Edit Profile</span> */}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

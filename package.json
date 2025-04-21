@@ -50,6 +50,7 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.5.2",
     "react-qr-barcode-scanner": "^2.0.0",
+    "recharts": "^2.15.3",
     "remix-auth": "^4.1.0",
     "remix-auth-github": "^3.0.2",
     "resend": "^4.1.2",

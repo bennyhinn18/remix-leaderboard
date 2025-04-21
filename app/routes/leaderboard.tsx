@@ -3,7 +3,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { useEffect, useState, useRef } from "react"
-import { Trophy, Github, Code, Search, Award, Medal, X, Building, Feather, MessageCircle, Book, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown, User, ArrowDown } from "lucide-react"
+import { Trophy, Github, Code, Search, Award, Medal, X, Building, Feather, MessageCircle, Book, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown, User, ArrowDown, ArrowUp, Info } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { initSupabase } from "~/utils/supabase.client"
 import iconImage from "~/assets/bashers.png"
@@ -13,6 +13,7 @@ import ClanTopOneCard from "~/components/leaderboard/clantopcard"
 import TopThreeCard from "~/components/leaderboard/topthreecard"
 import ClanCard from "~/components/leaderboard/clancard"
 import RegularCard from "~/components/leaderboard/regularcard"
+import LeagueInfoButton from "~/components/league-info"
 
 interface MemberWithStats {
   id: string
@@ -99,6 +100,7 @@ export default function Leaderboard() {
   const [currentUser, setCurrentUser] = useState<MemberWithStats | null>(null)
   const [showScrollButton, setShowScrollButton] = useState(true);
   const currentUserRef = useRef<HTMLElement | null>(null);
+  const [userPosition, setUserPosition] = useState<"above" | "below" | "visible">("below");
 
   interface Clan {
     id: string
@@ -121,6 +123,21 @@ export default function Leaderboard() {
       setTimeout(() => {
         currentUserRef.current?.classList.remove('highlight-pulse');
       }, 2000);
+    }
+  };
+
+  const checkUserPosition = () => {
+    if (!currentUserRef.current) return;
+    
+    const rect = currentUserRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    if (rect.top < 0) {
+      setUserPosition("above");
+    } else if (rect.top > viewportHeight) {
+      setUserPosition("below");
+    } else {
+      setUserPosition("visible");
     }
   };
 
@@ -211,6 +228,16 @@ export default function Leaderboard() {
     }
   }, [])
 
+  useEffect(() => {
+    window.addEventListener("scroll", checkUserPosition);
+    // Check initial position
+    checkUserPosition();
+    
+    return () => {
+      window.removeEventListener("scroll", checkUserPosition);
+    };
+  }, [currentUser]);
+
   async function fetchGitHubStreak(username: string) {
     return 0
   }
@@ -249,6 +276,7 @@ export default function Leaderboard() {
                 Leaderboard
               </h1>
             </div>
+            <LeagueInfoButton currentUser={currentUser} />
             <div className="hidden sm:block text-right">
               <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher's"}</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
@@ -325,11 +353,15 @@ export default function Leaderboard() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => scrollToCurrentUser()}
-          className="fixed bottom-28 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full shadow-lg"
+          className={`fixed bottom-28 right-6 z-50 flex items-center gap-2 px-4 py-2 text-white rounded-full shadow-lg ${userPosition === "visible" ? "bg-green-500" : "bg-blue-500"}`}
         >
-          <User className="w-4 h-4" />
-          <span>Find Me</span>
-          {/* <ArrowDown className="w-4 h-4" /> */}
+          {/*<User className="w-4 h-4" />
+           <span>Find Me</span> */}
+          {userPosition === "above" ? (
+            <ArrowUp className="w-4 h-4 animate-bounce" />
+          ) : userPosition === "below" ? (
+            <ArrowDown className="w-4 h-4 animate-bounce" />
+          ) : null}
         </motion.button>
       )}
 

@@ -16,6 +16,8 @@ import { SocialFooter } from "~/components/social-footer"
 import { useState, useEffect } from "react";
 import { EditProfileButton } from "~/components/edit-profile"
 import { isOrganiser } from "~/utils/currentUser"
+import  PointsGraph  from "~/components/points-graph"
+import { u } from "node_modules/framer-motion/dist/types.d-6pKw1mTI"
 
 // Add this function at the top level of your file, after imports
 function getTier(points: number): string {
@@ -75,6 +77,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     .select("*")
     .eq("github_username", params.username)
     .single();
+
+      // Additional fetch for points history
+  const { data: pointsHistory, error: pointsError } = await supabase
+  .from("points")
+  .select("*")
+  .eq("member_id", member.id)
+  .order("updated_at", { ascending: true });
+  
+if (pointsError) {
+  console.error("Error fetching points history:", pointsError);
+}
   
   // Check if current user is viewing their own profile
   const isOwnProfile = user && member && user.user_metadata?.user_name === member.github_username;
@@ -103,10 +116,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   return json({
     member,
+    user,
     duolingo_streak,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     organiserStatus,
+    pointsHistory: pointsHistory || [],
     isOwnProfile:false
   });
 };
@@ -180,7 +195,7 @@ await supabase.from('members').select('*').eq("github_username",params.usename)
 };
 
 export default function Profile() {
-  const { member, duolingo_streak, organiserStatus, isOwnProfile } = useLoaderData<typeof loader>();
+  const { member, duolingo_streak, organiserStatus, isOwnProfile,pointsHistory,user } = useLoaderData<typeof loader>();
   interface Profile {
     avatar_url: string;
     title: string;
@@ -310,7 +325,10 @@ export default function Profile() {
           member={member}
           isOrganiser={organiserStatus}
         />
-
+         {/* Points Graph - Add this section */}
+        {user && pointsHistory && pointsHistory.length > 0 && (
+          <PointsGraph pointsHistory={pointsHistory} />
+        )}
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
