@@ -68,6 +68,11 @@ const navigation = [
     href: "/clans",
     icon: UserCheck,
   },
+  {
+    title: "Legacy-Bashers",
+    href: "/legacy-bashers",
+    icon: UserCheck,
+  },
 ]
 
 const bottomNav = [

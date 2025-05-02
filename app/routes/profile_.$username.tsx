@@ -18,49 +18,7 @@ import { EditProfileButton } from "~/components/edit-profile"
 import { isOrganiser } from "~/utils/currentUser"
 import  PointsGraph  from "~/components/points-graph"
 import { u } from "node_modules/framer-motion/dist/types.d-6pKw1mTI"
-
-// Add this function at the top level of your file, after imports
-function getTier(points: number): string {
-  if (points >= 3000) return "Diamond"
-  if (points >= 2600) return "Obsidian"
-  if (points >= 2200) return "Pearl"
-  if (points >= 1750) return "Amethyst"
-  if (points >= 1350) return "Emerald"
-  if (points >= 1000) return "Ruby"
-  if (points >= 700) return "Sapphire"
-  if (points >= 450) return "Gold"
-  if (points >= 250) return "Silver"
-  return "Bronze"
-}
-
-// Add the tier icon function 
-function getTierIcon(tier: string) {
-  switch (tier.toLowerCase()) {
-    case "diamond":
-      return <GemIcon className="w-4 h-4" />
-    case "obsidian":
-      return <Boxes className="w-4 h-4" />
-    case "pearl":
-      return <CircleDot className="w-4 h-4" />
-    case "amethyst":
-      return <Sparkles className="w-4 h-4" />
-    case "emerald":
-      return <Leaf className="w-4 h-4" />
-    case "ruby":
-      return <Flame className="w-4 h-4" />
-    case "sapphire":
-      return <Droplets className="w-4 h-4" />
-    case "gold":
-      return <Trophy className="w-4 h-4" />
-    case "silver":
-      return <Medal className="w-4 h-4" />
-    case "bronze":
-      return <Award className="w-4 h-4" />
-    default:
-      return <Award className="w-4 h-4" />
-  }
-}
-
+import { getTier, getTierIcon } from "~/utils/tiers";
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -301,10 +259,17 @@ export default function Profile() {
     fetchProfile();
   }, [duolingo_streak, member]);
 
+  // Check if the member is a legacy basher  
+  const isLegacyBasher = member?.title === "Legacy Basher";
+
   if (!profile) return <p>Loading...</p>; 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <div className={`min-h-screen ${
+      isLegacyBasher 
+        ? "bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900" 
+        : "bg-gradient-to-br from-gray-900 to-gray-800"
+    } text-white`}>
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation */}
         <div className="mb-8 flex justify-between items-center">
@@ -324,14 +289,20 @@ export default function Profile() {
           canEdit={organiserStatus || isOwnProfile} 
           member={member}
           isOrganiser={organiserStatus}
+          isLegacyBasher={isLegacyBasher}
         />
          {/* Points Graph - Add this section */}
         {user && pointsHistory && pointsHistory.length > 0 && (
-          <PointsGraph pointsHistory={pointsHistory} />
+          <PointsGraph pointsHistory={pointsHistory} 
+          isLegacyBasher={isLegacyBasher}/>
         )}
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-          <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
+          <div className={`${
+            isLegacyBasher 
+              ? "bg-yellow-500/10 backdrop-blur-lg border border-yellow-500/30" 
+              : "bg-white/5 backdrop-blur-lg"
+          }backdrop-blur-lg rounded-xl p-6 text-center`}>
           <motion.div
               className="flex flex-col items-center gap-2"
               initial={{ y: 10 }}
@@ -573,6 +544,19 @@ export default function Profile() {
               <SocialFooter socials={profile.socials} />
             </motion.div>
       </div>
+      {/* Legacy Basher crown badge */}
+      {isLegacyBasher && (
+        <motion.div 
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 1, type: "spring" }}
+        >
+          <Crown className="w-5 h-5" />
+          <span>Legacy Basher</span>
+          <Sparkles className="w-5 h-5" />
+        </motion.div>
+      )}
     </div>
   )
 }

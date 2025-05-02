@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
-import { Briefcase, FileText, Star, Share2, Github, Edit } from 'lucide-react'
+import { Briefcase, FileText, Star, Share2, Github, Edit, Crown } from 'lucide-react'
 import type { BasherProfile } from "~/types/profile"
 import { format } from "date-fns"
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog"
@@ -12,10 +12,11 @@ import { Link } from "@remix-run/react"
 import { EditProfileButton } from "~/components/edit-profile"
 
 interface ProfileInfoProps {
-  profile: BasherProfile
-  canEdit?: boolean
-  member?: any
-  isOrganiser?: boolean // Add this new prop
+  profile: BasherProfile;
+  canEdit?: boolean;
+  member?: any;
+  isOrganiser?: boolean;
+  isLegacyBasher?: boolean; // Add this new prop
 }
 
 // Add this function at the top of your file, after imports
@@ -48,7 +49,7 @@ function getTierColorScheme(tier: string) {
   }
 }
 
-export function ProfileInfo({ profile, canEdit = false, member, isOrganiser = false }: ProfileInfoProps) {
+export function ProfileInfo({ profile, canEdit = false, member, isOrganiser = false, isLegacyBasher = false }: ProfileInfoProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
@@ -80,12 +81,42 @@ export function ProfileInfo({ profile, canEdit = false, member, isOrganiser = fa
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center px-4 sm:px-8 py-6 sm:py-10 rounded-2xl bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
+        className={`flex justify-between items-center px-4 sm:px-8 py-6 sm:py-10 rounded-2xl ${
+          isLegacyBasher 
+            ? "bg-gradient-to-r from-yellow-500/10 via-purple-500/10 to-amber-500/10 border border-yellow-400/30"
+            : "bg-gradient-to-r from-[#4dc4f9]/5 via-purple-500/5 to-amber-500/5 dark:from-[#4dc4f9]/10 dark:via-purple-500/10 dark:to-amber-500/10"
+        }`}
       >
+        {/* Animated crown for Legacy Bashers */}
+        {isLegacyBasher && (
+          <motion.div 
+            className="absolute -top-6 right-10"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <motion.div
+              animate={{ 
+                y: [0, -5, 0],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ 
+                duration: 3, 
+                repeat: Infinity, 
+                repeatType: "mirror"
+              }}
+            >
+              <Crown className="w-12 h-12 text-yellow-400 filter drop-shadow-lg" />
+            </motion.div>
+          </motion.div>
+        )}
+        
         <div className="flex flex-col sm:flex-row items-center justify-center sm:items-start gap-4 sm:gap-6 sm:justify-between"><motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-800"
+          className={`w-24 h-24 rounded-2xl overflow-hidden ${
+            isLegacyBasher ? "ring-4 ring-yellow-400 shadow-lg shadow-yellow-400/20" : "bg-gray-800"
+          }`}
         >
           {profile.avatar_url ? (
             <img

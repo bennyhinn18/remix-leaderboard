@@ -8,7 +8,7 @@ import { format, parseISO } from "date-fns";
 import {  ChevronDown, ChevronUp, ChevronRight, History } from "lucide-react";
 import { Link } from "@remix-run/react";
 
-function PointsGraph({ pointsHistory }: { pointsHistory: any[] }) {
+function PointsGraph({ pointsHistory, isLegacyBasher = false }: { pointsHistory: any[], isLegacyBasher?: boolean }) {
   const [showDetails, setShowDetails] = useState(false);
   
   // Calculate total points (sum of all point transactions)
@@ -35,7 +35,11 @@ function PointsGraph({ pointsHistory }: { pointsHistory: any[] }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/5 backdrop-blur-lg rounded-xl p-6 mt-8"
+      className={`${
+        isLegacyBasher 
+          ? "bg-yellow-500/10 backdrop-blur-lg border border-yellow-400/20" 
+          : "bg-white/5 backdrop-blur-lg"
+      } rounded-xl p-6 mt-8`}
     >
       {/* Points Summary - Always visible */}
       <div 
@@ -85,8 +89,8 @@ function PointsGraph({ pointsHistory }: { pointsHistory: any[] }) {
                   >
                     <defs>
                       <linearGradient id="colorPoints" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor={isLegacyBasher ? "#FFD700" : "#3b82f6"} stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor={isLegacyBasher ? "#FFD700" : "#3b82f6"} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -120,7 +124,7 @@ function PointsGraph({ pointsHistory }: { pointsHistory: any[] }) {
                       type="monotone" 
                       dataKey="totalPoints" 
                       name="Total Points"
-                      stroke="#3b82f6" 
+                      stroke={isLegacyBasher ? "#FFD700" : "#3b82f6"} 
                       fillOpacity={1} 
                       fill="url(#colorPoints)" 
                     />

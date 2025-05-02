@@ -14,7 +14,8 @@ import TopThreeCard from "~/components/leaderboard/topthreecard"
 import ClanCard from "~/components/leaderboard/clancard"
 import RegularCard from "~/components/leaderboard/regularcard"
 import LeagueInfoButton from "~/components/league-info"
-
+import { title } from "node:process"
+import { getTier, getTierIcon } from "~/utils/tiers";
 interface MemberWithStats {
   id: string
   name: string
@@ -34,45 +35,7 @@ interface MemberWithStats {
   }
 }
 
-function getTier(points: number): MemberWithStats["tier"] {
-  if (points >= 3000) return "diamond"
-  if (points >= 2600) return "obsidian"
-  if (points >= 2200) return "pearl"
-  if (points >= 1750) return "amethyst"
-  if (points >= 1350) return "emerald"
-  if (points >= 1000) return "ruby"
-  if (points >= 700) return "sapphire"
-  if (points >= 450) return "gold"
-  if (points >= 250) return "silver"
-  return "bronze"
-}
 
-function getTierIcon(tier: string) {
-  switch (tier) {
-    case "diamond":
-      return <GemIcon className="w-4 h-4" />
-    case "obsidian":
-      return <Boxes className="w-4 h-4" />
-    case "pearl":
-      return <CircleDot className="w-4 h-4" />
-    case "amethyst":
-      return <Sparkles className="w-4 h-4" />
-    case "emerald":
-      return <Leaf className="w-4 h-4" />
-    case "ruby":
-      return <Flame className="w-4 h-4" />
-    case "sapphire":
-      return <Droplets className="w-4 h-4" />
-    case "gold":
-      return <Trophy className="w-4 h-4" />
-    case "silver":
-      return <Medal className="w-4 h-4" />
-    case "platinum":
-      return <Crown className="w-4 h-4" />
-    default:
-      return <Award className="w-4 h-4" />
-  }
-}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response()
@@ -173,7 +136,7 @@ export default function Leaderboard() {
     }
 
     const fetchMembers = async () => {
-      const { data } = await supabase.from("members").select("*").order("bash_points", { ascending: false })
+      const { data } = await supabase.from("members").select("*").or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash').order("bash_points", { ascending: false })
 
       if (data) {
         const membersWithStats = await Promise.all(
