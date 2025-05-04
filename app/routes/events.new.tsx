@@ -71,6 +71,7 @@ export async function action({ request }: ActionFunctionArgs) {
         agenda: agendaItems,
         status: "upcoming",
         attendees: 0,
+        type: "weeklybash",
         created_at: now,
         updated_at: now,
       }

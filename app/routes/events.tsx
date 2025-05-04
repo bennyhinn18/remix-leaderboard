@@ -69,7 +69,7 @@ export default function Events() {
         // Adjust query as needed; here we assume the "events" table exists.
         let { data: eventsData, error } = await supabase
           .from("events")
-          .select("*")
+          .select("*").eq("type", "weeklybash")
           .order("date", { ascending: false });
 
         if (error) throw error;
