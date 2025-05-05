@@ -26,6 +26,7 @@ type MemberWithStats = {
   interface ClanCardProps {
     clan: Clan;
     index: number;
+    pointsPercentage: number
   }
 
 const ClanCard = ({ clan, index }: ClanCardProps) => {

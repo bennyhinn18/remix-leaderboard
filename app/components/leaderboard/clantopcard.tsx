@@ -30,6 +30,7 @@ interface Clan {
 interface ClanCardProps {
   clan: Clan;
   index: number;
+  pointsPercentage: number
 }
 
 

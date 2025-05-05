@@ -62,7 +62,7 @@ export default function Leaderboard() {
   const [showSearch, setShowSearch] = useState(false)
   const [currentUser, setCurrentUser] = useState<MemberWithStats | null>(null)
   const [showScrollButton, setShowScrollButton] = useState(true);
-  const currentUserRef = useRef<HTMLElement | null>(null);
+  const currentUserRef = useRef<HTMLDivElement | null>(null);
   const [userPosition, setUserPosition] = useState<"above" | "below" | "visible">("below");
 
   interface Clan {
@@ -239,7 +239,7 @@ export default function Leaderboard() {
                 Leaderboard
               </h1>
             </div>
-            <LeagueInfoButton currentUser={currentUser} />
+            {currentUser && <LeagueInfoButton currentUser={currentUser} />}
             <div className="hidden sm:block text-right">
               <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher's"}</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
@@ -349,10 +349,20 @@ export default function Leaderboard() {
           0
             );
             const pointsPercentage = totalPoints / (clan.members.length * 100) * 100;
+
+            // Ensure originalRank is assigned a number
+            const updatedClan = {
+              ...clan,
+              members: clan.members.map((member, memberIndex) => ({
+                ...member,
+                originalRank: member.originalRank ?? memberIndex + 1,
+              })),
+            };
+
             return index === 0 ? (
-          <ClanTopOneCard key={clan.id} clan={clan} index={index} pointsPercentage={pointsPercentage} />
+          <ClanTopOneCard key={clan.id} clan={updatedClan} index={index} pointsPercentage={pointsPercentage} />
             ) : (
-          <ClanCard key={clan.id} clan={clan} index={index} pointsPercentage={pointsPercentage} />
+          <ClanCard key={clan.id} clan={updatedClan} index={index} pointsPercentage={pointsPercentage} />
             );
           })}
         </div>

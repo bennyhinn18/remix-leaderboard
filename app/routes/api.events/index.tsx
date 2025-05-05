@@ -28,16 +28,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const status = url.searchParams.get("status");
     const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit") as string, 10) : 10;
     const fields = url.searchParams.get("fields") || "id,title,time,date,venue";
-    
-    let query = supabase.from("events").select(fields).limit(limit);
-    const { data: events, error } = await query.order("date", { ascending: false });
+    console.log("Fetching events with fields:", fields);
+    let query = supabase
+      .from("events")
+      .select(fields)
+      .in("type", ["weeklybash", "others"])
+      .limit(limit);
+    const { data: events, error } = await query.order("date", { ascending: false }) as { data: { date: string; time: string; [key: string]: any }[] | null, error: any };
     if (error) throw error;
     
     // Update event statuses dynamically
-    const updatedEvents = events.map(event => ({
-      ...event,
-      status: getEventStatus(event.date, event.time)
-    }));
+    const updatedEvents = events?.map((event: { date: string; time: string; [key: string]: any }) => (
+      { ...event, status: getEventStatus(event.date, event.time) }
+    )) || [];
     
     if (status && status !== "all") {
       return json(updatedEvents.filter(event => event.status === status));
