@@ -1,7 +1,7 @@
 "use client"
 
 import { json, type LoaderFunctionArgs } from "@remix-run/node"
-import { useLoaderData } from "@remix-run/react"
+import { Link, useLoaderData } from "@remix-run/react"
 import { useEffect, useState, useRef } from "react"
 import { Trophy, Github, Code, Search, Award, Medal, X, Building, Feather, MessageCircle, Book, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown, User, ArrowDown, ArrowUp, Info } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -33,6 +33,7 @@ interface MemberWithStats {
   stats?: {
     projects?: number
   }
+  clan_id?: string
 }
 
 
@@ -135,47 +136,75 @@ export default function Leaderboard() {
       }
     }
 
-    const fetchMembers = async () => {
-      const { data } = await supabase.from("members").select("*").or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash').order("bash_points", { ascending: false })
-
-      if (data) {
-        const membersWithStats = await Promise.all(
-          data.map(async (member) => ({
-            ...member,
-            tier: getTier(member.bash_points),
-            tierIcon: getTierIcon(getTier(member.bash_points)),
-            githubStreak: await fetchGitHubStreak(member.github_username),
-            leetcodeStreak: 0,
-          }))
-        )
-        setMembers(membersWithStats)
-      }
-    }
-
-    const fetchClans = async () => {
+        // Replace the fetchMembers function in your useEffect with this:
+    
+        const fetchMembers = async () => {
+      // Fetch members
+      const { data: members } = await supabase
+        .from("members")
+        .select("*")
+        .or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash,title.eq.Mentor')
+        .order("bash_points", { ascending: false });
+    
+      if (!members) return;
+      
+      // Fetch all member stats
+      const { data: memberStats } = await supabase
+        .from("member_stats")
+        .select("*");
+        
+      // Combine member data with their stats
+      const membersWithStats = members.map(member => {
+        const stats = memberStats?.find(stat => stat.member_id === member.id) || {};
+        
+        return {
+          ...member,
+          tier: getTier(member.bash_points),
+          tierIcon: getTierIcon(getTier(member.bash_points)),
+          githubStreak: stats.github_streak || 0,
+          leetcodeStreak: stats.leetcode_streak || 0,
+          duolingoStreak: stats.duolingo_streak || 0,
+          discordPoints: stats.discord_points || 0,
+          bookRead: stats.books_read || 0,
+        };
+      });
+      
+      setMembers(membersWithStats);
+      
+      // Fetch clans using the already fetched member data
+      fetchClans(membersWithStats);
+    };
+    
+    const fetchClans = async (membersData: MemberWithStats[]) => {
+      // Fetch clan data only, without members
       const { data: clans } = await supabase.from("clans").select("*");
+      
       if (clans) {
-        for (const clan of clans) {
-          const { data: members } = await supabase
-            .from("members")
-            .select("*")
-            .eq("clan_id", clan.id);
-          clan.members = members || [];
-        }
-        setClans(clans);
+        // Map through clans and assign members using filter
+        const clansWithMembers = clans.map(clan => {
+          const clanMembers = membersData.filter(member => member.clan_id === clan.id);
+          return {
+            ...clan,
+            members: clanMembers
+          };
+        });
+        
+        setClans(clansWithMembers);
       }
     };
 
+    
+
     fetchCurrentUser()
     fetchMembers()
-    fetchClans()
+    
 
     const channel = supabase
       .channel("members")
       .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
         fetchMembers()
         fetchCurrentUser()
-        fetchClans()
+        
       })
       .subscribe()
 
@@ -200,10 +229,6 @@ export default function Leaderboard() {
       window.removeEventListener("scroll", checkUserPosition);
     };
   }, [currentUser]);
-
-  async function fetchGitHubStreak(username: string) {
-    return 0
-  }
 
   const filteredMembers = members
     .map((member, index) => ({ ...member, originalRank: index + 1 }))
@@ -232,19 +257,23 @@ export default function Leaderboard() {
         className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl"
       >
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <img src={iconImage || "/placeholder.svg"} alt="Basher Logo" className="w-16 h-16" />
+            <div className="flex justify-between items-center">
+            <Link to="/" className="hover:opacity-80 transition-opacity">
+              <img src={iconImage || "/placeholder.svg"} alt="Basher Logo" className="w-16 h-16" />
+            </Link>
             <div className="text-center flex-1">
+            
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Leaderboard
               </h1>
+              
             </div>
             {currentUser && <LeagueInfoButton currentUser={currentUser} />}
             <div className="hidden sm:block text-right">
               <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher's"}</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
-          </div>
+            </div>
 
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:w-full flex items-center">

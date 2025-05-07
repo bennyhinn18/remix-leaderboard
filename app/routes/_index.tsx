@@ -73,6 +73,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .order("date", { ascending: true })
     .limit(3);
   
+    // Fetch Duolingo streak
+  const duolingoResponse = await fetch(
+    `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+  );
+  const duolingoData = await duolingoResponse.json();
+  const userData = duolingoData.users?.[0] || {};
+  const duolingo_streak = Math.max(
+    userData.streak ?? 0,
+    userData.streakData?.currentStreak?.length ?? 0,
+    userData.streakData?.previousStreak?.length ?? 0
+  );
+    
   return json({
     user,
     member,
@@ -87,7 +99,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       created_by: "ItOrganiser"
     },
     ...(announcements || [])],
-    upcomingEvents: upcomingEvents || []
+    upcomingEvents: upcomingEvents || [],
+    duolingo_streak,
   });
 };
 
@@ -105,7 +118,7 @@ function getTier(points: number): string {
 }
 
 export default function Home() {
-  const { user, member, organiserStatus, recentActivities, announcements, upcomingEvents } = useLoaderData<typeof loader>();
+  const { user, member, organiserStatus, recentActivities, announcements, upcomingEvents,duolingo_streak } = useLoaderData<typeof loader>();
   const [streakData, setStreakData] = useState({ github: 0, duolingo: 0 });
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<any>(null);
 
@@ -170,16 +183,6 @@ export default function Home() {
       if (!member.duolingo_username) return;
       
       try {
-        const duolingoResponse = await fetch(
-          `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData`
-        );
-        const duolingoData = await duolingoResponse.json();
-        const userData = duolingoData.users?.[0] || {};
-        const duolingo_streak = Math.max(
-          userData.streak ?? 0,
-          userData.streakData?.currentStreak?.length ?? 0,
-          userData.streakData?.previousStreak?.length ?? 0
-        );
         
         setStreakData(prev => ({ ...prev, duolingo: duolingo_streak }));
       } catch (error) {

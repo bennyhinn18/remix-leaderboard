@@ -94,6 +94,7 @@ export const loader = async ({ request }: ActionFunctionArgs) => {
         .from("members")
         .select("*")
         .eq("clan_id", clan.id)
+        .or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash,title.eq.Mentor')
       clan.members = members || []
     }
   }

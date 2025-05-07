@@ -25,7 +25,7 @@ export const loader = async ({ params,request }: LoaderFunctionArgs) => {
   const supabase =createServerSupabase(request, response)
   const { data: clan } = await supabase.from("clans").select("*").eq("id", params.id).single()
   if (clan) {
-    const { data: members } = await supabase.from("members").select("*").eq("clan_id", clan.id)
+    const { data: members } = await supabase.from("members").select("*").eq("clan_id", clan.id).or("title.eq.Basher,title.eq.Organiser")
     clan.members = members || []
   }
   
