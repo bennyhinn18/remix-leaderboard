@@ -4,20 +4,22 @@ import { fetchDuolingoStats } from "../services/duolingo.server";
 // Import other services as needed
 
 export async function updateMemberStats(request: Request, response: Response) {
-  console.log("Updating member stats...");
+  
   const supabase = createServerSupabase(request, response);
   
   // Get all members
   const { data: members, error } = await supabase
     .from("members")
-    .select("id, github_username, duolingo_username");
+    .select("id, github_username, duolingo_username")
+    
+    // .eq('id',19);
     
   if (error) {
     console.error("Error fetching members:", error);
     return;
   }
   
-  console.log(`Updating stats for ${members.length} members`);
+  
   
   // Process members in batches to avoid rate limits
   const batchSize = 5;
