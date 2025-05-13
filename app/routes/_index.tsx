@@ -90,14 +90,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     member,
     organiserStatus,
     recentActivities: recentActivities || [],
-    announcements: announcements || [{
-      id: "dev-announcement-1",
-      title: "Development Update",
-      content: "This version is under development. While adding Legacy Bashers info, the clan averages may get varied - this is not the actual data and will be fixed soon.",
-      category: "Important",
-      created_at: new Date().toISOString(),
-      created_by: "ItOrganiser"
-    },
+    announcements: announcements || [,
     ...(announcements || [])],
     upcomingEvents: upcomingEvents || [],
     duolingo_streak,

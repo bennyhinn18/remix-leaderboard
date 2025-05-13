@@ -11,10 +11,24 @@ export default function WhatsNewPanel() {
   const [isMinimized, setIsMinimized] = useState(true);
   
   // Current app version/update ID - update this when you make changes
-  const currentVersion = "v1.2.0";
+  const currentVersion = "v1.3.0";
   
   // Latest updates - newest first
   const updates = [
+    {
+      version: "v1.3.0",
+      date: "May 10, 2025",
+      title: "New Leaderboard Filters Active",
+      description: "The Github and Duolingo filters are now live! ",
+      link: "/leaderboard"
+    },
+    {
+      version: "v1.2.5",
+      date: "May 5, 2025",
+      title: "Improved Notifications",
+      description: "Notifications are now more interactive and provide quick actions.",
+      link: null
+    },
     {
       version: "v1.2.0",
       date: "May 2, 2025",

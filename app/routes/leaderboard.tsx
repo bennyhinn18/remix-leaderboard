@@ -309,7 +309,7 @@ export default function Leaderboard() {
               )}
 
                 <div className="flex relative w-full gap-2 overflow-x-auto">
-                {["overall", "bashclan", "github", "leetcode", "duolingo", "discord", "books"].map((tab) => (
+                {["overall", "bashclan", "github", "duolingo", "leetcode", "discord", "books"].map((tab) => (
                   <motion.button
                   key={tab}
                   whileHover={{ scale: 1.05 }}
