@@ -11,10 +11,17 @@ export default function WhatsNewPanel() {
   const [isMinimized, setIsMinimized] = useState(true);
   
   // Current app version/update ID - update this when you make changes
-  const currentVersion = "v1.3.0";
+  const currentVersion = "v1.3.1";
   
   // Latest updates - newest first
   const updates = [
+    {
+      version:"v1.3.1",
+      date: "May 15, 2025",
+      title:"Fixes in leaderboard sorting ",
+      description: "We fixed some issues with the sorting of the leaderboard. Your ranks should now be accurate.",
+      link: "/leaderboard"
+    },
     {
       version: "v1.3.0",
       date: "May 10, 2025",
@@ -93,7 +100,7 @@ export default function WhatsNewPanel() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
-          className="fixed bottom-6 right-6 z-50"
+          className="fixed bottom-32 right-6 z-50 "
         >
           <button
             onClick={toggleMinimize}

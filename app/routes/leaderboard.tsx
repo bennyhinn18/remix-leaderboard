@@ -268,7 +268,7 @@ export default function Leaderboard() {
               </h1>
               
             </div>
-            {currentUser && <LeagueInfoButton currentUser={currentUser} />}
+            {/* {currentUser && <LeagueInfoButton currentUser={currentUser} />} */}
             <div className="hidden sm:block text-right">
               <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher's"}</div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
@@ -277,26 +277,26 @@ export default function Leaderboard() {
 
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:w-full flex items-center">
-              {showSearch ? (
-                <div className="w-full flex items-center">
-                  <input
-                    type="text"
-                    placeholder="Search members..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white z-10"
-                    onClick={() => {
-                      setSearchQuery("")
-                      setShowSearch(false)
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                </div>
+              {/* {showSearch ? (
+                <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full md:w-60 pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white z-10"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setShowSearch(false)
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              </div>
               ) : (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -306,9 +306,9 @@ export default function Leaderboard() {
                 >
                   <Search className="w-5 h-5" />
                 </motion.button>
-              )}
+              )} */}
 
-                <div className="flex relative w-full gap-2 overflow-x-auto">
+                <div className="flex relative w-full gap-2 overflow-x-auto no-scrollbar">
                 {["overall", "bashclan", "github", "duolingo", "leetcode", "discord", "books"].map((tab) => (
                   <motion.button
                   key={tab}
@@ -345,7 +345,7 @@ export default function Leaderboard() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => scrollToCurrentUser()}
-          className={`fixed bottom-28 right-6 z-50 flex items-center gap-2 px-4 py-2 text-white rounded-full shadow-lg ${userPosition === "visible" ? "bg-green-500" : "bg-blue-500"}`}
+          className={`fixed bottom-28 right-6 z-50 flex items-center gap-2 px-4 py-2 text-white rounded-full shadow-lg ${userPosition === "visible" ? "hidden" : "bg-blue-500"}`}
         >
           {/*<User className="w-4 h-4" />
            <span>Find Me</span> */}
@@ -398,42 +398,26 @@ export default function Leaderboard() {
         ) : (
           <>
             <div className="space-y-4">
-          {sortedMembers
-            .filter((member) => member.originalRank <= 3)
-            .map((member, index) =>
-              activeTab === "overall" ? (
-            <TopThreeCard
-              key={member.id}
-              member={member}
-              index={member.originalRank - 1}
-              activeTab={activeTab}
-              searchQuery={searchQuery}
-              isCurrentUser={currentUser?.id === member.id}
-              ref={currentUser?.id === member.id ? currentUserRef : null}
-            />
-              ) : (
-            <RegularCard
-              key={member.id}
-              member={member}
-              index={index}
-              activeTab={activeTab}
-              searchQuery={searchQuery}
-              duolingoStreak={member.duolingoStreak || 0}
-              isCurrentUser={currentUser?.id === member.id}
-              ref={currentUser?.id === member.id ? currentUserRef : null}
-            />
-              )
-            )}
+          
             </div>
 
             <div className="space-y-4 mt-8">
           {sortedMembers
-            .filter((member) => member.originalRank > 3)
+            .filter((member) => member.originalRank )
             .map((member, index) => (
-            <RegularCard
+              activeTab === "overall" && member.originalRank <= 3 
+              ? <TopThreeCard key={member.id}
+              member={member}
+              index={index }
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              
+              isCurrentUser={currentUser?.id === member.id}
+              ref={currentUser?.id === member.id ? currentUserRef : null} />
+              : <RegularCard
               key={member.id}
               member={member}
-              index={index + 3}
+              index={index }
               activeTab={activeTab}
               searchQuery={searchQuery}
               duolingoStreak={member.duolingoStreak || 0}

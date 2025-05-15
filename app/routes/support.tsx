@@ -15,6 +15,17 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronLeft,
+  Info,
+  Award,
+  Medal,
+  Trophy,
+  Droplets,
+  Flame,
+  Leaf,
+  Sparkles,
+  CircleDot,
+  Boxes,
+  GemIcon,
 } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
@@ -29,14 +40,19 @@ const faqs = [
       "You can earn points through various activities: completing daily challenges, participating in weekly bashes, contributing to community projects, and maintaining coding streaks on platforms like GitHub and LeetCode.",
   },
   {
-    question: "What are the different basher levels?",
+    question: "What are the different basher tiers?",
     answer:
-      "There are three main levels: Gold (0-2000 points), Platinum (2000-2400 points), and Diamond (2400+ points). Each level unlocks new features and privileges in the community.",
+      "There are ten tiers: Bronze (0-249 points), Silver (250-449), Gold (450-699), Sapphire (700-999), Ruby (1000-1349), Emerald (1350-1749), Amethyst (1750-2199), Pearl (2200-2599), Obsidian (2600-2999), and Diamond (3000+). Each tier unlocks new features and privileges in the community.",
+  },
+  {
+    question: "How do I advance to the next tier?",
+    answer:
+      "You advance automatically when you reach the point threshold for the next tier. You'll never drop down to a lower tier, and points accumulate permanently. Check your current points and progress on your profile or through the leaderboard interface.",
   },
   {
     question: "How do clans work?",
     answer:
-      "Clans are collaborative groups of bashers who work together on projects and challenges. You can join a clan or create your own once you reach the Platinum level. Clans compete in monthly tournaments and special events.",
+      "Clans are collaborative groups of bashers who work together on projects and challenges. You can join a clan or create your own once you reach the Gold tier. Clans compete in monthly tournaments and special events.",
   },
   {
     question: "What are coding companions?",
@@ -61,13 +77,13 @@ const resources = [
     title: "Community Chat",
     description: "Join our Discord community",
     icon: MessageSquare,
-    href: "https://discord.gg/bytebash",
+    href: "https://discord.com/channels/1163002451746623528/1163002452187033670",
   },
   {
     title: "Email Support",
     description: "Get help from our support team",
     icon: Mail,
-    href: "mailto:support@bytebash.dev",
+    href: "mailto:bashers@stellamaryscoe.edu.in",
   },
 ]
 
@@ -188,6 +204,58 @@ export default function Support() {
               </Card>
             </motion.a>
           ))}
+        </motion.div>
+        
+        {/* Tier Information */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="space-y-6"
+        >
+          <h2 className="text-2xl font-bold">Leaderboard Tiers</h2>
+          <Card className="p-6 bg-white/5 border-white/10">
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {[
+                  { tier: "bronze", threshold: 0, nextThreshold: 250, icon: <Award className="w-5 h-5" />, color: "text-orange-400" },
+                  { tier: "silver", threshold: 250, nextThreshold: 450, icon: <Medal className="w-5 h-5" />, color: "text-gray-300" },
+                  { tier: "gold", threshold: 450, nextThreshold: 700, icon: <Trophy className="w-5 h-5" />, color: "text-yellow-400" },
+                  { tier: "sapphire", threshold: 700, nextThreshold: 1000, icon: <Droplets className="w-5 h-5" />, color: "text-blue-400" },
+                  { tier: "ruby", threshold: 1000, nextThreshold: 1350, icon: <Flame className="w-5 h-5" />, color: "text-red-400" },
+                  { tier: "emerald", threshold: 1350, nextThreshold: 1750, icon: <Leaf className="w-5 h-5" />, color: "text-green-400" },
+                  { tier: "amethyst", threshold: 1750, nextThreshold: 2200, icon: <Sparkles className="w-5 h-5" />, color: "text-purple-400" },
+                  { tier: "pearl", threshold: 2200, nextThreshold: 2600, icon: <CircleDot className="w-5 h-5" />, color: "text-pink-100" },
+                  { tier: "obsidian", threshold: 2600, nextThreshold: 3000, icon: <Boxes className="w-5 h-5" />, color: "text-gray-500" },
+                  { tier: "diamond", threshold: 3000, nextThreshold: null, icon: <GemIcon className="w-5 h-5" />, color: "text-cyan-200" },
+                ].map((tier) => (
+                  <div key={tier.tier} className="p-3 bg-white/5 rounded-lg flex items-center gap-2 border border-white/10">
+                    <div className={`p-2 rounded-full bg-white/10 ${tier.color}`}>
+                      {tier.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="capitalize font-medium">{tier.tier}</h4>
+                      <p className="text-xs text-gray-400">
+                        {tier.threshold} - {tier.nextThreshold ? `${tier.nextThreshold - 1}` : "∞"} pts
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Info className="w-5 h-5 text-blue-400" />
+                  <h3 className="font-medium">How progression works</h3>
+                </div>
+                <p className="text-sm text-gray-300">
+                  As you earn points from activities, you'll automatically progress through tiers. Points never expire, and your position on the leaderboard updates daily. Click the info button in the bottom corner for more details about earning points.
+                </p>
+              </div>
+              
+              
+            </div>
+          </Card>
         </motion.div>
 
         {/* FAQ Section */}
