@@ -1,6 +1,7 @@
 import { createServerSupabase } from "./supabase.server";
 import { fetchGitHubStats } from "../services/github.server";
 import { fetchDuolingoStats } from "../services/duolingo.server";
+import { fetchLeetCodeStats } from "../services/leetcode.server";
 // Import other services as needed
 
 export async function updateMemberStats(request: Request, response: Response) {
@@ -10,9 +11,9 @@ export async function updateMemberStats(request: Request, response: Response) {
   // Get all members
   const { data: members, error } = await supabase
     .from("members")
-    .select("id, github_username, duolingo_username")
+    .select("id, github_username, duolingo_username,leetcode_username")
     
-    // .eq('id',19);
+     
     
   if (error) {
     console.error("Error fetching members:", error);
@@ -44,6 +45,14 @@ export async function updateMemberStats(request: Request, response: Response) {
         console.log(`stats of ${member.id}`,stats);
         // Add other services as needed
         
+        //leetcode stats
+        if (member.leetcode_username) {
+          const { streak } = await fetchLeetCodeStats(member.leetcode_username);
+          stats.leetcode_streak = streak;
+        }
+
+
+
         // Update the stats in the database
         await supabase
           .from("member_stats")
