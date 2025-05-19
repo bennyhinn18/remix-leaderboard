@@ -5,13 +5,14 @@ import {
   Briefcase, Cpu, Code2, BookOpen, Globe, Quote,
   // Add these new imports
   GemIcon, Boxes, CircleDot, Sparkles, Leaf, Flame, 
-  Droplets, Medal, Crown 
+  Droplets, Medal, Crown, Bell, Settings 
 } from 'lucide-react'
 import { createServerSupabase } from "~/utils/supabase.server"
 import { ProfileInfo } from "~/components/profile-info"
 import { MainNav } from "~/components/main-nav"
 import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
+import { Button } from "~/components/ui/button"
 import { SocialFooter } from "~/components/social-footer"
 import { useState, useEffect, Suspense } from "react";
 import { EditProfileButton } from "~/components/edit-profile"
@@ -21,6 +22,8 @@ import  PointsGraph  from "~/components/points-graph"
 import { u } from "node_modules/framer-motion/dist/types.d-6pKw1mTI"
 import { getTier, getTierIcon } from "~/utils/tiers";
 import { ProfileHeaderSkeleton, StatCardSkeleton, SectionSkeleton, StreaksSkeleton, ProfilePageSkeleton } from "~/components/profile-skeletons";
+import { PushNotificationManager } from "~/components/push-notification-manager";
+import { getUserNotifications } from "~/services/notifications.server";
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -33,7 +36,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getCurrentUser(request);
   
   // Fetch the profile being viewed (cached)
-  const member = await getCachedMember(request, params.username, supabase);
+  const username = params.username || '';
+  const member = await getCachedMember(request, username, supabase);
   
   if (!member) {
     return json({ 
@@ -50,6 +54,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   
   // Get points history (cached)
   const pointsHistory = await getCachedPoints(request, member.id, supabase);
+
+  // Get user notifications if member exists and it's their own profile
+  let notifications: Array<any> = [];
+  let unreadCount = 0;
+  
+  if (member?.id && isOwnProfile) {
+    const notificationsResult = await getUserNotifications(request, member.id);
+    if (notificationsResult.success) {
+      notifications = notificationsResult.notifications;
+      unreadCount = notificationsResult.unreadCount;
+    }
+  }
 
   // Function to fetch Duolingo streak data - defer this
   const fetchDuolingoStreak = async () => {
@@ -92,16 +108,32 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
   };
 
+  //Fetch LeetCode data
+  const fetchLeetCodeData = async () => {
+    try {
+      const leetCodeResponse = await fetch(`https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`);
+      
+      const leetCodeData = await leetCodeResponse.json();
+      return leetCodeData?.totalSolved || 0;
+    } catch (error) {
+      console.error("Error fetching LeetCode data:", error);
+      return null;
+    }
+  };
+ 
   return defer({
     member,
     user,
     duolingoStreak: fetchDuolingoStreak(),
     githubData: fetchGithubData(),
+    leetCodeData: fetchLeetCodeData(),
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     organiserStatus,
     pointsHistory: pointsHistory || [],
-    isOwnProfile:false
+    isOwnProfile,
+    notifications,
+    unreadCount
   });
 };
 
@@ -173,6 +205,21 @@ await supabase.from('members').select('*').eq("github_username",params.usename)
   }
 };
 
+interface LoaderData {
+  member: any;
+  user: any;
+  duolingoStreak: Promise<number>;
+  githubData: Promise<any[]>;
+  leetCodeData: Promise<number | null>;
+  SUPABASE_URL: string | undefined;
+  SUPABASE_ANON_KEY: string | undefined;
+  organiserStatus: boolean;
+  pointsHistory: any[];
+  isOwnProfile: boolean;
+  notifications: any[];
+  unreadCount: number;
+}
+
 export default function Profile() {
   const { 
     member, 
@@ -181,9 +228,16 @@ export default function Profile() {
     pointsHistory, 
     user,
     duolingoStreak,
-    githubData
-  } = useLoaderData<typeof loader>();
+    leetCodeData,
+    githubData,
+    notifications,
+    unreadCount
+  } = useLoaderData<LoaderData>();
   interface Profile {
+    id: number;
+    name: string;
+    github_username: string;
+    points: number;
     avatar_url: string;
     title: string;
     joinedDate: Date;
@@ -206,6 +260,7 @@ export default function Profile() {
       discord: number;
       books: number;
     };
+    languages: { name: string; level: string }[];
     hobbies: string[];
     testimonial: string;
     gpa: number;
@@ -225,6 +280,10 @@ export default function Profile() {
         
     setProfile({
       ...member,
+      id: member.id,
+      name: member.name,
+      github_username: member.github_username,
+      points: member.bash_points || 0,
       avatar_url: member.avatar_url, // Provide default avatar
       title: member.title || "Basher",
       joinedDate: new Date(member.joined_date || Date.now()),
@@ -287,7 +346,38 @@ export default function Profile() {
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
           </Link>
-          <MainNav user={profile} />
+          {profile && (
+            <MainNav 
+              user={{
+                id: profile.id,
+                name: profile.name,
+                github_username: profile.github_username,
+                points: profile.bashPoints,
+                basherLevel: profile.basherLevel,
+                basherNo: profile.basherNo,
+                clanName: profile.clanName,
+                avatar_url: profile.avatar_url,
+                languages: profile.languages,
+                title: profile.title,
+                joinedDate: profile.joinedDate,
+                bashPoints: profile.bashPoints,
+                projects: profile.projects,
+                certifications: profile.certifications,
+                internships: profile.internships,
+                courses: profile.courses,
+                resume_url: profile.resume_url,
+                portfolio_url: profile.portfolio_url,
+                domains: profile.domains,
+                streaks: profile.streaks,
+                hobbies: profile.hobbies,
+                testimonial: profile.testimonial,
+                gpa: profile.gpa,
+                attendance: profile.attendance
+              }}
+              notifications={notifications || []}
+              unreadCount={unreadCount || 0}
+            />
+          )}
         </div>
 
         {/* Profile Info Section - Pass canEdit and member props */}
@@ -388,6 +478,31 @@ export default function Profile() {
         {/* Two Column Layout */}
         <div className="grid md:grid-cols-2 gap-6 mt-8">
           <div className="space-y-6">
+            {/* Push Notifications - Only display on own profile */}
+            {isOwnProfile && member && (
+              <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-blue-400" />
+                  Notifications
+                </h2>
+                <PushNotificationManager memberId={member.id} />
+                
+                <div className="mt-4">
+                  <Button
+                    variant="outline" 
+                    size="sm"
+                    className="w-full justify-center gap-2 text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+                    asChild
+                  >
+                    <a href="/notification-preferences">
+                      <Settings className="w-4 h-4" />
+                      Manage All Notification Settings
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             {/* Domains */}
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -481,9 +596,15 @@ export default function Profile() {
                 </div>
                 <div className="bg-orange-500/20 rounded-xl p-4">
                   <Code2 className="w-5 h-5 text-orange-400 mb-2" />
-                  <div className="text-2xl font-bold text-orange-400">
-                    {profile.streaks.leetcode}
-                  </div>
+                  <Suspense fallback={<div className="text-2xl font-bold text-orange-400 animate-pulse">...</div>}>
+                    <Await resolve={leetCodeData}>
+                      {(data) => (
+                        <div className="text-2xl font-bold text-orange-400">
+                          {data || profile.streaks.leetcode}
+                        </div>
+                      )}
+                    </Await>
+                  </Suspense>
                   <div className="text-sm text-orange-400">LeetCode</div>
                 </div>
                 <div className="bg-green-500/20 rounded-xl p-4">

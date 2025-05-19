@@ -26,7 +26,7 @@ async function getCurrentUser(request: Request): Promise<User | null> {
     
     const { data, error: roleError } = await supabase
         .from("members")
-        .select("title")
+        .select("title,id")
         .eq("github_username", user?.user_metadata.user_name)
         .single();
     
@@ -36,7 +36,7 @@ async function getCurrentUser(request: Request): Promise<User | null> {
     }
     
     // Store in cache
-    const userData = { id: user.id, title: data.title };
+    const userData = { id: user.id, title: data.title,member_id: data.id };
     userCache.set(cacheKey, userData);
 
     return userData;

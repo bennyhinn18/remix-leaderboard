@@ -20,6 +20,7 @@ import { MainNav } from "~/components/main-nav";
 import { useState, useEffect } from "react";
 import WhatsNewPanel from "~/components/WhatsNewPanel";
 import LeetCodeConnect from "~/components/leetcode-connect";
+import { NotificationManager } from "~/components/notification-manager";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,8 @@ import {
   DialogTrigger
 } from "~/components/ui/dialog";
 
+
+import { getUserNotifications } from "~/services/notifications.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request);
@@ -46,7 +49,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       organiserStatus: false,
       recentActivities: [],
       announcements: [],
-      upcomingEvents: []
+      upcomingEvents: [],
+      notifications: [],
+      unreadCount: 0
     });
   }
   
@@ -81,6 +86,39 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .order("date", { ascending: true })
     .limit(3)
     .then(result => result.data || []);
+    
+  // Get user notifications if member exists
+  let notifications: Array<any> = [];
+  let unreadCount = 0;
+  let allMembers: Array<any> = [];
+  let recentNotifications: Array<any> = [];
+  
+  if (member?.id) {
+    const notificationsResult = await getUserNotifications(request, member.id);
+    if (notificationsResult.success) {
+      notifications = notificationsResult.notifications;
+      unreadCount = notificationsResult.unreadCount;
+    }
+    
+    // If user is an organiser, fetch all members for NotificationManager
+    if (organiserStatus) {
+      const { data: members } = await supabase
+        .from("members")
+        .select("id, name, github_username, avatar_url")
+        .order("name");
+      
+      allMembers = members || [];
+      
+      // Also fetch recent notifications for NotificationManager
+      const { data: recentNotifs } = await supabase
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      
+      recentNotifications = recentNotifs || [];
+    }
+  }
   
   // Create promise for duolingo streak
   const getDuolingoStreak = async () => {
@@ -141,6 +179,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     upcomingEvents: getUpcomingEvents,
     duolingo_streak: getDuolingoStreak(),
     leetcode_stats: getLeetCodeStats(),
+    notifications,
+    unreadCount,
+    allMembers,
+    recentNotifications
   });
 };
 
@@ -158,7 +200,7 @@ function getTier(points: number): string {
 }
 
 export default function Home() {
-  const { user, member, organiserStatus, recentActivities, announcements, upcomingEvents, duolingo_streak, leetcode_stats } = useLoaderData<typeof loader>();
+  const { user, member, organiserStatus, recentActivities, announcements, upcomingEvents, duolingo_streak, leetcode_stats, notifications, unreadCount, allMembers, recentNotifications } = useLoaderData<typeof loader>();
   const [streakData, setStreakData] = useState({ github: 0, duolingo: 0, leetcode: 0 });
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<any>(null);
 
@@ -260,7 +302,7 @@ export default function Home() {
                 <img src={`${iconImage}`} alt="Byte Bash Logo" className="h-10 w-10" />
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">Byte Bash Blitz</h1>
               </div>
-              <MainNav user={member} />
+              <MainNav user={member} notifications={notifications} unreadCount={unreadCount} />
             </div>
           </div>
         </header>
@@ -575,6 +617,13 @@ export default function Home() {
                     <BarChart2 className="w-8 h-8 text-amber-400 mb-2" />
                     <span>Analytics</span>
                   </Link>
+                </div>
+                
+                <div className="mt-4">
+                  <NotificationManager 
+                    allMembers={allMembers}
+                    recentNotifications={recentNotifications}
+                  />
                 </div>
               </motion.div>
             )}
