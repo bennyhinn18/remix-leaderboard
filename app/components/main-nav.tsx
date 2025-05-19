@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Link } from "@remix-run/react"
 import { Trophy, Star, Mail, Globe, LogOut, Building, ChevronDown, Book, PanelRightOpen, Calendar, UserCheck } from "lucide-react"
@@ -17,6 +15,7 @@ import { ScrollArea } from "~/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import type { BasherProfile } from "~/types/profile"
 import iconImage from "~/assets/bashers.png";
+import { NotificationDropdown } from "~/components/notification-dropdown"
 
 const navigation = [
   {
@@ -95,10 +94,12 @@ const bottomNav = [
 ]
 
 interface MainNavProps {
-  user: BasherProfile
+  user: BasherProfile;
+  notifications?: Array<any>;
+  unreadCount?: number;
 }
 
-export function MainNav({ user }: MainNavProps) {
+export function MainNav({ user, notifications = [], unreadCount = 0 }: MainNavProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -125,10 +126,15 @@ export function MainNav({ user }: MainNavProps) {
               className="w-full h-full object-cover"
             />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
               <SheetTitle className="text-lg font-bold text-white">Byte Bash Blitz</SheetTitle>
               <p className="text-sm text-blue-400">{user.basherLevel} Basher</p>
             </div>
+            <NotificationDropdown 
+              memberId={user.id} 
+              notifications={notifications} 
+              unreadCount={unreadCount} 
+            />
           </div>
         </SheetHeader>
 

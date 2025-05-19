@@ -2,12 +2,42 @@ import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
+import fs from 'fs';
+import path from 'path';
 
 declare module "@remix-run/node" {
   interface Future {
     v3_singleFetch: true;
   }
 }
+
+// Custom plugin to add gcm_sender_id to the manifest.json after it's generated
+const addGcmSenderIdPlugin = () => {
+  return {
+    name: 'add-gcm-sender-id',
+    closeBundle: {
+      sequential: true,
+      handler: async () => {
+        try {
+          const manifestPath = path.resolve(__dirname, 'dist/manifest.webmanifest');
+          
+          if (fs.existsSync(manifestPath)) {
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            
+            // Add the gcm_sender_id
+            manifest.gcm_sender_id = "103953800507";
+            
+            // Write the modified manifest back
+            fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+            console.log('Added gcm_sender_id to manifest.webmanifest');
+          }
+        } catch (error) {
+          console.error('Error modifying manifest.webmanifest:', error);
+        }
+      }
+    }
+  };
+};
 
 export default defineConfig({
   plugins: [
@@ -43,7 +73,10 @@ export default defineConfig({
               }
             }
           }
-        ]
+        ],
+        // Enable push notifications in the service worker
+        skipWaiting: true,
+        clientsClaim: true
       },
       manifest: {
         id: "/",
@@ -88,8 +121,11 @@ export default defineConfig({
             type: "image/png",
             form_factor: "narrow"
           }
-        ]
+        ],
+        related_applications: []
       }
-    })    
+    }),
+    addGcmSenderIdPlugin()
   ],
 });
+   
