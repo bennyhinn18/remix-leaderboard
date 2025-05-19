@@ -2,17 +2,16 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { isOrganiser } from "~/utils/currentUser";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
-  Trophy, Users, Star, ArrowUpRight, 
+  Trophy, Users,
   Award, Activity, Bell, Calendar, 
-  BarChart2, Book, Code, Github, 
-  MessageCircle, Globe, Settings, Plus,
+  BarChart2, Github, 
+  Globe, Settings, Plus,
   ChevronRight, TrendingUp, Flame, User
 } from "lucide-react";
 import iconImage from "~/assets/bashers.png"
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { MainNav } from "~/components/main-nav";
 import { useState, useEffect } from "react";

@@ -16,6 +16,20 @@ export default function WhatsNewPanel() {
   // Latest updates - newest first
   const updates = [
     {
+      version: "v1.3.2",
+      date: "May 15, 2025",
+      title: "Resource Center Launched",
+      description: "Explore the new Resource Center.",
+      link: "/resources"
+    },
+    {
+      version: "v1.3.1",
+      date: "May 13, 2025",
+      title: "LeetCode Integration",
+      description: "Track your LeetCode progress and see your stats on the leaderboard.",
+      link: "/leaderboard"
+    },
+    {
       version: "v1.3.0",
       date: "May 10, 2025",
       title: "New Leaderboard Filters Active",
