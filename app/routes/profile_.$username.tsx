@@ -1,5 +1,5 @@
-import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node"
-import { useLoaderData, Link } from "@remix-run/react"
+import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs, defer } from "@remix-run/node"
+import { useLoaderData, Link, Await, useAsyncValue } from "@remix-run/react"
 import { 
   ArrowLeft, Github, Code, Book, MessageSquare, Trophy, Award, 
   Briefcase, Cpu, Code2, BookOpen, Globe, Quote,
@@ -13,56 +13,29 @@ import { MainNav } from "~/components/main-nav"
 import { motion } from "framer-motion"
 import { Card } from "~/components/ui/card"
 import { SocialFooter } from "~/components/social-footer"
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { EditProfileButton } from "~/components/edit-profile"
-import { isOrganiser } from "~/utils/currentUser"
+import { isOrganiser, getCurrentUser } from "~/utils/currentUser"
+import { getCachedMember, getCachedPoints } from "~/utils/cache.server"
 import  PointsGraph  from "~/components/points-graph"
 import { u } from "node_modules/framer-motion/dist/types.d-6pKw1mTI"
 import { getTier, getTierIcon } from "~/utils/tiers";
+import { ProfileHeaderSkeleton, StatCardSkeleton, SectionSkeleton, StreaksSkeleton, ProfilePageSkeleton } from "~/components/profile-skeletons";
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  // Get organiser status using the cached getCurrentUser function
   const organiserStatus = await isOrganiser(request);
   const response = new Response();
   const supabase = createServerSupabase(request, response);
   
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  // Get current user (cached)
+  const user = await getCurrentUser(request);
   
-  // Fetch the profile being viewed
-  const { data: member, error } = await supabase
-    .from("members")
-    .select("*")
-    .eq("github_username", params.username)
-    .single();
-
-      // Additional fetch for points history
-  const { data: pointsHistory, error: pointsError } = await supabase
-  .from("points")
-  .select("*")
-  .eq("member_id", member.id)
-  .order("updated_at", { ascending: true });
+  // Fetch the profile being viewed (cached)
+  const member = await getCachedMember(request, params.username, supabase);
   
-if (pointsError) {
-  console.error("Error fetching points history:", pointsError);
-}
-  
-  // Check if current user is viewing their own profile
-  const isOwnProfile = user && member && user.user_metadata?.user_name === member.github_username;
-  
-  // Fetch Duolingo streak
-  const duolingoResponse = await fetch(
-    `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
-  );
-  const duolingoData = await duolingoResponse.json();
-  const userData = duolingoData.users?.[0] || {};
-  const duolingo_streak = Math.max(
-    userData.streak ?? 0,
-    userData.streakData?.currentStreak?.length ?? 0,
-    userData.streakData?.previousStreak?.length ?? 0
-  );
-
-  if (error || !member) {
+  if (!member) {
     return json({ 
       member: null, 
       SUPABASE_URL: process.env.SUPABASE_URL, 
@@ -72,10 +45,58 @@ if (pointsError) {
     });
   }
 
-  return json({
+  // Check if current user is viewing their own profile
+  const isOwnProfile = user && member && user.id === member.user_id;
+  
+  // Get points history (cached)
+  const pointsHistory = await getCachedPoints(request, member.id, supabase);
+
+  // Function to fetch Duolingo streak data - defer this
+  const fetchDuolingoStreak = async () => {
+    try {
+      const duolingoResponse = await fetch(
+        `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+      );
+      const duolingoData = await duolingoResponse.json();
+      const userData = duolingoData.users?.[0] || {};
+      return Math.max(
+        userData.streak ?? 0,
+        userData.streakData?.currentStreak?.length ?? 0,
+        userData.streakData?.previousStreak?.length ?? 0
+      );
+    } catch (error) {
+      console.error("Error fetching Duolingo data:", error);
+      return 0;
+    }
+  };
+
+  // Function to fetch GitHub contributions - defer this
+  const fetchGithubData = async () => {
+    try {
+      const githubResponse = await fetch(`https://api.github.com/users/${member.github_username}/events/public`);
+      const githubEvents = await githubResponse.json();
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      return Array.isArray(githubEvents)
+        ? githubEvents.filter(
+            (event: any) =>
+              new Date(event.created_at) > thirtyDaysAgo &&
+              ["PushEvent", "CreateEvent", "PullRequestEvent"].includes(event.type)
+          )
+        : [];
+    } catch (error) {
+      console.error("Error fetching GitHub data:", error);
+      return [];
+    }
+  };
+
+  return defer({
     member,
     user,
-    duolingo_streak,
+    duolingoStreak: fetchDuolingoStreak(),
+    githubData: fetchGithubData(),
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     organiserStatus,
@@ -153,7 +174,15 @@ await supabase.from('members').select('*').eq("github_username",params.usename)
 };
 
 export default function Profile() {
-  const { member, duolingo_streak, organiserStatus, isOwnProfile,pointsHistory,user } = useLoaderData<typeof loader>();
+  const { 
+    member, 
+    organiserStatus, 
+    isOwnProfile, 
+    pointsHistory, 
+    user,
+    duolingoStreak,
+    githubData
+  } = useLoaderData<typeof loader>();
   interface Profile {
     avatar_url: string;
     title: string;
@@ -190,79 +219,57 @@ export default function Profile() {
   useEffect(() => {
     if (!member) return; // Exit early if no member
 
-    const fetchProfile = async () => {
-      try {
-        // Fetch GitHub contributions
-        const githubResponse = await fetch(`https://api.github.com/users/${member.github_username}/events/public`);
-        const githubEvents = await githubResponse.json();
-
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const contributions = Array.isArray(githubEvents)
-          ? githubEvents.filter(
-              (event: any) =>
-                new Date(event.created_at) > thirtyDaysAgo &&
-                ["PushEvent", "CreateEvent", "PullRequestEvent"].includes(event.type)
-            )
-          : [];
-
-        // Calculate tier based on bash points
-        const tier = getTier(member.bash_points || 0);
-        const tierIcon = getTierIcon(tier);
+    // Set initial profile with data we already have
+    const tier = getTier(member.bash_points || 0);
+    const tierIcon = getTierIcon(tier);
         
-        setProfile({
-          ...member,
-          avatar_url: member.avatar_url, // Provide default avatar
-          title: member.title || "Basher",
-          joinedDate: new Date(member.joined_date || Date.now()),
-          basherLevel: tier, // Use the dynamic tier
-          tierIcon: tierIcon, // Add the tier icon
-          bashPoints: member.bash_points || 0,
-          clanName: member.clan_name || "Byte Basher",
-          basherNo: member.basher_no || "BBT2023045",
-          projects: member.stats?.projects || 0,
-          certifications: member.stats?.certifications || 0,
-          internships: member.stats?.internships || 0,
-          courses: member.stats?.courses || 0,
-          resume_url: member.resume_url || "",
-          portfolio_url: member.portfolio_url || "",
-          domains: [...(member.primary_domain || []), ...(member.secondary_domain || [])],
-          streaks: {
-            github: contributions.length,
-            leetcode: 15,
-            duolingo: duolingo_streak,
-            discord: 60,
-            books: 12,
-          },
-          languages: [
-            { name: 'TypeScript', level: 'Expert' },
-            { name: 'Python', level: 'Advanced' },
-            { name: 'Rust', level: 'Intermediate' },
-            { name: 'Go', level: 'Beginner' }
-          ],
-          hobbies: member.hobbies || [],
-          testimonial: member.testimony || "No testimonial available.",
-          gpa: member.gpa || 0,
-          socials: [
-            { platform: "github", url: `https://github.com/${member.github_username}` },
-            { platform: "linkedin", url: member.linkedin_url || "#" },
-            { platform: "instagram", url: member.instagram_username ? `https://instagram.com/${member.instagram_username}` : "#" },
-          ],
-          attendance: member.weekly_bash_attendance || 0,
-        });
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
-      }
-    };
-
-    fetchProfile();
-  }, [duolingo_streak, member]);
+    setProfile({
+      ...member,
+      avatar_url: member.avatar_url, // Provide default avatar
+      title: member.title || "Basher",
+      joinedDate: new Date(member.joined_date || Date.now()),
+      basherLevel: tier, // Use the dynamic tier
+      tierIcon: tierIcon, // Add the tier icon
+      bashPoints: member.bash_points || 0,
+      clanName: member.clan_name || "Byte Basher",
+      basherNo: member.basher_no || "BBT2023045",
+      projects: member.stats?.projects || 0,
+      certifications: member.stats?.certifications || 0,
+      internships: member.stats?.internships || 0,
+      courses: member.stats?.courses || 0,
+      resume_url: member.resume_url || "",
+      portfolio_url: member.portfolio_url || "",
+      domains: [...(member.primary_domain || []), ...(member.secondary_domain || [])],
+      streaks: {
+        github: 0, // Will be updated when GitHub data loads
+        leetcode: 15,
+        duolingo: 0, // Will be updated when Duolingo data loads
+        discord: 60,
+        books: 12,
+      },
+      languages: [
+        { name: 'TypeScript', level: 'Expert' },
+        { name: 'Python', level: 'Advanced' },
+        { name: 'Rust', level: 'Intermediate' },
+        { name: 'Go', level: 'Beginner' }
+      ],
+      hobbies: member.hobbies || [],
+      testimonial: member.testimony || "No testimonial available.",
+      gpa: member.gpa || 0,
+      socials: [
+        { platform: "github", url: `https://github.com/${member.github_username}` },
+        { platform: "linkedin", url: member.linkedin_url || "#" },
+        { platform: "instagram", url: member.instagram_username ? `https://instagram.com/${member.instagram_username}` : "#" },
+      ],
+      attendance: member.weekly_bash_attendance || 0,
+    });
+  }, [member]);
 
   // Check if the member is a legacy basher  
   const isLegacyBasher = member?.title === "Legacy Basher";
 
-  if (!profile) return <p>Loading...</p>; 
+  if (!member) return <ProfilePageSkeleton />;
+  if (!profile) return <ProfilePageSkeleton />; 
 
   return (
     <div className={`min-h-screen ${
@@ -461,9 +468,15 @@ export default function Profile() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-purple-500/20 rounded-xl p-4">
                   <Github className="w-5 h-5 text-purple-400 mb-2" />
-                  <div className="text-2xl font-bold text-purple-400">
-                    {profile.streaks.github}
-                  </div>
+                  <Suspense fallback={<div className="text-2xl font-bold text-purple-400 animate-pulse">...</div>}>
+                    <Await resolve={githubData}>
+                      {(data) => (
+                        <div className="text-2xl font-bold text-purple-400">
+                          {data?.length || profile.streaks.github}
+                        </div>
+                      )}
+                    </Await>
+                  </Suspense>
                   <div className="text-sm text-purple-400">GitHub</div>
                 </div>
                 <div className="bg-orange-500/20 rounded-xl p-4">
@@ -475,9 +488,15 @@ export default function Profile() {
                 </div>
                 <div className="bg-green-500/20 rounded-xl p-4">
                   <Globe className="w-5 h-5 text-green-400 mb-2" />
-                  <div className="text-2xl font-bold text-green-400">
-                    {profile.streaks.duolingo}
-                  </div>
+                  <Suspense fallback={<div className="text-2xl font-bold text-green-400 animate-pulse">...</div>}>
+                    <Await resolve={duolingoStreak}>
+                      {(streak) => (
+                        <div className="text-2xl font-bold text-green-400">
+                          {streak || profile.streaks.duolingo}
+                        </div>
+                      )}
+                    </Await>
+                  </Suspense>
                   <div className="text-sm text-green-400">Duolingo</div>
                 </div>
                 <div className="bg-indigo-500/20 rounded-xl p-4">
@@ -557,6 +576,55 @@ export default function Profile() {
           <Sparkles className="w-5 h-5" />
         </motion.div>
       )}
+      {/* GitHub data resolver component */}
+      <Suspense fallback={null}>
+        <Await resolve={githubData}>
+          {(githubEvents) => {
+            useEffect(() => {
+              if (!githubEvents || !profile) return;
+              
+              // Update the profile with GitHub streak data
+              setProfile(prevProfile => {
+                if (!prevProfile) return null;
+                return {
+                  ...prevProfile,
+                  streaks: {
+                    ...prevProfile.streaks,
+                    github: githubEvents.length
+                  }
+                };
+              });
+            }, [githubEvents]);
+            
+            return null; // This component only updates state, doesn't render anything
+          }}
+        </Await>
+      </Suspense>
+
+      {/* Duolingo data resolver component */}
+      <Suspense fallback={null}>
+        <Await resolve={duolingoStreak}>
+          {(duolingoStreak) => {
+            useEffect(() => {
+              if (typeof duolingoStreak !== 'number' || !profile) return;
+              
+              // Update the profile with Duolingo streak data
+              setProfile(prevProfile => {
+                if (!prevProfile) return null;
+                return {
+                  ...prevProfile,
+                  streaks: {
+                    ...prevProfile.streaks,
+                    duolingo: duolingoStreak
+                  }
+                };
+              });
+            }, [duolingoStreak]);
+            
+            return null; // This component only updates state, doesn't render anything
+          }}
+        </Await>
+      </Suspense>
     </div>
   )
 }

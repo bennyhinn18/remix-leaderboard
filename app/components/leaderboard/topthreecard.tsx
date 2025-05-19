@@ -2,6 +2,7 @@ import { motion } from "framer-motion"
 import { User, Award, Trophy, Medal, Sparkles, GemIcon, Boxes, CircleDot, Leaf, Flame, Droplets, Crown } from "lucide-react"
 import { Link } from "@remix-run/react"
 import { forwardRef } from "react"
+import { getTierIcon, getTierStyles } from "~/utils/tiers"
 
 type MemberWithStats = {
   originalRank: number;
@@ -18,59 +19,9 @@ type MemberWithStats = {
   bookRead?: number;
 }
 
-function getTierIcon(tier: string) {
-  switch (tier) {
-    case "diamond":
-      return <GemIcon className="w-4 h-4" />
-    case "obsidian":
-      return <Boxes className="w-4 h-4" />
-    case "pearl":
-      return <CircleDot className="w-4 h-4" />
-    case "amethyst":
-      return <Sparkles className="w-4 h-4" />
-    case "emerald":
-      return <Leaf className="w-4 h-4" />
-    case "ruby":
-      return <Flame className="w-4 h-4" />
-    case "sapphire":
-      return <Droplets className="w-4 h-4" />
-    case "gold":
-      return <Trophy className="w-4 h-4" />
-    case "silver":
-      return <Medal className="w-4 h-4" />
-    case "platinum":
-      return <Crown className="w-4 h-4" />
-    default:
-      return <Award className="w-4 h-4" />
-  }
-}
 
-function getTierStyles(tier: string) {
-  switch (tier) {
-    case "diamond":
-      return "bg-gradient-to-r from-cyan-300 to-cyan-500 text-cyan-900"
-    case "obsidian":
-      return "bg-gradient-to-r from-gray-800 to-black text-white"
-    case "pearl":
-      return "bg-gradient-to-r from-pink-100 to-pink-400 text-pink-900"
-    case "amethyst":
-      return "bg-gradient-to-r from-purple-300 to-purple-500 text-purple-900"
-    case "emerald":
-      return "bg-gradient-to-r from-green-300 to-green-500 text-green-900"
-    case "ruby":
-      return "bg-gradient-to-r from-red-300 to-red-500 text-red-900"
-    case "sapphire":
-      return "bg-gradient-to-r from-blue-300 to-blue-500 text-blue-900"
-    case "gold":
-      return "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900"
-    case "silver":
-      return "bg-gradient-to-r from-gray-300 to-gray-500 text-gray-900"
-    case "platinum":
-      return "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900"
-    default:
-      return "bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900"
-  }
-}
+
+
 
 const TopThreeCard = forwardRef<
   HTMLDivElement,

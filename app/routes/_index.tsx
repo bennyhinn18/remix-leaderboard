@@ -1,8 +1,8 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { json, type LoaderFunctionArgs, defer } from "@remix-run/node";
+import { Link, useLoaderData, Await, useAsyncValue } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { isOrganiser } from "~/utils/currentUser";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Users,
   Award, Activity, Bell, Calendar, 
@@ -10,19 +10,26 @@ import {
   Globe, Settings, Plus,
   ChevronRight, TrendingUp, Flame, User
 } from "lucide-react";
-import iconImage from "~/assets/bashers.png"
+import { RecentActivitiesData, AnnouncementsData, UpcomingEventsData } from "~/components/async-data-components";
+import { LoadingSkeleton } from "~/components/loading-skeletons";
+import { PageTransition } from "~/components/page-transition";
+import iconImage from "~/assets/bashers.png";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { MainNav } from "~/components/main-nav";
 import { useState, useEffect } from "react";
 import WhatsNewPanel from "~/components/WhatsNewPanel";
+import LeetCodeConnect from "~/components/leetcode-connect";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogTrigger
 } from "~/components/ui/dialog";
+
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request);
@@ -43,56 +50,97 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
   
-  // Fetch the member profile
+  // Fetch the member profile (critical data, wait for this)
   const { data: member } = await supabase
     .from("members")
     .select("*, clan:clans(*)")
     .eq("github_username", user.user_metadata?.user_name)
     .single();
   
-  // Fetch recent activities (points, achievements, etc)
-  const { data: recentActivities } = await supabase
+  // Create promise for less critical data that can load later
+  const getRecentActivities = supabase
     .from("points")
     .select("*, member:members!points_member_id_fkey(name, avatar_url)")
     .order("updated_at", { ascending: false })
-    .limit(5);
+    .limit(5)
+    .then(result => result.data || []);
     
-  // Fetch announcements (for organisers to post)
-  const { data: announcements } = await supabase
+  // Create promise for announcements
+  const getAnnouncements = supabase
     .from("announcements")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(3);
+    .limit(3)
+    .then(result => result.data || []);
     
-  // Fetch upcoming events
-  const { data: upcomingEvents } = await supabase
+  // Create promise for upcoming events
+  const getUpcomingEvents = supabase
     .from("events")
     .select("*")
     .gte("date", new Date().toISOString())
     .order("date", { ascending: true })
-    .limit(3);
+    .limit(3)
+    .then(result => result.data || []);
   
-    // Fetch Duolingo streak
-  const duolingoResponse = await fetch(
-    `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
-  );
-  const duolingoData = await duolingoResponse.json();
-  const userData = duolingoData.users?.[0] || {};
-  const duolingo_streak = Math.max(
-    userData.streak ?? 0,
-    userData.streakData?.currentStreak?.length ?? 0,
-    userData.streakData?.previousStreak?.length ?? 0
-  );
+  // Create promise for duolingo streak
+  const getDuolingoStreak = async () => {
+    if (!member?.duolingo_username) return 0;
     
-  return json({
+    try {
+      const duolingoResponse = await fetch(
+        `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+      );
+      const duolingoData = await duolingoResponse.json();
+      const userData = duolingoData.users?.[0] || {};
+      return Math.max(
+        userData.streak ?? 0,
+        userData.streakData?.currentStreak?.length ?? 0,
+        userData.streakData?.previousStreak?.length ?? 0
+      );
+    } catch (error) {
+      console.error("Error fetching Duolingo data:", error);
+      return 0;
+    }
+  };
+  
+  // Create promise for LeetCode stats
+  const getLeetCodeStats = async () => {
+    if (!member?.leetcode_username) return { solved: 0 };
+    
+    try {
+      const response = await fetch(
+        `https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`,
+        {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; LeaderboardApp/1.0)"
+          }
+        }
+      );
+      
+      if (!response.ok) return { solved: 0 };
+      
+      const data = await response.json();
+      return {
+        solved: data?.totalSolved || 0,
+        easy: data?.easySolved || 0,
+        medium: data?.mediumSolved || 0,
+        hard: data?.hardSolved || 0
+      };
+    } catch (error) {
+      console.error(`Error fetching LeetCode stats:`, error);
+      return { solved: 0 };
+    }
+  };
+    
+  return defer({
     user,
     member,
     organiserStatus,
-    recentActivities: recentActivities || [],
-    announcements: announcements || [,
-    ...(announcements || [])],
-    upcomingEvents: upcomingEvents || [],
-    duolingo_streak,
+    recentActivities: getRecentActivities,
+    announcements: getAnnouncements,
+    upcomingEvents: getUpcomingEvents,
+    duolingo_streak: getDuolingoStreak(),
+    leetcode_stats: getLeetCodeStats(),
   });
 };
 
@@ -110,8 +158,8 @@ function getTier(points: number): string {
 }
 
 export default function Home() {
-  const { user, member, organiserStatus, recentActivities, announcements, upcomingEvents,duolingo_streak } = useLoaderData<typeof loader>();
-  const [streakData, setStreakData] = useState({ github: 0, duolingo: 0 });
+  const { user, member, organiserStatus, recentActivities, announcements, upcomingEvents, duolingo_streak, leetcode_stats } = useLoaderData<typeof loader>();
+  const [streakData, setStreakData] = useState({ github: 0, duolingo: 0, leetcode: 0 });
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<any>(null);
 
   // For users not logged in
@@ -170,41 +218,54 @@ export default function Home() {
       }
     };
     
-    // Fetch Duolingo streak
-    const fetchDuolingoStreak = async () => {
-      if (!member.duolingo_username) return;
-      
-      try {
-        
+    // Handle Duolingo streak
+    const handleDuolingoStreak = async () => {
+      // Use the deferred Duolingo streak once resolved
+      if (duolingo_streak instanceof Promise) {
+        duolingo_streak.then(streak => {
+          setStreakData(prev => ({ ...prev, duolingo: streak }));
+        });
+      } else if (typeof duolingo_streak === 'number') {
         setStreakData(prev => ({ ...prev, duolingo: duolingo_streak }));
-      } catch (error) {
-        console.error("Error fetching Duolingo data:", error);
+      }
+    };
+    
+    // Handle LeetCode stats
+    const handleLeetCodeStats = async () => {
+      if (leetcode_stats instanceof Promise) {
+        leetcode_stats.then(stats => {
+          setStreakData(prev => ({ ...prev, leetcode: stats.solved }));
+        });
+      } else if (leetcode_stats && typeof leetcode_stats.solved === 'number') {
+        setStreakData(prev => ({ ...prev, leetcode: leetcode_stats.solved }));
       }
     };
     
     fetchGitHubStreak();
-    fetchDuolingoStreak();
-  }, [member]);
+    handleDuolingoStreak();
+    handleLeetCodeStats();
+  }, [member, duolingo_streak, leetcode_stats]);
 
   return (
-    <div className={`min-h-screen pb-20 ${
-      isLegacyBasher 
-        ? "bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900" 
-        : "bg-gradient-to-br from-gray-900 to-gray-800"
-    } text-white`}>
-      <header className="bg-black/20 backdrop-blur-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <img src={`${iconImage }`} alt="Byte Bash Logo" className="h-10 w-10" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">Byte Bash Blitz</h1>
+    <PageTransition>
+      <div className={`min-h-screen pb-20 ${
+        isLegacyBasher 
+          ? "bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900" 
+          : "bg-gradient-to-br from-gray-900 to-gray-800"
+      } text-white`}>
+        <header className="bg-black/20 backdrop-blur-lg">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <img src={`${iconImage}`} alt="Byte Bash Logo" className="h-10 w-10" />
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">Byte Bash Blitz</h1>
+              </div>
+              <MainNav user={member} />
             </div>
-            <MainNav user={member} />
           </div>
-        </div>
-      </header>
-      
-      <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        </header>
+        
+        <main className="max-w-7xl mx-auto px-4 py-8 space-y-8 fade-in">
         {/* Welcome Section with Role-Based Greeting */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -245,7 +306,13 @@ export default function Home() {
             </div>
           </div>
         </motion.div>
-         {/* What's New Section - Add this here */}
+         {/* LeetCode Connect Component */}
+         <LeetCodeConnect 
+          hasLeetCodeUsername={!!member?.leetcode_username}
+          username={member?.leetcode_username || ""}
+          memberId={member?.id}
+         />
+         {/* What's New Section */}
          <WhatsNewPanel />
         {/* Stats Overview Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -292,6 +359,10 @@ export default function Home() {
                 <Globe className="w-4 h-4 text-green-500 mr-1.5" />
                 <span className="text-lg font-medium">{streakData.duolingo}</span>
               </div>
+              <div className="flex items-center">
+                <Code className="w-4 h-4 text-blue-500 mr-1.5" />
+                <span className="text-lg font-medium">{streakData.leetcode}</span>
+              </div>
             </div>
             <div className="mt-2 text-xs text-blue-400">
               <Link to={`/profile/${member?.github_username}`} className="flex items-center gap-1">
@@ -314,7 +385,8 @@ export default function Home() {
             <div className="text-lg font-medium">{member?.clan?.clan_name || "No Clan"}</div>
             <div className="text-sm text-gray-400 mt-1">Rank: {member?.clan?.rank || "N/A"}</div>
             <div className="mt-2 text-xs text-blue-400">
-              <Link to={`/clans/${member?.clan?.id}`} className="flex items-center gap-1">
+              <Link to={`/cla
+                ns/${member?.clan?.id}`} className="flex items-center gap-1">
                 View clan
                 <ChevronRight className="w-3 h-3" />
               </Link>
@@ -363,50 +435,11 @@ export default function Home() {
             </div>
             
             <div className="space-y-4">
-              {recentActivities && recentActivities.length > 0 ? (
-                recentActivities.map((activity) => (
-                  <motion.div 
-                    key={activity.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-3 p-3 bg-white/5 rounded-lg"
-                  >
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-                      {activity.member?.avatar_url ? (
-                        <img 
-                          src={activity.member.avatar_url} 
-                          alt={activity.member.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-6 h-6 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium truncate">
-                          {activity.member?.name || "Unknown User"}
-                        </span>
-                        <span className={`${
-                          activity.points > 0 ? "text-green-400" : "text-red-400"
-                        }`}>
-                          {activity.points > 0 ? "+" : ""}{activity.points} points
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-400 truncate">
-                        {activity.description}
-                      </p>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(activity.updated_at).toLocaleDateString()}
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-center text-gray-400 py-6">
-                  No recent activity to display
-                </div>
-              )}
+              <Suspense fallback={<LoadingSkeleton type="activity" count={3} />}>
+                <Await resolve={recentActivities}>
+                  <RecentActivitiesData />
+                </Await>
+              </Suspense>
             </div>
           </motion.div>
           
@@ -424,12 +457,6 @@ export default function Home() {
                   <Bell className="w-5 h-5 text-orange-400" /> 
                   Announcements
                 </h2>
-                {announcements && announcements.length > 0 ? (
-                  <div className="relative">
-                  <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
-                  <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
-                  </div>
-                ) : null}
                 {organiserStatus && (
                   <Button size="sm" variant="ghost" className="text-blue-400">
                     <Plus className="w-4 h-4 mr-1" /> 
@@ -439,45 +466,17 @@ export default function Home() {
               </div>
               
               <div className="space-y-4">
-              {announcements && announcements.length > 0 ? (
-                  announcements.map((announcement) => (
-                    <motion.div 
-                      key={announcement.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors"
-                      onClick={() => setSelectedAnnouncement(announcement)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium">{announcement.title}</h3>
-                        <Badge variant="outline" className={`text-xs ${
-                          announcement.category === 'Important' 
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
-                            : 'bg-blue-500/10 text-blue-400'
-                        }`}>
-                          {announcement.category}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-2 line-clamp-2">
-                        {announcement.content}
-                      </p>
-                      <div className="text-xs flex justify-between items-center mt-2">
-                        <span className="text-gray-500">
-                          {new Date(announcement.created_at).toLocaleDateString()}
-                        </span>
-                        <span className="text-blue-400 text-xs flex items-center">
-                          Read more <ChevronRight className="w-3 h-3 ml-1" />
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-400 py-6">
-                    No announcements to display
-                  </div>
-                )}
+                <Suspense fallback={<LoadingSkeleton type="announcement" count={2} />}>
+                  <Await resolve={announcements}>
+                    {(resolvedAnnouncements) => (
+                      <AnnouncementsData 
+                        onAnnouncementClick={setSelectedAnnouncement} 
+                      />
+                    )}
+                  </Await>
+                </Suspense>
 
-                {/* Add this dialog component at the end of your return statement, before the closing </div> */}
+                {/* Announcement dialog component */}
                 <Dialog open={!!selectedAnnouncement} onOpenChange={(open) => !open && setSelectedAnnouncement(null)}>
                   <DialogContent className="bg-gray-900 border border-gray-800 text-white max-w-xl">
                     <DialogHeader>
@@ -535,34 +534,11 @@ export default function Home() {
               </div>
               
               <div className="space-y-4">
-                {upcomingEvents && upcomingEvents.length > 0 ? (
-                  upcomingEvents.map((event) => (
-                    <motion.div 
-                      key={event.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="p-3 bg-white/5 rounded-lg"
-                    >
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium">{event.title}</h3>
-                        <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400">
-                          {event.type}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-400 mt-2 flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(event.date).toLocaleDateString()} at {event.time}
-                      </div>
-                      <div className="text-sm text-gray-400 mt-1">
-                        {event.location}
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-400 py-6">
-                    No upcoming events
-                  </div>
-                )}
+                <Suspense fallback={<LoadingSkeleton type="event" count={2} />}>
+                  <Await resolve={upcomingEvents}>
+                    <UpcomingEventsData />
+                  </Await>
+                </Suspense>
               </div>
             </motion.div>
             
@@ -641,13 +617,15 @@ export default function Home() {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 }
 
 // Simple landing page for users who aren't logged in
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
+    <PageTransition>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white fade-in">
       <div className="max-w-6xl mx-auto px-4 py-20 text-center">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -714,5 +692,6 @@ function LandingPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

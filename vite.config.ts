@@ -24,16 +24,39 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
+      strategies: "generateSW",
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,png,jpg,svg,ico}"],
+        navigateFallback: null,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
+      },
       manifest: {
         id: "/",
         name: "Basher Terminal",
         short_name: "Basher Terminal",
-        description: "Manage points",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        description: "Track coding journey, earn points, and climb the leaderboard with Byte Bash Blitz",
+        theme_color: "#111827", // Dark blue/gray to match app's background
+        background_color: "#111827", // Dark blue/gray background
         display: "standalone",
         display_override: ["window-controls-overlay"],
+        orientation: "any", // Support both portrait and landscape
         start_url: "/",
+        categories: ["productivity", "education", "social"],
         icons: [
           {
             src: "/icons/icon-192x192.png",
@@ -44,22 +67,28 @@ export default defineConfig({
             src: "/icons/icon-512x512.png",
             sizes: "512x512",
             type: "image/png"
+          },
+          {
+            src: "/icons/maskable-icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable"
           }
         ],
-        // screenshots: [
-        //   {
-        //     src: "/screenshots/screenshot1.png",
-        //     sizes: "1280x720", // Wide format for desktop
-        //     type: "image/png",
-        //     form_factor: "wide"
-        //   },
-        //   {
-        //     src: "/screenshots/screenshot2.png",
-        //     sizes: "720x1280", // Narrow format for mobile
-        //     type: "image/png",
-        //     form_factor: "narrow" // or simply remove this key for mobile
-        //   }
-        // ]
+        screenshots: [
+          {
+            src: "/screenshots/desktop.png",
+            sizes: "1280x720",
+            type: "image/png",
+            form_factor: "wide"
+          },
+          {
+            src: "/screenshots/mobile.png",
+            sizes: "720x1280",
+            type: "image/png",
+            form_factor: "narrow"
+          }
+        ]
       }
     })    
   ],

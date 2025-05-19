@@ -14,6 +14,10 @@ import TopThreeCard from "~/components/leaderboard/topthreecard"
 import ClanCard from "~/components/leaderboard/clancard"
 import RegularCard from "~/components/leaderboard/regularcard"
 import LeagueInfoButton from "~/components/league-info"
+import Sidebar from "~/components/leaderboard/sidebar"
+import LeagueBadges from "~/components/leaderboard/league-badges"
+import PromotionZone from "~/components/leaderboard/promotion-zone"
+import MobileTabs from "~/components/leaderboard/mobile-tabs"
 import { title } from "node:process"
 import { getTier, getTierIcon } from "~/utils/tiers";
 interface MemberWithStats {
@@ -250,35 +254,28 @@ export default function Leaderboard() {
   })
 
   return (
-    <div className="min-h-screen pb-[78px] bg-gradient-to-b from-gray-900 to-black dark:from-white dark:to-gray-50">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl"
-      >
-        <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex justify-between items-center">
-            <Link to="/" className="hover:opacity-80 transition-opacity">
-              <img src={iconImage || "/placeholder.svg"} alt="Basher Logo" className="w-16 h-16" />
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black dark:from-white dark:to-gray-50 overflow-x-auto">
+      {/* Sidebar Navigation - only visible on desktop */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+      {/* Main Content Area */}
+      <div className="flex-1 md:ml-[200px]">
+        {/* User welcome area */}
+        <div className="p-4 flex justify-between items-center border-b border-white/10">
+          <div className="md:hidden">
+            <Link to="/" className="flex items-center">
+              <img src={iconImage || "/placeholder.svg"} alt="Basher Logo" className="w-8 h-8" />
             </Link>
-            <div className="text-center flex-1">
-            
-              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                Leaderboard
-              </h1>
-              
-            </div>
-            {/* {currentUser && <LeagueInfoButton currentUser={currentUser} />} */}
-            <div className="hidden sm:block text-right">
-              <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher's"}</div>
-              <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
-            </div>
-            </div>
-
-          <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full sm:w-full flex items-center">
-              {/* {showSearch ? (
-                <div className="relative">
+          </div>
+        
+          <h1 className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+            Leaderboard
+          </h1>
+          
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Search */}
+            {showSearch ? (
+              <div className="relative">
                 <input
                   type="text"
                   placeholder="Search members..."
@@ -297,69 +294,65 @@ export default function Leaderboard() {
                 </button>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               </div>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowSearch(true)}
-                  className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 mr-4"
-                >
-                  <Search className="w-5 h-5" />
-                </motion.button>
-              )} */}
-
-                <div className="flex relative w-full gap-2 overflow-x-auto no-scrollbar">
-                {["overall", "bashclan", "github", "duolingo", "leetcode", "discord", "books"].map((tab) => (
-                  <motion.button
-                  key={tab}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    setActiveTab(tab as typeof activeTab)
-                    localStorage.setItem("activeTab", tab)
-                  }}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-colors ${
-                    activeTab === tab ? "bg-blue-500 text-white" : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  }`}
-                  >
-                  {tab === "overall" && <Trophy className="w-4 h-4" />}
-                  {tab === "bashclan" && <Building className="w-4 h-4" />}
-                  {tab === "github" && <Github className="w-4 h-4" />}
-                  {tab === "leetcode" && <Code className="w-4 h-4" />}
-                  {tab === "duolingo" && <Feather className="w-4 h-4" />}
-                  {tab === "discord" && <MessageCircle className="w-4 h-4" />}
-                  {tab === "books" && <Book className="w-4 h-4" />}
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </motion.button>
-                ))}
-              </div>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowSearch(true)}
+                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20"
+              >
+                <Search className="w-5 h-5" />
+              </motion.button>
+            )}
+            
+            {/* User greeting - hidden on small screens */}
+            <div className="hidden md:block text-right">
+              <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher"}</div>
+              <div className="text-sm text-gray-400">How's your learning journey?</div>
             </div>
           </div>
         </div>
-      </motion.div>
+        
+        {/* League badges at top */}
+        {currentUser && (
+          <div className="pt-4 md:pt-6 pb-0 overflow-hidden">
+            <div className="w-full overflow-hidden">
+              <LeagueBadges 
+                currentUserTier={currentUser.tier}
+                daysToNextLeague={2}
+                currentUser={currentUser}
+              />
+            </div>
+            
+            {/* Mobile tabs below league badges */}
+            <div className="md:hidden mt-4 w-full overflow-hidden">
+              <MobileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            </div>
+          </div>
+        )}
 
-      {currentUser && showScrollButton && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => scrollToCurrentUser()}
-          className={`fixed bottom-28 right-6 z-50 flex items-center gap-2 px-4 py-2 text-white rounded-full shadow-lg ${userPosition === "visible" ? "hidden" : "bg-blue-500"}`}
-        >
-          {/*<User className="w-4 h-4" />
-           <span>Find Me</span> */}
-          {userPosition === "above" ? (
-            <ArrowUp className="w-4 h-4 animate-bounce" />
-          ) : userPosition === "below" ? (
-            <ArrowDown className="w-4 h-4 animate-bounce" />
-          ) : null}
-        </motion.button>
-      )}
+        {/* Find me button */}
+        {currentUser && showScrollButton && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => scrollToCurrentUser()}
+            className={`fixed bottom-28 right-6 z-50 flex items-center gap-2 px-4 py-2 text-white rounded-full shadow-lg ${userPosition === "visible" ? "hidden" : "bg-blue-500"}`}
+          >
+            {userPosition === "above" ? (
+              <ArrowUp className="w-4 h-4 animate-bounce" />
+            ) : userPosition === "below" ? (
+              <ArrowDown className="w-4 h-4 animate-bounce" />
+            ) : null}
+          </motion.button>
+        )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <AnimatePresence mode="popLayout">
-          <motion.div layout className="space-y-6">
+        {/* Main Content */}
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <AnimatePresence mode="popLayout">
+            <motion.div layout className="space-y-6">
         {activeTab === "bashclan" ? (
         <div className="space-y-4">
         {clans
@@ -398,26 +391,44 @@ export default function Leaderboard() {
         ) : (
           <>
             <div className="space-y-4">
-          
-            </div>
-
-            <div className="space-y-4 mt-8">
           {sortedMembers
-            .filter((member) => member.originalRank )
-            .map((member, index) => (
-              activeTab === "overall" && member.originalRank <= 3 
-              ? <TopThreeCard key={member.id}
-              member={member}
-              index={index }
-              activeTab={activeTab}
-              searchQuery={searchQuery}
-              
-              isCurrentUser={currentUser?.id === member.id}
-              ref={currentUser?.id === member.id ? currentUserRef : null} />
-              : <RegularCard
+            .filter((member) => member.originalRank <= 3)
+            .map((member, index) =>
+              activeTab === "overall" ? (
+            <TopThreeCard
               key={member.id}
               member={member}
-              index={index }
+              index={member.originalRank - 1}
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              isCurrentUser={currentUser?.id === member.id}
+              ref={currentUser?.id === member.id ? currentUserRef : null}
+            />
+              ) : (
+            <RegularCard
+              key={member.id}
+              member={member}
+              index={index}
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              duolingoStreak={member.duolingoStreak || 0}
+              isCurrentUser={currentUser?.id === member.id}
+              ref={currentUser?.id === member.id ? currentUserRef : null}
+            />
+              )
+            )}
+            </div>
+
+           
+            
+            <div className="space-y-4 mt-8">
+          {sortedMembers
+            .filter((member) => member.originalRank > 3)
+            .map((member, index) => (
+            <RegularCard
+              key={member.id}
+              member={member}
+              index={index + 3}
               activeTab={activeTab}
               searchQuery={searchQuery}
               duolingoStreak={member.duolingoStreak || 0}
@@ -432,6 +443,7 @@ export default function Leaderboard() {
         </AnimatePresence>
       </div>
     </div>
+  </div>
   )
 }
 
