@@ -16,10 +16,17 @@ export default function WhatsNewPanel() {
   // Latest updates - newest first
   const updates = [
     {
-      version:"v1.3.1",
-      date: "May 15, 2025",
-      title:"Fixes in leaderboard sorting ",
-      description: "We fixed some issues with the sorting of the leaderboard. Your ranks should now be accurate.",
+      version: "v1.4.0",
+      date: "May 19, 2025",
+      title: "Resources Page Launched",
+      description: "Explore curated learning resources and tools to boost your progress. Find guides, links, and more on the new Resources page!",
+      link: "/resources"
+    },
+    {
+      version: "v1.3.1",
+      date: "May 17, 2025",
+      title: "LeetCode Added to Leaderboard",
+      description: "You can now track and compare LeetCode stats on the leaderboard. Filter by LeetCode to see top performers!",
       link: "/leaderboard"
     },
     {
@@ -107,7 +114,7 @@ export default function WhatsNewPanel() {
             className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors"
           >
             <Bell className="w-4 h-4 animate-pulse" />
-            <span>What's New</span>
+            <span>What&apos;s New</span>
             <ChevronUp className="w-4 h-4" />
           </button>
         </motion.div>
@@ -122,7 +129,7 @@ export default function WhatsNewPanel() {
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-blue-400" />
-              <h3 className="text-lg font-semibold text-white">What's New</h3>
+              <h3 className="text-lg font-semibold text-white">What&apos;s New</h3>
             </div>
             <div className="flex items-center gap-1">
               <button 
