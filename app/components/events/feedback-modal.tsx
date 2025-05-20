@@ -7,6 +7,7 @@ import { Textarea } from "~/components/ui/textarea"
 import { Star } from "lucide-react"
 import type { Event } from "../../types/events"
 import { motion, AnimatePresence } from "framer-motion"
+import { sendFeedbackEmail } from '~/services/email-service';
 
 interface FeedbackModalProps {
   event: Event
@@ -14,7 +15,7 @@ interface FeedbackModalProps {
   onClose: () => void
 }
 
-export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [positives, setPositives] = useState("")
@@ -24,32 +25,55 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const [isSubmitted, setIsSubmitted] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    // Simulate submission
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+  try {
+    const response = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: "bashers@stellamaryscoe.edu.in",
+        eventName: event.name,
+        rating,
+        positives,
+        negatives,
+        improvements,
+      }),
+    });
 
-    console.log("Submitting feedback:", { rating, positives, negatives, improvements })
-    setIsSubmitting(false)
-    setIsSubmitted(true)
+    const result = await response.json();
 
-    // Reset and close
+    if (!result.success) {
+      console.error("Failed to send feedback email:", result.error);
+      alert("Failed to send feedback. Try again later.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitted(true);
     setTimeout(() => {
-      onClose()
-      setIsSubmitted(false)
-      setRating(0)
-      setPositives("")
-      setNegatives("")
-      setImprovements("")
-    }, 2000)
+      onClose();
+      setIsSubmitted(false);
+      setRating(0);
+      setPositives("");
+      setNegatives("");
+      setImprovements("");
+    }, 2000);
+  } catch (err) {
+    console.error("Error submitting feedback:", err);
+    alert("Unexpected error. Try again later.");
+  } finally {
+    setIsSubmitting(false);
   }
+};
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg bg-gradient-to-br from-blue-900 to-indigo-900 text-white">
         <DialogHeader>
-          <DialogTitle className="text-white">Event Feedback</DialogTitle>
+          <DialogTitle className="text-white">Basher {event.name} Feedback</DialogTitle>
         </DialogHeader>
         <AnimatePresence mode="wait">
           {!isSubmitted ? (
@@ -156,4 +180,3 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     </Dialog>
   )
 }
-

@@ -58,7 +58,7 @@ export default function Events() {
   const location = useLocation();
   const { toast } = useToast();
 
-
+const isLoading = navigation.state === "loading" || navigation.state === "submitting"
 
   // Fetch events from database on mount
   useEffect(() => {
@@ -251,10 +251,11 @@ export default function Events() {
                     </SelectContent>
                   </Select>
                 </div>
-
+                      
                 <div className="mt-6 mb-8">
                   {selectedEvent && (
                     <>
+                    
                       <EventCard
                         event={selectedEvent}
                         onJoin={() => handleJoin(selectedEvent.id)}
@@ -268,10 +269,23 @@ export default function Events() {
                       <AgendaSection event={selectedEvent} isVisible={showAgenda} />
                       <AbsenceModal event={selectedEvent} isOpen={showAbsence} onClose={() => setShowAbsence(false)} />
                       <FeedbackModal event={selectedEvent} isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
+                     {selectedEvent.status === "completed" && (
+              <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFeedback(true)}
+                  className="w-full border-blue-400 text-white hover:bg-blue-800"
+                  // disabled={isLoading}
+                >
+                  Provide Feedback
+                </Button>
+              </motion.div>
+            )}
                     </>
                   )}
                 </div>
               </motion.div>
+              
             </AnimatePresence>
           </>
         )}

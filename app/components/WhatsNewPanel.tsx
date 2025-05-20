@@ -11,10 +11,17 @@ export default function WhatsNewPanel() {
   const [isMinimized, setIsMinimized] = useState(true);
   
   // Current app version/update ID - update this when you make changes
-  const currentVersion = "v1.3.1";
+  const currentVersion = "v1.4.1";
   
   // Latest updates - newest first
   const updates = [
+    {
+      version: "v1.4.1",
+      date: "May 20, 2025",
+      title: "Discord in Leaderboard is Live",
+      description: "You can now filter by Discord  on the leaderboard, also minor fixes",
+      link: "/leaderboard"
+    },
     {
       version: "v1.4.0",
       date: "May 19, 2025",

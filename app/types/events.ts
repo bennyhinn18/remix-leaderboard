@@ -63,6 +63,7 @@ export interface Database {
 }
 
 export interface Event {
+  name: ReactNode
   id: string
   title: string
   date: string

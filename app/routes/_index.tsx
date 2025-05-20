@@ -320,7 +320,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
               <h2 className="text-2xl font-bold">
-                Welcome back, {member?.name || 'Basher'}!
+                Welcome back, {`Basher ${member?.name?.split(" ")[1] || ''}`.trim() || 'Basher'}!
               </h2>
               <p className="text-gray-400 mt-2">
                 {organiserStatus ? "Manage your community and track progress" : 

@@ -1,7 +1,7 @@
 "use client"
 
 import { ActionFunctionArgs, json, type LoaderFunctionArgs } from "@remix-run/node"
-import { Link, useLoaderData } from "@remix-run/react"
+import { Link, Outlet, useLoaderData } from "@remix-run/react"
 import { createServerSupabase } from "~/utils/supabase.server"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
@@ -149,7 +149,7 @@ export default function ResourcesPage() {
       <div className="absolute inset-0 z-0 opacity-5">
         <div className="h-full w-full bg-grid-pattern"></div>
       </div>
-
+      
       {/* Scanline effect */}
       <div className="scanline"></div>
 
@@ -263,7 +263,9 @@ export default function ResourcesPage() {
           ))}
         </motion.div>
         <ProjectList initialProjects={projects} initialMembers={members} />;
+     
       </div>
+      
     </div>
   )
 }

@@ -270,11 +270,12 @@ export default function Leaderboard() {
             </div>
             {/* {currentUser && <LeagueInfoButton currentUser={currentUser} />} */}
             <div className="hidden sm:block text-right">
-              <div className="text-lg font-semibold text-white">Hello {currentUser?.name || "Basher's"}</div>
+              <div className="text-lg font-semibold text-white">
+                Hello {`Basher ${currentUser?.name?.split(" ")[0] || ""}`.trim() || "Basher's"}
+              </div>
               <div className="text-sm text-gray-400">How&apos;s your learning journey?</div>
             </div>
             </div>
-
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:w-full flex items-center">
               {/* {showSearch ? (
