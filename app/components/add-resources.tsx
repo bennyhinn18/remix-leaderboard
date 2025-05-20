@@ -22,6 +22,7 @@ interface ActionData {
     websiteUrl?: string
     memberName?: string
   }
+  success?: boolean
 }
 
 export default function AddResource({ domains, onClose }: AddResourceProps) {
@@ -33,6 +34,7 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
   const [cursorVisible, setCursorVisible] = useState(true)
   const [showScrollIndicator, setShowScrollIndicator] = useState(false)
   const formContainerRef = useRef<HTMLDivElement>(null)
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Typing animation for title
   useEffect(() => {
@@ -65,6 +67,14 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
     window.addEventListener("resize", checkScroll)
     return () => window.removeEventListener("resize", checkScroll)
   }, [])
+
+  useEffect(() => {
+    if (actionData?.success) {
+      formRef.current?.reset();
+      onClose();
+      // You might want to add a toast notification here
+    }
+  }, [actionData, onClose]);
 
   // Animation variants
   const overlayVariants = {
@@ -206,7 +216,7 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
               scrollbarColor: "#00ff9d30 transparent",
             }}
           >
-            <Form method="post" className="space-y-6" onSubmit={() => setIsSubmitting(true)}>
+            <Form method="post" className="space-y-6" id="resource-form" onSubmit={() => setIsSubmitting(true)}>
               <motion.div
                 variants={formFieldVariants}
                 initial="hidden"

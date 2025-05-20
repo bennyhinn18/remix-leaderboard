@@ -1,14 +1,15 @@
 import { json, type LoaderFunctionArgs, defer } from "@remix-run/node";
-import { Link, useLoaderData, Await, useAsyncValue } from "@remix-run/react";
+import { Link, useLoaderData, Await } from "@remix-run/react";
 import { createServerSupabase } from "~/utils/supabase.server";
 import { isOrganiser } from "~/utils/currentUser";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Trophy, Users,
   Award, Activity, Bell, Calendar, 
   BarChart2, Github, 
   Globe, Settings, Plus,
-  ChevronRight, TrendingUp, Flame, User
+  ChevronRight, TrendingUp, Flame, User,
+  Code
 } from "lucide-react";
 import { RecentActivitiesData, AnnouncementsData, UpcomingEventsData } from "~/components/async-data-components";
 import { LoadingSkeleton } from "~/components/loading-skeletons";
@@ -17,18 +18,16 @@ import iconImage from "~/assets/bashers.png";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { MainNav } from "~/components/main-nav";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import WhatsNewPanel from "~/components/WhatsNewPanel";
 import LeetCodeConnect from "~/components/leetcode-connect";
 import { NotificationManager } from "~/components/notification-manager";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger
 } from "~/components/ui/dialog";
 
 

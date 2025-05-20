@@ -1,12 +1,13 @@
 "use client"
 
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
+import { ActionFunctionArgs, json, type LoaderFunctionArgs } from "@remix-run/node"
 import { Link, useLoaderData } from "@remix-run/react"
 import { createServerSupabase } from "~/utils/supabase.server"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
 import AddResource from "~/components/add-resources"
 import AddProject from "~/components/add-project"
+import ProjectList from "~/components/project-list"
 
 interface Domain {
   id: number
@@ -22,15 +23,73 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response()
   const supabase = createServerSupabase(request, response)
 
-  const { data: domain, error } = await supabase.from("domains").select("*").order("name", { ascending: true })
+  // Fetch domains
+  const { data: domain, error } = await supabase
+    .from("domains")
+    .select("*")
+    .order("name", { ascending: true });
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return json<LoaderData>({
+  // Fetch projects
+  const { data: projectsData } = await supabase
+    .from("projects")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  // Fetch members
+  const { data: membersData } = await supabase
+    .from("members")
+    .select("id, name")
+    .order("name", { ascending: true });
+
+  return json({
     domains: domain || [],
-  })
+    projects: projectsData || [],
+    members: membersData || [],
+  });
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+
+  const formData = await request.formData();
+  
+  const domainId = formData.get("domainId");
+  const websiteName = formData.get("websiteName");
+  const websiteUrl = formData.get("websiteUrl");
+  const memberName = formData.get("memberName");
+
+  // Validate inputs
+  const errors: Record<string, string> = {};
+  if (!domainId) errors.domainId = "Domain is required";
+  if (!websiteName) errors.websiteName = "Resource name is required";
+  if (!websiteUrl) errors.websiteUrl = "URL is required";
+  if (!memberName) errors.memberName = "Your name is required";
+
+  if (Object.keys(errors).length > 0) {
+    return json({ errors }, { status: 400 });
+  }
+
+  // Insert into database
+  const { error } = await supabase
+    .from("resources")
+    .insert({
+      domain_id: Number(domainId),
+      website_name: websiteName!.toString(),
+      website_url: websiteUrl!.toString(),
+      membername: memberName!.toString(),
+      added_at: new Date().toISOString(),
+    });
+
+  if (error) {
+    return json({ errors: { form: error.message } }, { status: 500 });
+  }
+
+  return json({ success: true });
 }
 
 export default function ResourcesPage() {
@@ -40,6 +99,7 @@ export default function ResourcesPage() {
   const [typedText, setTypedText] = useState("")
   const fullText = "Computer Science Terminal"
   const [cursorVisible, setCursorVisible] = useState(true)
+  const { projects, members } = useLoaderData<typeof loader>();
 
   // Typing animation effect
   useEffect(() => {
@@ -95,12 +155,14 @@ export default function ResourcesPage() {
 
       <div className="relative z-10">
         <div className="terminal-header mb-8 border-b border-[#00ff9d]/30 pb-4">
+          <Link to="/leaderboard">
           <div className="flex items-center gap-2 mb-2">
             <div className="h-3 w-3 rounded-full bg-red-500"></div>
             <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
             <div className="h-3 w-3 rounded-full bg-green-500"></div>
             <div className="ml-4 text-xs text-[#00ff9d]/70">user@bytebashblitz:~</div>
           </div>
+          </Link>
 
           <motion.div
             className="flex flex-col items-center justify-center relative"
@@ -108,13 +170,6 @@ export default function ResourcesPage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
           >
-            <Link
-              to="/leaderboard"
-              className="absolute left-0 top-0 ml-2 mt-2 text-[#00ff9d]/70 hover:text-[#00ff9d] text-xl underline transition-colors flex items-center gap-1"
-            >
-              <span className="text-lg">←</span>
-              LeaderBoard
-            </Link>
             <div className="flex items-center justify-center w-full">
               <span className="text-[#00ff9d]/70 mr-2">$</span>
               <motion.h1
@@ -207,6 +262,7 @@ export default function ResourcesPage() {
             </motion.div>
           ))}
         </motion.div>
+        <ProjectList initialProjects={projects} initialMembers={members} />;
       </div>
     </div>
   )
