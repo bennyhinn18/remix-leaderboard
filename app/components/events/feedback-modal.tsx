@@ -7,15 +7,18 @@ import { Textarea } from "~/components/ui/textarea"
 import { Star } from "lucide-react"
 import type { Event } from "../../types/events"
 import { motion, AnimatePresence } from "framer-motion"
-import { sendFeedbackEmail } from '~/services/email-service';
+import { Member } from "~/types/database"
 
 interface FeedbackModalProps {
   event: Event
+  member: Member
   isOpen: boolean
   onClose: () => void
 }
 
-export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
+
+
+export function FeedbackModal({ event, isOpen, onClose, member }: FeedbackModalProps) {
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [positives, setPositives] = useState("")
@@ -33,13 +36,17 @@ export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        to: "bashers@stellamaryscoe.edu.in",
-        eventName: event.name,
-        rating,
-        positives,
-        negatives,
-        improvements,
-      }),
+      to: "bashers@stellamaryscoe.edu.in",
+      eventId: event.id,
+      memberId: member.id,
+      memberName: member.name,
+      memberEmail: member.academic_email,
+      eventName: event.name,
+      rating,
+      positives,
+      negatives,
+      improvements,
+    }),
     });
 
     const result = await response.json();

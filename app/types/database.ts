@@ -1,5 +1,6 @@
 export interface Member {
   tier(tier: string): import("clsx").ClassValue
+  academic_email: string
   duolingo_streak: number
   discord_messages: number
   leetcode_streak: number

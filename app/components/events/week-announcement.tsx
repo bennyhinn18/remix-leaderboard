@@ -11,9 +11,10 @@ interface WeekAnnouncementProps {
     score: number
   }
   isLoading?: boolean
+  leadingClanScore?: number
 }
 
-export function WeekAnnouncement({ leadingClan, isLoading }: WeekAnnouncementProps) {
+export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: WeekAnnouncementProps) {
   // Array of decorative icons that will float around
   const icons = [
     { Icon: Star, position: "top-10 left-10", delay: 0 },
@@ -89,7 +90,7 @@ export function WeekAnnouncement({ leadingClan, isLoading }: WeekAnnouncementPro
                 >
                   {leadingClan?.name || "Loading..."}
                 </motion.span>
-                {""}'s Week
+                {""}&apos;s Week
                 
               </motion.h2>
 
@@ -123,7 +124,7 @@ export function WeekAnnouncement({ leadingClan, isLoading }: WeekAnnouncementPro
                     }}
                     className="text-2xl font-bold text-white"
                   >
-                    {leadingClan.score.toLocaleString()}
+                    {leadingClanScore}
                   </motion.div>
                 </motion.div>
               )}

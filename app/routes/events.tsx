@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useLocation, Outlet } from "react-router-dom"; // using react-router for navigation in CSR
+import { useNavigate, useLocation, Outlet, useNavigation } from "react-router-dom"; // using react-router for navigation in CSR
 import { parseISO, isAfter, isBefore, startOfDay } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { Plus, AlertCircle } from "lucide-react";
@@ -13,6 +13,7 @@ import { AbsenceModal } from "~/components/events/absence-modal";
 import { FeedbackModal } from "~/components/events/feedback-modal";
 import { WeekAnnouncement } from "~/components/events/week-announcement";
 import { useLocalStorage } from "~/hooks/use-local-storage";
+import { Event } from "~/types/events";
 
 // Import your client-side Supabase client initialization
 import { json, useLoaderData } from "@remix-run/react";
@@ -44,13 +45,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 }
 export default function Events() {
   const { SUPABASE_URL, SUPABASE_ANON_KEY,isOrganiser } = useLoaderData();
-  const [events, setEvents] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showAgenda, setShowAgenda] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
   const [showAbsence, setShowAbsence] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [joinedEvents, setJoinedEvents] = useLocalStorage("joinedEvents", []);
+  const [joinedEvents, setJoinedEvents] = useLocalStorage<string[]>("joinedEvents", []);
   
 
 
@@ -58,46 +59,67 @@ export default function Events() {
   const location = useLocation();
   const { toast } = useToast();
 
-const isLoading = navigation.state === "loading" || navigation.state === "submitting"
+  const navigation = useNavigation();
+  const isLoading = navigation.state === "loading" || navigation.state === "submitting";
 
   // Fetch events from database on mount
   useEffect(() => {
      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
     async function fetchEvents() {
-      try {
-        // Adjust query as needed; here we assume the "events" table exists.
-        let { data: eventsData, error } = await supabase
-          .from("events")
-          .select("*").eq("type", "weeklybash")
-          .order("date", { ascending: false });
+  try {
+    let { data: eventsData, error } = await supabase
+      .from("events")
+      .select(`
+        *,
+        clans:clan_id (
+          id,
+          clan_name,
+          members:members (
+            id,
+            name,
+            bash_points,
+            avatar_url
+          )
+        )
+      `)
+      .eq("type", "weeklybash")
+      .order("date", { ascending: false });
 
-        if (error) throw error;
 
-        // If you have a method to determine organiser status, call it here.
-        // For demonstration, we assume a boolean is returned.
-        // You can replace the below with your own logic.
-        
+    if (error) throw error;
 
-        const updatedEvents = (eventsData || []).map((event) => ({
-          ...event,
-          status: getEventStatus(event.date, event.time),
-        })).sort((a, b) => {
-          const statusOrder = { ongoing: 0, upcoming: 1, completed: 2 };
-          return statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder];
-        });
-
-        setEvents(updatedEvents);
-        setSelectedEvent(updatedEvents[0] || null);
-      } catch (error) {
-        console.error("Error loading events:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load events",
-          variant: "destructive",
-        });
+    const updatedEvents = (eventsData || []).map((event) => {
+      // If leading_clan is stored as JSON, we might need to merge with clan data
+      let leadingClan = event.leading_clan;
+      if (event.clans) {
+        leadingClan = {
+          ...leadingClan,
+          members: event.clans.members || []
+        };
       }
-    }
+
+      return {
+        ...event,
+        leading_clan: leadingClan,
+        status: getEventStatus(event.date, event.time),
+      };
+    }).sort((a, b) => {
+      const statusOrder = { ongoing: 0, upcoming: 1, completed: 2 };
+      return statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder];
+    });
+
+    setEvents(updatedEvents);
+    setSelectedEvent(updatedEvents[0] || null);
+  } catch (error) {
+    console.error("Error loading events:", error);
+    toast({
+      title: "Error",
+      description: "Failed to load events",
+      variant: "destructive",
+    });
+  }
+}
 
     fetchEvents();
     // You can add toast or other dependencies if needed
@@ -214,7 +236,7 @@ const isLoading = navigation.state === "loading" || navigation.state === "submit
 
             <AnimatePresence mode="popLayout">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <WeekAnnouncement leadingClan={selectedEvent?.leading_clan} isLoading={false} />
+                <WeekAnnouncement leadingClan={selectedEvent?.leading_clan} leadingClanScore={selectedEvent?.leading_clan_score || 0} isLoading={false} />
               </motion.div>
             </AnimatePresence>
 
@@ -265,6 +287,7 @@ const isLoading = navigation.state === "loading" || navigation.state === "submit
                         isJoined={joinedEvents.includes(selectedEvent.id)}
                         isOrganiser={isOrganiser}
                         members={selectedEvent.leading_clan?.members}
+
                       />
                       <AgendaSection event={selectedEvent} isVisible={showAgenda} />
                       <AbsenceModal event={selectedEvent} isOpen={showAbsence} onClose={() => setShowAbsence(false)} />

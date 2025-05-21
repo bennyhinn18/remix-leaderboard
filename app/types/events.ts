@@ -1,3 +1,5 @@
+import { ReactNode } from "react"
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type LeadingClan = {
@@ -5,6 +7,7 @@ export type LeadingClan = {
   name: string
   avatar: string
   score: number
+  members: { bash_points: number }[]
 }
 
 export type AgendaItem = {

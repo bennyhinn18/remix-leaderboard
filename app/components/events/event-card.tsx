@@ -20,16 +20,22 @@ interface EventCardProps {
   onFeedback: () => void
   isJoined: boolean
   isOrganiser: boolean
-  members: { bash_points: number }[]
+  members: Array<{
+    id: number
+    name: string
+    bash_points: number
+    avatar_url?: string
+  }>
 }
 
 export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganiser, isJoined, members }: EventCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-    const averagePoints = (members?.reduce(
-      (acc: number, member: { bash_points: number }) => acc + member.bash_points,
-      0
-    ) || 0) / (members?.length || 1);
+
+  const averagePoints = members?.length > 0 
+    ? members.reduce((acc, member) => acc + (member?.bash_points || 0), 0) / members.length
+    : 0;
+
 
   return (
     <Card
