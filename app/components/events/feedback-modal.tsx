@@ -16,11 +16,10 @@ interface FeedbackModalProps {
   onClose: () => void
 }
 
-
-
-export function FeedbackModal({ event, isOpen, onClose, member }: FeedbackModalProps) {
+export function FeedbackModal({ event, isOpen, onClose }: FeedbackModalProps) {
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
+  const [fullname, setFullName] = useState("")
   const [positives, setPositives] = useState("")
   const [negatives, setNegatives] = useState("")
   const [improvements, setImprovements] = useState("")
@@ -28,57 +27,55 @@ export function FeedbackModal({ event, isOpen, onClose, member }: FeedbackModalP
   const [isSubmitted, setIsSubmitted] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  try {
-    const response = await fetch("/api/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-      to: "bashers@stellamaryscoe.edu.in",
-      eventId: event.id,
-      memberId: member.id,
-      memberName: member.name,
-      memberEmail: member.academic_email,
-      eventName: event.name,
-      rating,
-      positives,
-      negatives,
-      improvements,
-    }),
-    });
+    try {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: "bashers@stellamaryscoe.edu.in",
+          eventId: event.id,
+          eventName: event.leading_clan.name,
+          rating,
+          fullname,
+          positives,
+          negatives,
+          improvements,
+        }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (!result.success) {
-      console.error("Failed to send feedback email:", result.error);
-      alert("Failed to send feedback. Try again later.");
+      if (!result.success) {
+        console.error("Failed to send feedback email:", result.error);
+        alert("Failed to send feedback. Try again later.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setIsSubmitted(true);
+      setTimeout(() => {
+        onClose();
+        setIsSubmitted(false);
+        setRating(0);
+        setFullName("");
+        setPositives("");
+        setNegatives("");
+        setImprovements("");
+      }, 2000);
+    } catch (err) {
+      console.error("Error submitting feedback:", err);
+      alert("Unexpected error. Try again later.");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    setIsSubmitted(true);
-    setTimeout(() => {
-      onClose();
-      setIsSubmitted(false);
-      setRating(0);
-      setPositives("");
-      setNegatives("");
-      setImprovements("");
-    }, 2000);
-  } catch (err) {
-    console.error("Error submitting feedback:", err);
-    alert("Unexpected error. Try again later.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg bg-gradient-to-br from-blue-900 to-indigo-900 text-white">
+      <DialogContent className="sm:max-w-lg bg-gradient-to-br from-blue-900 to-indigo-900 text-white max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white">Basher {event.name} Feedback</DialogTitle>
         </DialogHeader>
@@ -87,7 +84,7 @@ export function FeedbackModal({ event, isOpen, onClose, member }: FeedbackModalP
             <motion.form
               key="form"
               onSubmit={handleSubmit}
-              className="space-y-6"
+              className="space-y-6 overflow-y-auto flex-1 px-1 py-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -117,6 +114,18 @@ export function FeedbackModal({ event, isOpen, onClose, member }: FeedbackModalP
 
               {/* Feedback Fields */}
               <div className="space-y-4">
+                <div>
+                  <label htmlFor="fullName" className="text-sm font-medium text-blue-200">Full Name</label>
+                  <input
+                    id="fullname"
+                    type="text"
+                    value={fullname}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="mt-1 w-full rounded-md bg-blue-800/50 border border-blue-700 text-white placeholder:text-blue-300 px-3 py-2"
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
                 <div>
                   <label htmlFor="positives" className="text-sm font-medium text-blue-200">What went well?</label>
                   <Textarea
@@ -151,22 +160,24 @@ export function FeedbackModal({ event, isOpen, onClose, member }: FeedbackModalP
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
-                disabled={isSubmitting || rating === 0}
-              >
-                {isSubmitting ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                  >
-                    ⭐
-                  </motion.div>
-                ) : (
-                  "Submit Feedback"
-                )}
-              </Button>
+              <div className="sticky bottom-0 bg-gradient-to-t from-blue-900 to-transparent pt-4 pb-2">
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                  disabled={isSubmitting || rating === 0}
+                >
+                  {isSubmitting ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                    >
+                      ⭐
+                    </motion.div>
+                  ) : (
+                    "Submit Feedback"
+                  )}
+                </Button>
+              </div>
             </motion.form>
           ) : (
             <motion.div

@@ -11,47 +11,54 @@ export default function WhatsNewPanel() {
   const [isMinimized, setIsMinimized] = useState(true);
   
   // Current app version/update ID - update this when you make changes
-  const currentVersion = "v1.4.1";
+  const currentVersion = "v1.4.5";
   
   // Latest updates - newest first
   const updates = [
     {
-      version: "v1.4.1",
-      date: "May 20, 2025",
-      title: "Discord in Leaderboard is Live",
-      description: "You can now filter by Discord  on the leaderboard, also minor fixes",
-      link: "/leaderboard"
+      version: "v1.4.5",
+      date: "May 22, 2025",
+      title: "Email Setup for Absent & Feedback in Events",
+      description: "If members fail to attend an event, you can now send them an email directly from the Events page. After completing the event, you can also send feedbacks.",
+      link: "/events"
     },
     {
       version: "v1.4.0",
+      date: "May 20, 2025",
+      title: "Discord in Leaderboard is Live",
+      description: "You can now filter by Discord on the leaderboard, also minor fixes",
+      link: "/leaderboard"
+    },
+    {
+      version: "v1.3.5",
       date: "May 19, 2025",
       title: "Resources Page Launched",
       description: "Explore curated learning resources and tools to boost your progress. Find guides, links, and more on the new Resources page!",
       link: "/resources"
     },
     {
-      version: "v1.3.1",
+      version: "v1.3.0",
       date: "May 17, 2025",
       title: "LeetCode Added to Leaderboard",
       description: "You can now track and compare LeetCode stats on the leaderboard. Filter by LeetCode to see top performers!",
       link: "/leaderboard"
     },
     {
-      version: "v1.3.0",
+      version: "v1.2.5",
       date: "May 10, 2025",
       title: "New Leaderboard Filters Active",
       description: "The Github and Duolingo filters are now live! ",
       link: "/leaderboard"
     },
     {
-      version: "v1.2.5",
+      version: "v1.2.0",
       date: "May 5, 2025",
       title: "Improved Notifications",
       description: "Notifications are now more interactive and provide quick actions.",
       link: null
     },
     {
-      version: "v1.2.0",
+      version: "v1.1.5",
       date: "May 2, 2025",
       title: "Legacy Bashers Hall of Fame",
       description: "We've added a special page to honor our Legacy Bashers! Check out their profiles and achievements in the new Hall of Fame.",

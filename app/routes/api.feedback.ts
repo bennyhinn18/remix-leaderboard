@@ -2,28 +2,41 @@ import { json } from '@remix-run/node';
 import { sendFeedbackEmail } from '~/services/email-service';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+);
 
 export async function action({ request }: { request: Request }) {
   try {
     const body = await request.json();
-    const { to, eventId, memberId, memberName, memberEmail, eventName, rating, positives, negatives, improvements } = body;
+    const {
+      to,
+      eventId,
+      eventName,
+      rating,
+      fullname,
+      positives,
+      negatives,
+      improvements,
+    } = body;
 
     // Insert into feedback table
-    const { error: insertError } = await supabase
-      .from('feedback')
-      .insert({
-        event_id: eventId,
-        member_id: memberId,
-        rating,
-        positives,
-        negatives,
-        improvements,
-        created_at: new Date(),
-      });
+    const { error: insertError } = await supabase.from('feedback').insert({
+      event_id: eventId,
+      rating,
+      fullname,
+      positives,
+      negatives,
+      improvements,
+      created_at: new Date(),
+    });
 
     if (insertError) {
-      return json({ success: false, error: insertError.message }, { status: 500 });
+      return json(
+        { success: false, error: insertError.message },
+        { status: 500 }
+      );
     }
 
     // Send email
@@ -31,11 +44,10 @@ export async function action({ request }: { request: Request }) {
       to,
       eventName,
       rating,
+      fullname,
       positives,
       negatives,
-      improvements,
-      memberName,
-      memberEmail
+      improvements
     );
 
     return json({ success: result.success ?? true });
