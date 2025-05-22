@@ -1,7 +1,7 @@
-import { json } from "@remix-run/node";
-import { createServerSupabase } from "~/utils/supabase.server";
+import { json } from '@remix-run/node';
+import { createServerSupabase } from '~/utils/supabase.server';
 
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from '@remix-run/node';
 
 export async function action({ request }: ActionFunctionArgs) {
   const response = new Response();
@@ -11,12 +11,12 @@ export async function action({ request }: ActionFunctionArgs) {
   const { projectId, memberName, status } = formData;
 
   const { error } = await supabase
-    .from("projects")
+    .from('projects')
     .update({
       member_name: memberName,
       status: status,
     })
-    .eq("id", projectId);
+    .eq('id', projectId);
 
   if (error) {
     return json({ success: false, error: error.message }, { status: 500 });

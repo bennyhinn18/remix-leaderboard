@@ -30,7 +30,7 @@
 //     background: "bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600",
 //     textColor: "text-amber-900",
 //   },
-  
+
 //   platinum: {
 //     name: "Platinum League",
 //     color: "slate",
@@ -47,8 +47,7 @@
 //     background: "bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600",
 //     textColor: "text-cyan-900",
 //   },
-  
-  
+
 // }
 
 // function getLeague(points: number): string {
@@ -59,10 +58,11 @@
 //   return "bronze"
 // }
 
-
-
- {/* League Selection */}
-          {/* <div className="mt-6">
+{
+  /* League Selection */
+}
+{
+  /* <div className="mt-6">
             <div className="flex items-center justify-between">
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -106,4 +106,5 @@
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </div>
-          </div> */}
+          </div> */
+}

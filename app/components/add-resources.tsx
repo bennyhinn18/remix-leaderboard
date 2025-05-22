@@ -1,72 +1,78 @@
-"use client"
+'use client';
 
-import { useActionData, Form } from "@remix-run/react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useState, useEffect, useRef } from "react"
-import { LucideX, LucideCheck, LucideLoader, LucideAlertCircle, LucideChevronDown } from "lucide-react"
+import { useActionData, Form } from '@remix-run/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import {
+  LucideX,
+  LucideCheck,
+  LucideLoader,
+  LucideAlertCircle,
+  LucideChevronDown,
+} from 'lucide-react';
 
 interface Domain {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface AddResourceProps {
-  domains: Domain[]
-  onClose: () => void
+  domains: Domain[];
+  onClose: () => void;
 }
 
 interface ActionData {
   errors?: {
-    domainId?: string
-    websiteName?: string
-    websiteUrl?: string
-    memberName?: string
-  }
-  success?: boolean
+    domainId?: string;
+    websiteName?: string;
+    websiteUrl?: string;
+    memberName?: string;
+  };
+  success?: boolean;
 }
 
 export default function AddResource({ domains, onClose }: AddResourceProps) {
-  const actionData = useActionData<ActionData>()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [activeField, setActiveField] = useState<string | null>(null)
-  const [typedTitle, setTypedTitle] = useState("")
-  const fullTitle = "Add Learning Resource"
-  const [cursorVisible, setCursorVisible] = useState(true)
-  const [showScrollIndicator, setShowScrollIndicator] = useState(false)
-  const formContainerRef = useRef<HTMLDivElement>(null)
+  const actionData = useActionData<ActionData>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeField, setActiveField] = useState<string | null>(null);
+  const [typedTitle, setTypedTitle] = useState('');
+  const fullTitle = 'Add Learning Resource';
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const formContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Typing animation for title
   useEffect(() => {
     if (typedTitle.length < fullTitle.length) {
       const timeout = setTimeout(() => {
-        setTypedTitle(fullTitle.slice(0, typedTitle.length + 1))
-      }, 50)
-      return () => clearTimeout(timeout)
+        setTypedTitle(fullTitle.slice(0, typedTitle.length + 1));
+      }, 50);
+      return () => clearTimeout(timeout);
     }
-  }, [typedTitle, fullTitle])
+  }, [typedTitle, fullTitle]);
 
   // Blinking cursor effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setCursorVisible((prev) => !prev)
-    }, 530)
-    return () => clearInterval(interval)
-  }, [])
+      setCursorVisible((prev) => !prev);
+    }, 530);
+    return () => clearInterval(interval);
+  }, []);
 
   // Check if form needs scroll indicator
   useEffect(() => {
     const checkScroll = () => {
       if (formContainerRef.current) {
-        const { scrollHeight, clientHeight } = formContainerRef.current
-        setShowScrollIndicator(scrollHeight > clientHeight)
+        const { scrollHeight, clientHeight } = formContainerRef.current;
+        setShowScrollIndicator(scrollHeight > clientHeight);
       }
-    }
+    };
 
-    checkScroll()
-    window.addEventListener("resize", checkScroll)
-    return () => window.removeEventListener("resize", checkScroll)
-  }, [])
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, []);
 
   useEffect(() => {
     if (actionData?.success) {
@@ -81,7 +87,7 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.3 } },
     exit: { opacity: 0, transition: { duration: 0.2 } },
-  }
+  };
 
   const modalVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -90,7 +96,7 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
       y: 0,
       scale: 1,
       transition: {
-        type: "spring",
+        type: 'spring',
         damping: 25,
         stiffness: 300,
       },
@@ -103,7 +109,7 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
         duration: 0.2,
       },
     },
-  }
+  };
 
   const formFieldVariants = {
     hidden: { opacity: 0, x: -10 },
@@ -115,16 +121,16 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
         duration: 0.3,
       },
     }),
-  }
+  };
 
   const scrollToBottom = () => {
     if (formContainerRef.current) {
       formContainerRef.current.scrollTo({
         top: formContainerRef.current.scrollHeight,
-        behavior: "smooth",
-      })
+        behavior: 'smooth',
+      });
     }
-  }
+  };
 
   return (
     <AnimatePresence>
@@ -152,9 +158,9 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                   tabIndex={0}
                   onClick={onClose}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault()
-                      onClose()
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onClose();
                     }
                   }}
                   aria-label="Close"
@@ -174,7 +180,9 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                   {typedTitle}
                   <span
                     className={`ml-1 inline-block h-5 w-2.5 bg-[#00ff9d] ${
-                      cursorVisible && typedTitle.length >= fullTitle.length ? "opacity-100" : "opacity-0"
+                      cursorVisible && typedTitle.length >= fullTitle.length
+                        ? 'opacity-100'
+                        : 'opacity-0'
                     }`}
                   ></span>
                 </h1>
@@ -182,7 +190,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
               <motion.button
                 onClick={onClose}
                 className="text-[#00ff9d]/70 hover:text-[#00ff9d] bg-[#111] h-8 w-8 rounded-md flex items-center justify-center"
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 50, 50, 0.2)" }}
+                whileHover={{
+                  scale: 1.1,
+                  backgroundColor: 'rgba(255, 50, 50, 0.2)',
+                }}
                 whileTap={{ scale: 0.9 }}
                 aria-label="Close"
               >
@@ -191,7 +202,8 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
             </div>
 
             <div className="px-6 pt-4 terminal-text text-sm">
-              <span className="text-[#00ff9d]/70">$</span> ./submit-resource.sh --interactive
+              <span className="text-[#00ff9d]/70">$</span> ./submit-resource.sh
+              --interactive
             </div>
 
             {/* Scroll indicator */}
@@ -212,11 +224,16 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
             ref={formContainerRef}
             className="overflow-y-auto flex-grow px-6 py-4 custom-scrollbar"
             style={{
-              scrollbarWidth: "thin",
-              scrollbarColor: "#00ff9d30 transparent",
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#00ff9d30 transparent',
             }}
           >
-            <Form method="post" className="space-y-6" id="resource-form" onSubmit={() => setIsSubmitting(true)}>
+            <Form
+              method="post"
+              className="space-y-6"
+              id="resource-form"
+              onSubmit={() => setIsSubmitting(true)}
+            >
               <motion.div
                 variants={formFieldVariants}
                 initial="hidden"
@@ -226,7 +243,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ff9d]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="domainId" className="block text-sm font-medium text-[#00ff9d] mb-1">
+                  <label
+                    htmlFor="domainId"
+                    className="block text-sm font-medium text-[#00ff9d] mb-1"
+                  >
                     SELECT_DOMAIN
                   </label>
                 </div>
@@ -237,25 +257,31 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                     className={`w-full px-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ff9d] 
                       focus:outline-none focus:ring-1 transition-all
                       ${
-                        activeField === "domainId"
-                          ? "border-[#00ff9d] ring-[#00ff9d]/30"
-                          : "border-[#00ff9d]/30 hover:border-[#00ff9d]/50"
+                        activeField === 'domainId'
+                          ? 'border-[#00ff9d] ring-[#00ff9d]/30'
+                          : 'border-[#00ff9d]/30 hover:border-[#00ff9d]/50'
                       }
-                      ${actionData?.errors?.domainId ? "border-[#ff5555]" : ""}`}
+                      ${
+                        actionData?.errors?.domainId ? 'border-[#ff5555]' : ''
+                      }`}
                     defaultValue=""
-                    onFocus={() => setActiveField("domainId")}
+                    onFocus={() => setActiveField('domainId')}
                     onBlur={() => setActiveField(null)}
                   >
                     <option value="" disabled className="text-gray-500">
                       Select a domain
                     </option>
                     {domains.map((domain) => (
-                      <option key={domain.id} value={domain.id} className="bg-[#111] text-[#00ff9d]">
+                      <option
+                        key={domain.id}
+                        value={domain.id}
+                        className="bg-[#111] text-[#00ff9d]"
+                      >
                         {domain.name}
                       </option>
                     ))}
                   </select>
-                  {activeField === "domainId" && (
+                  {activeField === 'domainId' && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ff9d]/70"
                       initial={{ opacity: 0 }}
@@ -274,7 +300,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.domainId}</p>
                     </motion.div>
                   )}
@@ -290,7 +319,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ff9d]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="websiteName" className="block text-sm font-medium text-[#00ff9d]">
+                  <label
+                    htmlFor="websiteName"
+                    className="block text-sm font-medium text-[#00ff9d]"
+                  >
                     RESOURCE_NAME
                   </label>
                 </div>
@@ -302,16 +334,20 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                     className={`w-full px-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ff9d] 
                       focus:outline-none focus:ring-1 transition-all
                       ${
-                        activeField === "websiteName"
-                          ? "border-[#00ff9d] ring-[#00ff9d]/30"
-                          : "border-[#00ff9d]/30 hover:border-[#00ff9d]/50"
+                        activeField === 'websiteName'
+                          ? 'border-[#00ff9d] ring-[#00ff9d]/30'
+                          : 'border-[#00ff9d]/30 hover:border-[#00ff9d]/50'
                       }
-                      ${actionData?.errors?.websiteName ? "border-[#ff5555]" : ""}`}
+                      ${
+                        actionData?.errors?.websiteName
+                          ? 'border-[#ff5555]'
+                          : ''
+                      }`}
                     placeholder="e.g., MDN Web Docs"
-                    onFocus={() => setActiveField("websiteName")}
+                    onFocus={() => setActiveField('websiteName')}
                     onBlur={() => setActiveField(null)}
                   />
-                  {activeField === "websiteName" && (
+                  {activeField === 'websiteName' && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ff9d]/70"
                       initial={{ opacity: 0 }}
@@ -330,7 +366,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.websiteName}</p>
                     </motion.div>
                   )}
@@ -346,7 +385,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ff9d]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="websiteUrl" className="block text-sm font-medium text-[#00ff9d]">
+                  <label
+                    htmlFor="websiteUrl"
+                    className="block text-sm font-medium text-[#00ff9d]"
+                  >
                     RESOURCE_URL
                   </label>
                 </div>
@@ -358,16 +400,18 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                     className={`w-full px-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ff9d] 
                       focus:outline-none focus:ring-1 transition-all
                       ${
-                        activeField === "websiteUrl"
-                          ? "border-[#00ff9d] ring-[#00ff9d]/30"
-                          : "border-[#00ff9d]/30 hover:border-[#00ff9d]/50"
+                        activeField === 'websiteUrl'
+                          ? 'border-[#00ff9d] ring-[#00ff9d]/30'
+                          : 'border-[#00ff9d]/30 hover:border-[#00ff9d]/50'
                       }
-                      ${actionData?.errors?.websiteUrl ? "border-[#ff5555]" : ""}`}
+                      ${
+                        actionData?.errors?.websiteUrl ? 'border-[#ff5555]' : ''
+                      }`}
                     placeholder="https://developer.mozilla.org"
-                    onFocus={() => setActiveField("websiteUrl")}
+                    onFocus={() => setActiveField('websiteUrl')}
                     onBlur={() => setActiveField(null)}
                   />
-                  {activeField === "websiteUrl" && (
+                  {activeField === 'websiteUrl' && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ff9d]/70"
                       initial={{ opacity: 0 }}
@@ -386,7 +430,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.websiteUrl}</p>
                     </motion.div>
                   )}
@@ -402,13 +449,18 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
               >
                 <div className="flex items-center mb-4">
                   <span className="text-[#00ff9d]/70 mr-2 text-sm">$</span>
-                  <h2 className="text-lg font-medium text-[#00ff9d]">USER_INFO</h2>
+                  <h2 className="text-lg font-medium text-[#00ff9d]">
+                    USER_INFO
+                  </h2>
                 </div>
 
                 <div className="form-field">
                   <div className="flex items-center mb-1">
                     <span className="text-[#00ff9d]/70 mr-2 text-sm">$</span>
-                    <label htmlFor="memberName" className="block text-sm font-medium text-[#00ff9d]">
+                    <label
+                      htmlFor="memberName"
+                      className="block text-sm font-medium text-[#00ff9d]"
+                    >
                       YOUR_NAME
                     </label>
                   </div>
@@ -420,16 +472,20 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                       className={`w-full px-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ff9d] 
                         focus:outline-none focus:ring-1 transition-all
                         ${
-                          activeField === "memberName"
-                            ? "border-[#00ff9d] ring-[#00ff9d]/30"
-                            : "border-[#00ff9d]/30 hover:border-[#00ff9d]/50"
+                          activeField === 'memberName'
+                            ? 'border-[#00ff9d] ring-[#00ff9d]/30'
+                            : 'border-[#00ff9d]/30 hover:border-[#00ff9d]/50'
                         }
-                        ${actionData?.errors?.memberName ? "border-[#ff5555]" : ""}`}
+                        ${
+                          actionData?.errors?.memberName
+                            ? 'border-[#ff5555]'
+                            : ''
+                        }`}
                       placeholder="Your name"
-                      onFocus={() => setActiveField("memberName")}
+                      onFocus={() => setActiveField('memberName')}
                       onBlur={() => setActiveField(null)}
                     />
-                    {activeField === "memberName" && (
+                    {activeField === 'memberName' && (
                       <motion.div
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ff9d]/70"
                         initial={{ opacity: 0 }}
@@ -448,7 +504,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                       >
-                        <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                        <LucideAlertCircle
+                          size={16}
+                          className="mt-0.5 flex-shrink-0"
+                        />
                         <p>{actionData.errors.memberName}</p>
                       </motion.div>
                     )}
@@ -469,7 +528,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                 onClick={onClose}
                 className="px-5 py-2.5 border border-[#00ff9d]/50 rounded-md text-[#00ff9d] bg-[#111] 
                   hover:bg-[#1a1a1a] hover:border-[#00ff9d] transition-all flex items-center gap-2"
-                whileHover={{ scale: 1.02, boxShadow: "0 0 8px rgba(0, 255, 157, 0.3)" }}
+                whileHover={{
+                  scale: 1.02,
+                  boxShadow: '0 0 8px rgba(0, 255, 157, 0.3)',
+                }}
                 whileTap={{ scale: 0.98 }}
               >
                 <LucideX size={16} />
@@ -482,7 +544,10 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
                 className="px-6 py-2.5 bg-[#00ff9d] text-black rounded-md hover:bg-[#00cc7d] 
                   disabled:opacity-50 disabled:hover:bg-[#00ff9d] transition-all flex items-center gap-2 font-medium"
                 disabled={isSubmitting}
-                whileHover={{ scale: 1.02, boxShadow: "0 0 12px rgba(0, 255, 157, 0.5)" }}
+                whileHover={{
+                  scale: 1.02,
+                  boxShadow: '0 0 12px rgba(0, 255, 157, 0.5)',
+                }}
                 whileTap={{ scale: 0.98 }}
                 onClick={scrollToBottom}
               >
@@ -509,5 +574,5 @@ export default function AddResource({ domains, onClose }: AddResourceProps) {
         </motion.div>
       </motion.div>
     </AnimatePresence>
-  )
+  );
 }

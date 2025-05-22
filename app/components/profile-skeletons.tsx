@@ -1,6 +1,5 @@
 // Profile page loading skeletons
 
-import { motion } from "framer-motion";
 
 export function ProfileHeaderSkeleton() {
   return (
@@ -9,18 +8,18 @@ export function ProfileHeaderSkeleton() {
       <div className="flex items-start gap-6 relative">
         {/* Avatar placeholder */}
         <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-white/10"></div>
-        
+
         <div className="flex-1 space-y-4">
           <div className="h-8 bg-white/10 rounded w-48"></div>
           <div className="h-4 bg-white/10 rounded w-32"></div>
           <div className="h-4 bg-white/10 rounded w-60"></div>
-          
+
           <div className="flex gap-2 pt-2">
             <div className="h-8 w-24 bg-white/10 rounded-md"></div>
             <div className="h-8 w-24 bg-white/10 rounded-md"></div>
           </div>
         </div>
-        
+
         {/* Right-side stats */}
         <div className="hidden sm:flex flex-col items-end gap-3">
           <div className="h-6 bg-white/10 rounded w-24"></div>
@@ -44,7 +43,7 @@ export function StatCardSkeleton() {
 
 export function SectionSkeleton({ height = 200 }: { height?: number }) {
   return (
-    <div 
+    <div
       className="bg-white/5 backdrop-blur-lg rounded-xl p-6 relative"
       style={{ height: `${height}px` }}
     >
@@ -89,12 +88,15 @@ export function ProfilePageSkeleton() {
 
         {/* Profile Header */}
         <ProfileHeaderSkeleton />
-        
+
         {/* Points Graph */}
-        <div className="mt-8 bg-white/5 backdrop-blur-lg rounded-xl p-6 relative" style={{ height: "200px" }}>
+        <div
+          className="mt-8 bg-white/5 backdrop-blur-lg rounded-xl p-6 relative"
+          style={{ height: '200px' }}
+        >
           <div className="absolute inset-0 shimmer"></div>
         </div>
-        
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           <StatCardSkeleton />

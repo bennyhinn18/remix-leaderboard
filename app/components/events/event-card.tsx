@@ -1,41 +1,59 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Card } from "~/components/ui/card"
-import { Button } from "~/components/ui/button"
-import { Avatar, AvatarFallback } from "~/components/ui/avatar"
-import { Badge } from "~/components/ui/badge"
-import { Calendar, Clock, MapPin, Users, Trophy, Check, Pencil } from "lucide-react"
-import type { Event } from "~/types/events"
-import { format } from "date-fns"
-import { motion } from "framer-motion"
-import { cn } from "~/lib/utils"
-import { Link } from "@remix-run/react"
+import { useState } from 'react';
+import { Card } from '~/components/ui/card';
+import { Button } from '~/components/ui/button';
+import { Avatar, AvatarFallback } from '~/components/ui/avatar';
+import { Badge } from '~/components/ui/badge';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Trophy,
+  Check,
+  Pencil,
+} from 'lucide-react';
+import type { Event } from '~/types/events';
+import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import { cn } from '~/lib/utils';
+import { Link } from '@remix-run/react';
 
 interface EventCardProps {
-  event: Event
-  onViewAgenda: () => void
-  onJoin: () => void
-  onCantAttend: () => void
-  onFeedback: () => void
-  isJoined: boolean
-  isOrganiser: boolean
+  event: Event;
+  onViewAgenda: () => void;
+  onJoin: () => void;
+  onCantAttend: () => void;
+  onFeedback: () => void;
+  isJoined: boolean;
+  isOrganiser: boolean;
   members: Array<{
-    id: number
-    name: string
-    bash_points: number
-    avatar_url?: string
-  }>
+    id: number;
+    name: string;
+    bash_points: number;
+    avatar_url?: string;
+  }>;
 }
 
-export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganiser, isJoined, members }: EventCardProps) {
-  const [isHovered, setIsHovered] = useState(false)
+export function EventCard({
+  event,
+  onViewAgenda,
+  onJoin,
+  onCantAttend,
+  isOrganiser,
+  isJoined,
+  members,
+}: EventCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
 
-
-  const averagePoints = members?.length > 0 
-    ? members.reduce((acc, member) => acc + (member?.bash_points || 0), 0) / members.length
-    : 0;
-
+  const averagePoints =
+    members?.length > 0
+      ? Math.round(
+          members.reduce((acc, member) => acc + (member?.bash_points || 0), 0) /
+            members.length
+        )
+      : 0;
 
   return (
     <Card
@@ -52,31 +70,31 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganis
             </Avatar>
             <div>
               <div className="text-blue-200">Leading Clan</div>
-              <div className="font-bold text-white">{event.leading_clan.name}</div>
+              <div className="font-bold text-white">
+                {event.leading_clan.name}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2 bg-blue-700 px-3 py-1 rounded-full">
-          {isOrganiser && (
-        <div className="relative">
-          <Link 
-            to={`/events/${event.id}/edit`}
-            className=""
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-white hover:bg-blue-800/50"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      )}
-          <div className="flex items-center gap-2 bg-blue-700 px-3 py-1 rounded-full">
-            <Trophy className="w-5 h-5 text-yellow-400" />
-            <span className="font-bold">{averagePoints}</span>
+            {isOrganiser && (
+              <div className="relative">
+                <Link to={`/events/${event.id}/edit`} className="">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-white hover:bg-blue-800/50"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+            <div className="flex items-center gap-2 bg-blue-700 px-3 py-1 rounded-full">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <span className="font-bold">{averagePoints}</span>
+            </div>
           </div>
-        </div></div>
+        </div>
       </div>
 
       {/* Event Details */}
@@ -87,11 +105,11 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganis
             variant="outline"
             className={`
               ${
-                event.status === "upcoming"
-                  ? "bg-green-500 text-white border-green-400"
-                  : event.status === "ongoing"
-                    ? "bg-yellow-500 text-white border-yellow-400"
-                    : "bg-blue-500 text-white border-blue-400"
+                event.status === 'upcoming'
+                  ? 'bg-green-500 text-white border-green-400'
+                  : event.status === 'ongoing'
+                  ? 'bg-yellow-500 text-white border-yellow-400'
+                  : 'bg-blue-500 text-white border-blue-400'
               }
             `}
           >
@@ -102,7 +120,7 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganis
         <div className="space-y-3 text-blue-100">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            <span>{format(new Date(event.date), "MMMM d, yyyy")}</span>
+            <span>{format(new Date(event.date), 'MMMM d, yyyy')}</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
@@ -122,13 +140,12 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganis
           <Button
             onClick={onJoin}
             className={cn(
-              "flex-1 relative overflow-hidden",
+              'flex-1 relative overflow-hidden',
               isJoined
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600",
-            )
-          }
-          disabled={new Date(event.date) < new Date()}
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
+            )}
+            disabled={new Date(event.date) < new Date()}
           >
             {isJoined ? (
               <span className="flex items-center gap-2">
@@ -146,17 +163,18 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganis
           >
             View Agenda
           </Button>
-            <Button
+          <Button
             variant="ghost"
             onClick={onCantAttend}
             className={cn(
-              "flex-1 text-blue-200 hover:text-white hover:bg-blue-800",
-              new Date(event.date) < new Date() && "cursor-not-allowed opacity-50 pointer-events-none"
+              'flex-1 text-blue-200 hover:text-white hover:bg-blue-800',
+              new Date(event.date) < new Date() &&
+                'cursor-not-allowed opacity-50 pointer-events-none'
             )}
             disabled={new Date(event.date) < new Date()}
-            >
+          >
             Can&apos;t Attend
-            </Button>
+          </Button>
         </div>
       </div>
 
@@ -169,11 +187,10 @@ export function EventCard({ event, onViewAgenda, onJoin, onCantAttend, isOrganis
       <motion.div
         className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500"
         initial={{ width: 0 }}
-        animate={{ width: isHovered ? "100%" : "0%" }}
+        animate={{ width: isHovered ? '100%' : '0%' }}
         transition={{ duration: 0.3 }}
       />
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 transform rotate-45 translate-x-16 -translate-y-16" />
     </Card>
-  )
+  );
 }
-

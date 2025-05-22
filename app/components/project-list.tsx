@@ -1,53 +1,75 @@
-import { useState } from "react"
-import { Check, Edit, Loader2 } from "lucide-react"
-import { Button } from "./ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { useState } from 'react';
+import { Check, Edit, Loader2 } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
 interface Project {
-  id: number
-  title: string
-  description: string
-  domain_id: number
-  difficulty_level: string
-  member_id: number
-  created_at: string
-  member_name: string | null
-  status: string | null
+  id: number;
+  title: string;
+  description: string;
+  domain_id: number;
+  difficulty_level: string;
+  member_id: number;
+  created_at: string;
+  member_name: string | null;
+  status: string | null;
 }
 
 interface Member {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface ProjectListProps {
-  initialProjects: Project[]
-  initialMembers: Member[]
+  initialProjects: Project[];
+  initialMembers: Member[];
 }
 
-export default function ProjectList({ initialProjects, initialMembers }: ProjectListProps) {
-  const [projects, setProjects] = useState<Project[]>(initialProjects)
-  const [members] = useState<Member[]>(initialMembers)
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
-  const [updatedMemberName, setUpdatedMemberName] = useState("")
-  const [updatedStatus, setUpdatedStatus] = useState("")
-  const [updating, setUpdating] = useState(false)
+export default function ProjectList({
+  initialProjects,
+  initialMembers,
+}: ProjectListProps) {
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [members] = useState<Member[]>(initialMembers);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [updatedMemberName, setUpdatedMemberName] = useState('');
+  const [updatedStatus, setUpdatedStatus] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   const handleProjectSelect = (project: Project) => {
-    setSelectedProject(project)
-    setUpdatedMemberName(project.member_name || "")
-    setUpdatedStatus(project.status || "")
-    setIsUpdateDialogOpen(true)
-  }
+    setSelectedProject(project);
+    setUpdatedMemberName(project.member_name || '');
+    setUpdatedStatus(project.status || '');
+    setIsUpdateDialogOpen(true);
+  };
 
   const handleUpdateProject = async () => {
-    if (!selectedProject) return
+    if (!selectedProject) return;
 
-    setUpdating(true)
+    setUpdating(true);
 
     try {
       const response = await fetch('/api/update-project', {
@@ -66,20 +88,30 @@ export default function ProjectList({ initialProjects, initialMembers }: Project
         setProjects(
           projects.map((project) =>
             project.id === selectedProject.id
-              ? { ...project, member_name: updatedMemberName, status: updatedStatus }
-              : project,
-          ),
-        )
-        setIsUpdateDialogOpen(false)
+              ? {
+                  ...project,
+                  member_name: updatedMemberName,
+                  status: updatedStatus,
+                }
+              : project
+          )
+        );
+        setIsUpdateDialogOpen(false);
       }
     } catch (error) {
-      console.error("Error updating project:", error)
+      console.error('Error updating project:', error);
     } finally {
-      setUpdating(false)
+      setUpdating(false);
     }
-  }
+  };
 
-  const statusOptions = ["Not Started", "In Progress", "Completed", "On Hold", "Cancelled"]
+  const statusOptions = [
+    'Not Started',
+    'In Progress',
+    'Completed',
+    'On Hold',
+    'Cancelled',
+  ];
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#00ff9d] font-mono px-4 py-8 relative overflow-hidden">
@@ -116,22 +148,24 @@ export default function ProjectList({ initialProjects, initialMembers }: Project
                     <TableCell className="font-medium">{project.id}</TableCell>
                     <TableCell>{project.title}</TableCell>
                     <TableCell>{project.difficulty_level}</TableCell>
-                    <TableCell>{project.member_name || "Not assigned"}</TableCell>
+                    <TableCell>
+                      {project.member_name || 'Not assigned'}
+                    </TableCell>
                     <TableCell>
                       <span
                         className={`px-2 py-1 rounded text-xs ${
-                          project.status === "Completed"
-                            ? "bg-green-900/50 text-green-300"
-                            : project.status === "In Progress"
-                              ? "bg-blue-900/50 text-blue-300"
-                              : project.status === "On Hold"
-                                ? "bg-yellow-900/50 text-yellow-300"
-                                : project.status === "Cancelled"
-                                  ? "bg-red-900/50 text-red-300"
-                                  : "bg-gray-900/50 text-gray-300"
+                          project.status === 'Completed'
+                            ? 'bg-green-900/50 text-green-300'
+                            : project.status === 'In Progress'
+                            ? 'bg-blue-900/50 text-blue-300'
+                            : project.status === 'On Hold'
+                            ? 'bg-yellow-900/50 text-yellow-300'
+                            : project.status === 'Cancelled'
+                            ? 'bg-red-900/50 text-red-300'
+                            : 'bg-gray-900/50 text-gray-300'
                         }`}
                       >
-                        {project.status || "Not Started"}
+                        {project.status || 'Not Started'}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -156,7 +190,9 @@ export default function ProjectList({ initialProjects, initialMembers }: Project
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
         <DialogContent className="bg-[#111] border border-[#00ff9d]/50 text-[#00ff9d]">
           <DialogHeader>
-            <DialogTitle className="text-[#00ff9d]">Update Project: {selectedProject?.title}</DialogTitle>
+            <DialogTitle className="text-[#00ff9d]">
+              Update Project: {selectedProject?.title}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -164,7 +200,10 @@ export default function ProjectList({ initialProjects, initialMembers }: Project
               <label htmlFor="member_name" className="text-sm">
                 Member Name
               </label>
-              <Select value={updatedMemberName} onValueChange={setUpdatedMemberName}>
+              <Select
+                value={updatedMemberName}
+                onValueChange={setUpdatedMemberName}
+              >
                 <SelectTrigger className="bg-[#0a0a0a] border-[#00ff9d]/50">
                   <SelectValue placeholder="Select a member" />
                 </SelectTrigger>
@@ -228,5 +267,5 @@ export default function ProjectList({ initialProjects, initialMembers }: Project
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

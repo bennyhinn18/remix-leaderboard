@@ -1,64 +1,81 @@
-import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs, defer } from "@remix-run/node"
-import { useLoaderData, Link, Await, useAsyncValue } from "@remix-run/react"
-import { 
-  ArrowLeft, Github, Code, Book, MessageSquare, Trophy, Award, 
-  Briefcase, Cpu, Code2, BookOpen, Globe, Quote,
-  // Add these new imports
-  GemIcon, Boxes, CircleDot, Sparkles, Leaf, Flame, 
-  Droplets, Medal, Crown, Bell, Settings 
-} from 'lucide-react'
-import { createServerSupabase } from "~/utils/supabase.server"
-import { ProfileInfo } from "~/components/profile-info"
-import { MainNav } from "~/components/main-nav"
-import { motion } from "framer-motion"
-import { Card } from "~/components/ui/card"
-import { Button } from "~/components/ui/button"
-import { SocialFooter } from "~/components/social-footer"
-import { useState, useEffect, Suspense } from "react";
-import { EditProfileButton } from "~/components/edit-profile"
-import { isOrganiser, getCurrentUser } from "~/utils/currentUser"
-import { getCachedMember, getCachedPoints } from "~/utils/cache.server"
-import  PointsGraph  from "~/components/points-graph"
-import { u } from "node_modules/framer-motion/dist/types.d-6pKw1mTI"
-import { getTier, getTierIcon } from "~/utils/tiers";
-import { ProfileHeaderSkeleton, StatCardSkeleton, SectionSkeleton, StreaksSkeleton, ProfilePageSkeleton } from "~/components/profile-skeletons";
-import { PushNotificationManager } from "~/components/push-notification-manager";
-import { getUserNotifications } from "~/services/notifications.server";
-
+import {
+  ActionFunctionArgs,
+  json,
+  redirect,
+  type LoaderFunctionArgs,
+  defer,
+} from '@remix-run/node';
+import { useLoaderData, Link, Await } from '@remix-run/react';
+import {
+  ArrowLeft,
+  Github,
+  Code,
+  Book,
+  MessageSquare,
+  Trophy,
+  Award,
+  Briefcase,
+  Cpu,
+  Code2,
+  BookOpen,
+  Globe,
+  Quote,
+  Sparkles,
+  Crown,
+  Bell,
+  Settings,
+} from 'lucide-react';
+import { createServerSupabase } from '~/utils/supabase.server';
+import { ProfileInfo } from '~/components/profile-info';
+import { MainNav } from '~/components/main-nav';
+import { motion } from 'framer-motion';
+import { Card } from '~/components/ui/card';
+import { Button } from '~/components/ui/button';
+import { SocialFooter } from '~/components/social-footer';
+import { useState, useEffect, Suspense } from 'react';
+import { isOrganiser, getCurrentUser } from '~/utils/currentUser';
+import { getCachedMember, getCachedPoints } from '~/utils/cache.server';
+import PointsGraph from '~/components/points-graph';
+import { getTier, getTierIcon } from '~/utils/tiers';
+import {
+  ProfilePageSkeleton,
+} from '~/components/profile-skeletons';
+import { PushNotificationManager } from '~/components/push-notification-manager';
+import { getUserNotifications } from '~/services/notifications.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Get organiser status using the cached getCurrentUser function
   const organiserStatus = await isOrganiser(request);
   const response = new Response();
   const supabase = createServerSupabase(request, response);
-  
+
   // Get current user (cached)
   const user = await getCurrentUser(request);
-  
+
   // Fetch the profile being viewed (cached)
   const username = params.username || '';
   const member = await getCachedMember(request, username, supabase);
-  
+
   if (!member) {
-    return json({ 
-      member: null, 
-      SUPABASE_URL: process.env.SUPABASE_URL, 
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, 
+    return json({
+      member: null,
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
       organiserStatus: false,
-      isOwnProfile: false 
+      isOwnProfile: false,
     });
   }
 
   // Check if current user is viewing their own profile
   const isOwnProfile = user && member && user.id === member.user_id;
-  
+
   // Get points history (cached)
   const pointsHistory = await getCachedPoints(request, member.id, supabase);
 
   // Get user notifications if member exists and it's their own profile
   let notifications: Array<any> = [];
   let unreadCount = 0;
-  
+
   if (member?.id && isOwnProfile) {
     const notificationsResult = await getUserNotifications(request, member.id);
     if (notificationsResult.success) {
@@ -81,7 +98,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         userData.streakData?.previousStreak?.length ?? 0
       );
     } catch (error) {
-      console.error("Error fetching Duolingo data:", error);
+      console.error('Error fetching Duolingo data:', error);
       return 0;
     }
   };
@@ -89,7 +106,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Function to fetch GitHub contributions - defer this
   const fetchGithubData = async () => {
     try {
-      const githubResponse = await fetch(`https://api.github.com/users/${member.github_username}/events/public`);
+      const githubResponse = await fetch(
+        `https://api.github.com/users/${member.github_username}/events/public`
+      );
       const githubEvents = await githubResponse.json();
 
       const thirtyDaysAgo = new Date();
@@ -99,11 +118,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         ? githubEvents.filter(
             (event: any) =>
               new Date(event.created_at) > thirtyDaysAgo &&
-              ["PushEvent", "CreateEvent", "PullRequestEvent"].includes(event.type)
+              ['PushEvent', 'CreateEvent', 'PullRequestEvent'].includes(
+                event.type
+              )
           )
         : [];
     } catch (error) {
-      console.error("Error fetching GitHub data:", error);
+      console.error('Error fetching GitHub data:', error);
       return [];
     }
   };
@@ -111,16 +132,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   //Fetch LeetCode data
   const fetchLeetCodeData = async () => {
     try {
-      const leetCodeResponse = await fetch(`https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`);
-      
+      const leetCodeResponse = await fetch(
+        `https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`
+      );
+
       const leetCodeData = await leetCodeResponse.json();
       return leetCodeData?.totalSolved || 0;
     } catch (error) {
-      console.error("Error fetching LeetCode data:", error);
+      console.error('Error fetching LeetCode data:', error);
       return null;
     }
   };
- 
+
   return defer({
     member,
     user,
@@ -133,7 +156,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     pointsHistory: pointsHistory || [],
     isOwnProfile,
     notifications,
-    unreadCount
+    unreadCount,
   });
 };
 
@@ -165,14 +188,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       avatar_url: data.avatar_url || null,
       joined_date: data.joined_date || null,
       testimony: data.testimony || null,
-      hobbies: typeof data.hobbies === "string" ? data.hobbies.split(",") : [],
+      hobbies: typeof data.hobbies === 'string' ? data.hobbies.split(',') : [],
       title: data.title || null,
       basher_level: data.basher_level || null,
       bash_points: Number(data.bash_points) || 0,
       clan_name: data.clan_name || null,
       basher_no: data.basher_no || null,
-      primary_domain: typeof data.primary_domain === "string" ? data.primary_domain.split(",") : [],
-      secondary_domain: typeof data.secondary_domain === "string" ? data.secondary_domain.split(",") : [],
+      primary_domain:
+        typeof data.primary_domain === 'string'
+          ? data.primary_domain.split(',')
+          : [],
+      secondary_domain:
+        typeof data.secondary_domain === 'string'
+          ? data.secondary_domain.split(',')
+          : [],
       gpa: Number(data.gpa) || 0,
       weekly_bash_attendance: Number(data.weekly_bash_attendance) || 0,
       github_username: data.github_username || null,
@@ -186,22 +215,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       duolingo_username: data.duolingo_username || null,
       stats,
     };
-    
-await supabase.from('members').select('*').eq("github_username",params.usename)
+
+    await supabase
+      .from('members')
+      .select('*')
+      .eq('github_username', params.usename);
     // Update the member's profile in the database
     const { error } = await supabase
-      .from("members")
+      .from('members')
       .update(updatedMember)
-      .eq("github_username", params.username);
+      .eq('github_username', params.username);
     if (error) {
-      console.error("Supabase Error:", error);
+      console.error('Supabase Error:', error);
       return json({ error: error.message }, { status: 500 });
     }
 
     return redirect(`/profile/${params.username}`);
   } catch (error) {
-    console.error("Action Function Error:", error);
-    return json({ error: "An unexpected error occurred." }, { status: 500 });
+    console.error('Action Function Error:', error);
+    return json({ error: 'An unexpected error occurred.' }, { status: 500 });
   }
 };
 
@@ -221,17 +253,17 @@ interface LoaderData {
 }
 
 export default function Profile() {
-  const { 
-    member, 
-    organiserStatus, 
-    isOwnProfile, 
-    pointsHistory, 
+  const {
+    member,
+    organiserStatus,
+    isOwnProfile,
+    pointsHistory,
     user,
     duolingoStreak,
     leetCodeData,
     githubData,
     notifications,
-    unreadCount
+    unreadCount,
   } = useLoaderData<LoaderData>();
   interface Profile {
     id: number;
@@ -269,7 +301,8 @@ export default function Profile() {
   }
 
   const [profile, setProfile] = useState<Profile | null>(null);
-  const calculatePercentage = (value: number, max: number) => (value / max) * 100;
+  const calculatePercentage = (value: number, max: number) =>
+    (value / max) * 100;
 
   useEffect(() => {
     if (!member) return; // Exit early if no member
@@ -277,7 +310,7 @@ export default function Profile() {
     // Set initial profile with data we already have
     const tier = getTier(member.bash_points || 0);
     const tierIcon = getTierIcon(tier);
-        
+
     setProfile({
       ...member,
       id: member.id,
@@ -285,20 +318,23 @@ export default function Profile() {
       github_username: member.github_username,
       points: member.bash_points || 0,
       avatar_url: member.avatar_url, // Provide default avatar
-      title: member.title || "Basher",
+      title: member.title || 'Basher',
       joinedDate: new Date(member.joined_date || Date.now()),
       basherLevel: tier, // Use the dynamic tier
       tierIcon: tierIcon, // Add the tier icon
       bashPoints: member.bash_points || 0,
-      clanName: member.clan_name || "Byte Basher",
-      basherNo: member.basher_no || "BBT2023045",
+      clanName: member.clan_name || 'Byte Basher',
+      basherNo: member.basher_no || 'BBT2023045',
       projects: member.stats?.projects || 0,
       certifications: member.stats?.certifications || 0,
       internships: member.stats?.internships || 0,
       courses: member.stats?.courses || 0,
-      resume_url: member.resume_url || "",
-      portfolio_url: member.portfolio_url || "",
-      domains: [...(member.primary_domain || []), ...(member.secondary_domain || [])],
+      resume_url: member.resume_url || '',
+      portfolio_url: member.portfolio_url || '',
+      domains: [
+        ...(member.primary_domain || []),
+        ...(member.secondary_domain || []),
+      ],
       streaks: {
         github: 0, // Will be updated when GitHub data loads
         leetcode: 15,
@@ -310,36 +346,46 @@ export default function Profile() {
         { name: 'TypeScript', level: 'Expert' },
         { name: 'Python', level: 'Advanced' },
         { name: 'Rust', level: 'Intermediate' },
-        { name: 'Go', level: 'Beginner' }
+        { name: 'Go', level: 'Beginner' },
       ],
       hobbies: member.hobbies || [],
-      testimonial: member.testimony || "No testimonial available.",
+      testimonial: member.testimony || 'No testimonial available.',
       gpa: member.gpa || 0,
       socials: [
-        { platform: "github", url: `https://github.com/${member.github_username}` },
-        { platform: "linkedin", url: member.linkedin_url || "#" },
-        { platform: "instagram", url: member.instagram_username ? `https://instagram.com/${member.instagram_username}` : "#" },
+        {
+          platform: 'github',
+          url: `https://github.com/${member.github_username}`,
+        },
+        { platform: 'linkedin', url: member.linkedin_url || '#' },
+        {
+          platform: 'instagram',
+          url: member.instagram_username
+            ? `https://instagram.com/${member.instagram_username}`
+            : '#',
+        },
       ],
       attendance: member.weekly_bash_attendance || 0,
     });
   }, [member]);
 
-  // Check if the member is a legacy basher  
-  const isLegacyBasher = member?.title === "Legacy Basher";
+  // Check if the member is a legacy basher
+  const isLegacyBasher = member?.title === 'Legacy Basher';
 
   if (!member) return <ProfilePageSkeleton />;
-  if (!profile) return <ProfilePageSkeleton />; 
+  if (!profile) return <ProfilePageSkeleton />;
 
   return (
-    <div className={`min-h-screen ${
-      isLegacyBasher 
-        ? "bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900" 
-        : "bg-gradient-to-br from-gray-900 to-gray-800"
-    } text-white`}>
+    <div
+      className={`min-h-screen ${
+        isLegacyBasher
+          ? 'bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900'
+          : 'bg-gradient-to-br from-gray-900 to-gray-800'
+      } text-white`}
+    >
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation */}
         <div className="mb-8 flex justify-between items-center">
-          <Link 
+          <Link
             to="/leaderboard"
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
@@ -347,7 +393,7 @@ export default function Profile() {
             Back to Leaderboard
           </Link>
           {profile && (
-            <MainNav 
+            <MainNav
               user={{
                 id: profile.id,
                 name: profile.name,
@@ -372,7 +418,7 @@ export default function Profile() {
                 hobbies: profile.hobbies,
                 testimonial: profile.testimonial,
                 gpa: profile.gpa,
-                attendance: profile.attendance
+                attendance: profile.attendance,
               }}
               notifications={notifications || []}
               unreadCount={unreadCount || 0}
@@ -381,96 +427,108 @@ export default function Profile() {
         </div>
 
         {/* Profile Info Section - Pass canEdit and member props */}
-        <ProfileInfo 
-          profile={profile} 
-          canEdit={organiserStatus || isOwnProfile} 
+        <ProfileInfo
+          profile={profile}
+          canEdit={organiserStatus || isOwnProfile}
           member={member}
           isOrganiser={organiserStatus}
           isLegacyBasher={isLegacyBasher}
         />
-         {/* Points Graph - Add this section */}
+        {/* Points Graph - Add this section */}
         {user && pointsHistory && pointsHistory.length > 0 && (
-          <PointsGraph pointsHistory={pointsHistory} 
-          isLegacyBasher={isLegacyBasher}/>
+          <PointsGraph
+            pointsHistory={pointsHistory}
+            isLegacyBasher={isLegacyBasher}
+          />
         )}
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-          <div className={`${
-            isLegacyBasher 
-              ? "bg-yellow-500/10 backdrop-blur-lg border border-yellow-500/30" 
-              : "bg-white/5 backdrop-blur-lg"
-          }backdrop-blur-lg rounded-xl p-6 text-center`}>
-          <motion.div
+          <div
+            className={`${
+              isLegacyBasher
+                ? 'bg-yellow-500/10 backdrop-blur-lg border border-yellow-500/30'
+                : 'bg-white/5 backdrop-blur-lg'
+            }backdrop-blur-lg rounded-xl p-6 text-center`}
+          >
+            <motion.div
               className="flex flex-col items-center gap-2"
               initial={{ y: 10 }}
               animate={{ y: 0 }}
             >
-          <motion.div
+              <motion.div
                 animate={{
                   rotate: [0, 10, -10, 0],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Number.POSITIVE_INFINITY,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
+                  repeatType: 'reverse',
+                  ease: 'easeInOut',
                 }}
               >
-            <Trophy className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+                <Trophy className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+              </motion.div>
             </motion.div>
-            </motion.div>
-            <div className="text-3xl font-bold text-blue-400">{profile.projects}</div>
+            <div className="text-3xl font-bold text-blue-400">
+              {profile.projects}
+            </div>
             <div className="text-sm text-gray-400">Projects</div>
           </div>
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
-          <motion.div
-                animate={{
-                  rotate: [0, 10, -10, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-              >
-            <Award className="w-6 h-6 text-green-400 mx-auto mb-2" />
+            <motion.div
+              animate={{
+                rotate: [0, 10, -10, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Number.POSITIVE_INFINITY,
+                repeatType: 'reverse',
+                ease: 'easeInOut',
+              }}
+            >
+              <Award className="w-6 h-6 text-green-400 mx-auto mb-2" />
             </motion.div>
-            <div className="text-3xl font-bold text-green-400">{profile.certifications}</div>
+            <div className="text-3xl font-bold text-green-400">
+              {profile.certifications}
+            </div>
             <div className="text-sm text-gray-400">Certifications</div>
           </div>
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
-          <motion.div
-                animate={{
-                  rotate: [0, 10, -10, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-              >
-            <Briefcase className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+            <motion.div
+              animate={{
+                rotate: [0, 10, -10, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Number.POSITIVE_INFINITY,
+                repeatType: 'reverse',
+                ease: 'easeInOut',
+              }}
+            >
+              <Briefcase className="w-6 h-6 text-purple-400 mx-auto mb-2" />
             </motion.div>
-            <div className="text-3xl font-bold text-purple-400">{profile.internships}</div>
+            <div className="text-3xl font-bold text-purple-400">
+              {profile.internships}
+            </div>
             <div className="text-sm text-gray-400">Internships</div>
           </div>
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 text-center">
-          <motion.div
-                animate={{
-                  rotate: [0, 10, -10, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-              >
-            <Book className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+            <motion.div
+              animate={{
+                rotate: [0, 10, -10, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Number.POSITIVE_INFINITY,
+                repeatType: 'reverse',
+                ease: 'easeInOut',
+              }}
+            >
+              <Book className="w-6 h-6 text-orange-400 mx-auto mb-2" />
             </motion.div>
-            <div className="text-3xl font-bold text-orange-400">{profile.courses}</div>
+            <div className="text-3xl font-bold text-orange-400">
+              {profile.courses}
+            </div>
             <div className="text-sm text-gray-400">Courses</div>
           </div>
         </div>
@@ -486,10 +544,10 @@ export default function Profile() {
                   Notifications
                 </h2>
                 <PushNotificationManager memberId={member.id} />
-                
+
                 <div className="mt-4">
                   <Button
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     className="w-full justify-center gap-2 text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
                     asChild
@@ -502,23 +560,30 @@ export default function Profile() {
                 </div>
               </div>
             )}
-            
+
             {/* Domains */}
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Cpu className="w-5 h-5" />
                 Domains
               </h2>
-                <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {profile.domains.map((domain, index) => (
-                  <div 
-                  key={index} 
-                  className={`bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm ${index < (member.primary_domain?.length || 0) ? 'font-bold' : ''}`}
+                  <div
+                    key={index}
+                    className={`bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-l text-sm ${
+                      index < (member.primary_domain?.length || 0)
+                        ? 'font-bold'
+                        : ''
+                    }`}
                   >
-                  {domain} {index < (member.primary_domain?.length || 0) ? '(Primary)' : '(Secondary)'}
+                    {domain}{' '}
+                    {index < (member.primary_domain?.length || 0)
+                      ? '(Primary)'
+                      : '(Secondary)'}
                   </div>
                 ))}
-                </div>
+              </div>
             </div>
 
             {/* Programming Languages */}
@@ -531,12 +596,17 @@ export default function Profile() {
                 {profile.languages.map((lang) => (
                   <div key={lang.name} className="bg-white/5 rounded-lg p-3">
                     <div className="font-medium">{lang.name}</div>
-                    <div className={`text-sm ${
-                      lang.level === 'Expert' ? 'text-green-400' :
-                      lang.level === 'Advanced' ? 'text-blue-400' :
-                      lang.level === 'Intermediate' ? 'text-yellow-400' :
-                      'text-gray-400'
-                    }`}>
+                    <div
+                      className={`text-sm ${
+                        lang.level === 'Expert'
+                          ? 'text-green-400'
+                          : lang.level === 'Advanced'
+                          ? 'text-blue-400'
+                          : lang.level === 'Intermediate'
+                          ? 'text-yellow-400'
+                          : 'text-gray-400'
+                      }`}
+                    >
                       {lang.level}
                     </div>
                   </div>
@@ -546,29 +616,37 @@ export default function Profile() {
 
             {/* Academic Performance */}
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Academic Performance</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Academic Performance
+              </h2>
               <div className="space-y-4">
                 <div>
-                    <div className="flex justify-between mb-2">
-                      <span className="text-gray-400">GPA</span>
-                      <span className="text-blue-400">{profile.gpa}/10.0</span>
-                    </div>
-                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500 rounded-full transition-all duration-500" 
-                        style={{ width: `${calculatePercentage(profile.gpa, 10)}%` }} 
-                      />
-                    </div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-400">GPA</span>
+                    <span className="text-blue-400">{profile.gpa}/10.0</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${calculatePercentage(profile.gpa, 10)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">Weekly Bash Attendance</span>
-                    <span className="text-green-400">{profile.attendance}%</span>
+                    <span className="text-gray-400">
+                      Weekly Bash Attendance
+                    </span>
+                    <span className="text-green-400">
+                      {profile.attendance}%
+                    </span>
                   </div>
                   <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-green-500 rounded-full transition-all duration-500" 
-                      style={{ width: `${profile.attendance}%` }} 
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all duration-500"
+                      style={{ width: `${profile.attendance}%` }}
                     />
                   </div>
                 </div>
@@ -583,7 +661,13 @@ export default function Profile() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-purple-500/20 rounded-xl p-4">
                   <Github className="w-5 h-5 text-purple-400 mb-2" />
-                  <Suspense fallback={<div className="text-2xl font-bold text-purple-400 animate-pulse">...</div>}>
+                  <Suspense
+                    fallback={
+                      <div className="text-2xl font-bold text-purple-400 animate-pulse">
+                        ...
+                      </div>
+                    }
+                  >
                     <Await resolve={githubData}>
                       {(data) => (
                         <div className="text-2xl font-bold text-purple-400">
@@ -596,7 +680,13 @@ export default function Profile() {
                 </div>
                 <div className="bg-orange-500/20 rounded-xl p-4">
                   <Code2 className="w-5 h-5 text-orange-400 mb-2" />
-                  <Suspense fallback={<div className="text-2xl font-bold text-orange-400 animate-pulse">...</div>}>
+                  <Suspense
+                    fallback={
+                      <div className="text-2xl font-bold text-orange-400 animate-pulse">
+                        ...
+                      </div>
+                    }
+                  >
                     <Await resolve={leetCodeData}>
                       {(data) => (
                         <div className="text-2xl font-bold text-orange-400">
@@ -609,7 +699,13 @@ export default function Profile() {
                 </div>
                 <div className="bg-green-500/20 rounded-xl p-4">
                   <Globe className="w-5 h-5 text-green-400 mb-2" />
-                  <Suspense fallback={<div className="text-2xl font-bold text-green-400 animate-pulse">...</div>}>
+                  <Suspense
+                    fallback={
+                      <div className="text-2xl font-bold text-green-400 animate-pulse">
+                        ...
+                      </div>
+                    }
+                  >
                     <Await resolve={duolingoStreak}>
                       {(streak) => (
                         <div className="text-2xl font-bold text-green-400">
@@ -639,58 +735,63 @@ export default function Profile() {
 
             {/* Hobbies & Interests */}
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Hobbies & Interests</h2>
-                <div className="flex flex-wrap gap-2">
+              <h2 className="text-lg font-semibold mb-4">
+                Hobbies & Interests
+              </h2>
+              <div className="flex flex-wrap gap-2">
                 {profile.hobbies.map((hobby) => (
-                  <span 
-                  key={hobby} 
-                  className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-full text-sm"
+                  <span
+                    key={hobby}
+                    className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-full text-sm"
                   >
-                  {hobby}
+                    {hobby}
                   </span>
                 ))}
-                </div>
+              </div>
             </div>
           </div>
         </div>
         {/* Testimonial */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="bg-white/5 backdrop-blur-lg border-gray-300/20 p-8 relative overflow-hidden mt-4">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2 }}
-                className="absolute top-4 left-4"
-              >
-                <Quote className="w-12 h-12 text-gray-300/20" />
-              </motion.div>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="absolute bottom-4 right-4 rotate-180"
-              >
-                <Quote className="w-12 h-12 text-gray-300/20" />
-              </motion.div>
-              <motion.blockquote
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-gray-300 italic text-s text-center px-8 leading-relaxed"
-              >
-                {profile.testimonial}
-              </motion.blockquote>
-              </Card>
-              <SocialFooter socials={profile.socials} />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className="bg-white/5 backdrop-blur-lg border-gray-300/20 p-8 relative overflow-hidden mt-4">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="absolute top-4 left-4"
+            >
+              <Quote className="w-12 h-12 text-gray-300/20" />
             </motion.div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="absolute bottom-4 right-4 rotate-180"
+            >
+              <Quote className="w-12 h-12 text-gray-300/20" />
+            </motion.div>
+            <motion.blockquote
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-gray-300 italic text-s text-center px-8 leading-relaxed"
+            >
+              {profile.testimonial}
+            </motion.blockquote>
+          </Card>
+          <SocialFooter socials={profile.socials} />
+        </motion.div>
       </div>
       {/* Legacy Basher crown badge */}
       {isLegacyBasher && (
-        <motion.div 
+        <motion.div
           className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1, type: "spring" }}
+          transition={{ delay: 1, type: 'spring' }}
         >
           <Crown className="w-5 h-5" />
           <span>Legacy Basher</span>
@@ -703,20 +804,20 @@ export default function Profile() {
           {(githubEvents) => {
             useEffect(() => {
               if (!githubEvents || !profile) return;
-              
+
               // Update the profile with GitHub streak data
-              setProfile(prevProfile => {
+              setProfile((prevProfile) => {
                 if (!prevProfile) return null;
                 return {
                   ...prevProfile,
                   streaks: {
                     ...prevProfile.streaks,
-                    github: githubEvents.length
-                  }
+                    github: githubEvents.length,
+                  },
                 };
               });
             }, [githubEvents]);
-            
+
             return null; // This component only updates state, doesn't render anything
           }}
         </Await>
@@ -728,24 +829,24 @@ export default function Profile() {
           {(duolingoStreak) => {
             useEffect(() => {
               if (typeof duolingoStreak !== 'number' || !profile) return;
-              
+
               // Update the profile with Duolingo streak data
-              setProfile(prevProfile => {
+              setProfile((prevProfile) => {
                 if (!prevProfile) return null;
                 return {
                   ...prevProfile,
                   streaks: {
                     ...prevProfile.streaks,
-                    duolingo: duolingoStreak
-                  }
+                    duolingo: duolingoStreak,
+                  },
                 };
               });
             }, [duolingoStreak]);
-            
+
             return null; // This component only updates state, doesn't render anything
           }}
         </Await>
       </Suspense>
     </div>
-  )
+  );
 }

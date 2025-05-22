@@ -1,149 +1,166 @@
-"use client"
+'use client';
 
-import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node"
-import { useLoaderData } from "@remix-run/react"
-import { motion, useScroll, useTransform } from "framer-motion"
-import { Crown, Star, Award, Users } from "lucide-react"
-import { Card } from "~/components/ui/card"
-import { createServerSupabase} from "~/utils/supabase.server"
-import { useEffect, useState } from "react"
-import type React from "react" // Added import for React
-import { UpdateChampionsForm } from "~/components/update-champions-form"
+import {
+  json,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+} from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Crown, Star, Award, Users } from 'lucide-react';
+import { Card } from '~/components/ui/card';
+import { createServerSupabase } from '~/utils/supabase.server';
+import { useEffect, useState } from 'react';
+import type React from 'react'; // Added import for React
+import { UpdateChampionsForm } from '~/components/update-champions-form';
 
 interface Award {
-  icon: string
-  title: string
-  name: string
-  description: string
-  gradient: string
-  borderGradient: string
-  lucideIcon: "crown" | "star" | "users" | "award" // Changed to string identifier
+  icon: string;
+  title: string;
+  name: string;
+  description: string;
+  gradient: string;
+  borderGradient: string;
+  lucideIcon: 'crown' | 'star' | 'users' | 'award'; // Changed to string identifier
 }
 
-export const loader = async ({request}: LoaderFunctionArgs) => {
-
-  const response = new Response()
-  const supabase =createServerSupabase(request, response)
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
 
   const { data: creditData, error } = await supabase
-    .from("credits")
-    .select("*")
-    .order("month_date", { ascending: false })
+    .from('credits')
+    .select('*')
+    .order('month_date', { ascending: false })
     .limit(1)
-    .single()
+    .single();
 
   if (error) {
-    console.error("Error fetching credits:", error)
+    console.error('Error fetching credits:', error);
   }
 
   const [basherDetails, leaderDetails] = await Promise.all([
-    supabase.from("members").select("avatar_url, points").eq("name", creditData?.best_basher).single(),
-    supabase.from("members").select("avatar_url, points").eq("name", creditData?.best_leader).single(),
-  ])
+    supabase
+      .from('members')
+      .select('avatar_url, points')
+      .eq('name', creditData?.best_basher)
+      .single(),
+    supabase
+      .from('members')
+      .select('avatar_url, points')
+      .eq('name', creditData?.best_leader)
+      .single(),
+  ]);
 
   const awards: Award[] = [
     {
-      icon: "👑",
-      title: "Best Basher",
-      name: creditData?.best_basher || "",
-      description: "Awarded to members who consistently demonstrate exceptional coding skills",
-      gradient: "from-amber-500/20 to-yellow-500/20",
-      borderGradient: "from-amber-500/30 to-yellow-500/30",
-      lucideIcon: "crown",
+      icon: '👑',
+      title: 'Best Basher',
+      name: creditData?.best_basher || '',
+      description:
+        'Awarded to members who consistently demonstrate exceptional coding skills',
+      gradient: 'from-amber-500/20 to-yellow-500/20',
+      borderGradient: 'from-amber-500/30 to-yellow-500/30',
+      lucideIcon: 'crown',
     },
     {
-      icon: "⭐",
-      title: "Best Leader",
-      name: creditData?.best_leader || "",
-      description: "Recognizes outstanding leadership and mentorship within the community",
-      gradient: "from-blue-500/20 to-purple-500/20",
-      borderGradient: "from-blue-500/30 to-purple-500/30",
-      lucideIcon: "star",
+      icon: '⭐',
+      title: 'Best Leader',
+      name: creditData?.best_leader || '',
+      description:
+        'Recognizes outstanding leadership and mentorship within the community',
+      gradient: 'from-blue-500/20 to-purple-500/20',
+      borderGradient: 'from-blue-500/30 to-purple-500/30',
+      lucideIcon: 'star',
     },
     {
-      icon: "🏆",
-      title: "Best Clan",
-      name: creditData?.best_clan || "",
-      description: "Honors clans with exceptional teamwork and achievements",
-      gradient: "from-green-500/20 to-emerald-500/20",
-      borderGradient: "from-green-500/30 to-emerald-500/30",
-      lucideIcon: "users",
+      icon: '🏆',
+      title: 'Best Clan',
+      name: creditData?.best_clan || '',
+      description: 'Honors clans with exceptional teamwork and achievements',
+      gradient: 'from-green-500/20 to-emerald-500/20',
+      borderGradient: 'from-green-500/30 to-emerald-500/30',
+      lucideIcon: 'users',
     },
     {
-      icon: "💫",
-      title: "Best Profile",
-      name: creditData?.best_profile || "",
-      description: "Celebrates members with outstanding profile customization and activity",
-      gradient: "from-pink-500/20 to-rose-500/20",
-      borderGradient: "from-pink-500/30 to-rose-500/30",
-      lucideIcon: "award",
+      icon: '💫',
+      title: 'Best Profile',
+      name: creditData?.best_profile || '',
+      description:
+        'Celebrates members with outstanding profile customization and activity',
+      gradient: 'from-pink-500/20 to-rose-500/20',
+      borderGradient: 'from-pink-500/30 to-rose-500/30',
+      lucideIcon: 'award',
     },
-  ]
+  ];
 
   return json({
     credits: creditData,
     basherDetails: basherDetails?.data,
     leaderDetails: leaderDetails?.data,
     awards,
-  })
-}
+  });
+};
 
 // Helper function to render Lucide icons
-function getLucideIcon(iconName: Award["lucideIcon"]) {
+function getLucideIcon(iconName: Award['lucideIcon']) {
   switch (iconName) {
-    case "crown":
-      return <Crown className="w-6 h-6" />
-    case "star":
-      return <Star className="w-6 h-6" />
-    case "users":
-      return <Users className="w-6 h-6" />
-    case "award":
-      return <Award className="w-6 h-6" />
+    case 'crown':
+      return <Crown className="w-6 h-6" />;
+    case 'star':
+      return <Star className="w-6 h-6" />;
+    case 'users':
+      return <Users className="w-6 h-6" />;
+    case 'award':
+      return <Award className="w-6 h-6" />;
   }
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const response = new Response()
-  const supabase = createServerSupabase(request, response)
-  const formData = await request.formData()
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  const formData = await request.formData();
   const data = {
     month_date: new Date().toISOString(),
-    month: new Date().toLocaleString("default", { month: "long", year: "numeric" }),
-    best_basher: formData.get("best_basher"),
-    best_leader: formData.get("best_leader"),
-    best_clan: formData.get("best_clan"),
-    best_profile: formData.get("best_profile"),
-    basher_clan_name: formData.get("basher_clan_name"),
-    leader_clan_name: formData.get("leader_clan_name"),
-  }
+    month: new Date().toLocaleString('default', {
+      month: 'long',
+      year: 'numeric',
+    }),
+    best_basher: formData.get('best_basher'),
+    best_leader: formData.get('best_leader'),
+    best_clan: formData.get('best_clan'),
+    best_profile: formData.get('best_profile'),
+    basher_clan_name: formData.get('basher_clan_name'),
+    leader_clan_name: formData.get('leader_clan_name'),
+  };
 
   // Validate required fields
   const requiredFields = [
-    "best_basher",
-    "best_leader",
-    "best_clan",
-    "best_profile",
-    "basher_clan_name",
-    "leader_clan_name",
-  ]
+    'best_basher',
+    'best_leader',
+    'best_clan',
+    'best_profile',
+    'basher_clan_name',
+    'leader_clan_name',
+  ];
 
   for (const field of requiredFields) {
     if (!data[field as keyof typeof data]) {
-      return json({ error: `${field.replace("_", " ")} is required` })
+      return json({ error: `${field.replace('_', ' ')} is required` });
     }
   }
 
   try {
-    const { error } = await supabase.from("credits").insert([data])
+    const { error } = await supabase.from('credits').insert([data]);
 
-    if (error) throw error
+    if (error) throw error;
 
-    return json({ success: true })
+    return json({ success: true });
   } catch (error) {
-    console.error("Error updating champions:", error)
-    return json({ error: "Failed to update champions" })
+    console.error('Error updating champions:', error);
+    return json({ error: 'Failed to update champions' });
   }
-}
+};
 
 function AchievementCard({
   title,
@@ -155,14 +172,14 @@ function AchievementCard({
   avatarUrl,
   delay = 0,
 }: {
-  title: string
-  name: string
-  clanName: string
-  icon: React.ReactNode
-  gradient: string
-  points?: number
-  avatarUrl?: string
-  delay?: number
+  title: string;
+  name: string;
+  clanName: string;
+  icon: React.ReactNode;
+  gradient: string;
+  points?: number;
+  avatarUrl?: string;
+  delay?: number;
 }) {
   return (
     <motion.div
@@ -186,7 +203,11 @@ function AchievementCard({
           <div className="flex items-center gap-4">
             <div className="relative">
               {avatarUrl ? (
-                <img src={avatarUrl || "/placeholder.svg"} alt={name} className="w-16 h-16 rounded-xl object-cover" />
+                <img
+                  src={avatarUrl || '/placeholder.svg'}
+                  alt={name}
+                  className="w-16 h-16 rounded-xl object-cover"
+                />
               ) : (
                 <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
                   {icon}
@@ -198,8 +219,10 @@ function AchievementCard({
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                 style={{
-                  background: `linear-gradient(45deg, ${gradient.split(" ")[1]} 0%, transparent 100%)`,
-                  filter: "blur(8px)",
+                  background: `linear-gradient(45deg, ${
+                    gradient.split(' ')[1]
+                  } 0%, transparent 100%)`,
+                  filter: 'blur(8px)',
                   zIndex: -1,
                 }}
               />
@@ -210,34 +233,38 @@ function AchievementCard({
                 {name}
               </p>
               <p className="text-gray-400">{clanName}</p>
-              {points && <p className="text-sm mt-1 text-gray-400">{points.toLocaleString()} points</p>}
+              {points && (
+                <p className="text-sm mt-1 text-gray-400">
+                  {points.toLocaleString()} points
+                </p>
+              )}
             </div>
           </div>
         </div>
       </Card>
     </motion.div>
-  )
+  );
 }
 
 function ParticleBackground() {
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     setDimensions({
       width: window.innerWidth,
       height: window.innerHeight * 0.4,
-    })
+    });
 
     const handleResize = () => {
       setDimensions({
         width: window.innerWidth,
         height: window.innerHeight * 0.4,
-      })
-    }
+      });
+    };
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <motion.div
@@ -263,28 +290,37 @@ function ParticleBackground() {
             transition={{
               duration: Math.random() * 3 + 2,
               repeat: Number.POSITIVE_INFINITY,
-              repeatType: "loop",
+              repeatType: 'loop',
               delay: Math.random() * 2,
             }}
           />
         ))}
     </motion.div>
-  )
+  );
 }
 
 export default function Credits() {
-  const { credits, basherDetails, leaderDetails, awards } = useLoaderData<typeof loader>()
-  const { scrollYProgress } = useScroll()
-  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
-  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95])
-  const [isMounted, setIsMounted] = useState(false)
+  const { credits, basherDetails, leaderDetails, awards } =
+    useLoaderData<typeof loader>();
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+  const [isMounted, setIsMounted] = useState(false);
   const currentDate = new Date();
-  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const endOfVisibility = new Date(currentDate.getFullYear(), currentDate.getMonth(), 10);
+  const startOfMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+  const endOfVisibility = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    10
+  );
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
@@ -293,46 +329,52 @@ export default function Credits() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="text-center space-y-2 p-6 pb-0"
-          >
+      >
         <h1 className="text-3xl font-bold text-purple-400">Hall of Fame</h1>
-        <p className="text-gray-400">Celebrating our community&apos;s brightest stars</p>
+        <p className="text-gray-400">
+          Celebrating our community&apos;s brightest stars
+        </p>
         <div className="flex justify-end">
-          {currentDate >= startOfMonth && currentDate <= endOfVisibility && <UpdateChampionsForm />}
+          {currentDate >= startOfMonth && currentDate <= endOfVisibility && (
+            <UpdateChampionsForm />
+          )}
         </div>
-        </motion.div> 
+      </motion.div>
 
       <div className="max-w-7xl mx-auto px-4 py-12 space-y-24">
         <section className="space-y-12">
-        <motion.div
-        style={{ opacity, scale }}
-        className="relative h-[40vh] flex items-center justify-center overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900" />
-        <div className="relative z-10 text-center space-y-4">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400"
+          <motion.div
+            style={{ opacity, scale }}
+            className="relative h-[40vh] flex items-center justify-center overflow-hidden"
           >
-            {credits?.month} Champions
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-gray-300"
-          >
-            <p className="text-gray-400">Recognizing this month&apos;s outstanding achievements</p>
-          </motion.p>
-        </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900" />
+            <div className="relative z-10 text-center space-y-4">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400"
+              >
+                {credits?.month} Champions
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl text-gray-300"
+              >
+                <p className="text-gray-400">
+                  Recognizing this month&apos;s outstanding achievements
+                </p>
+              </motion.p>
+            </div>
 
-        {isMounted && <ParticleBackground />}
-      </motion.div>
+            {isMounted && <ParticleBackground />}
+          </motion.div>
           <div className="grid md:grid-cols-2 gap-6">
             <AchievementCard
               title="Best Basher"
-              name={credits?.best_basher || ""}
-              clanName={credits?.basher_clan_name || ""}
+              name={credits?.best_basher || ''}
+              clanName={credits?.basher_clan_name || ''}
               icon={<Crown className="w-8 h-8 text-amber-400" />}
               gradient="from-amber-500 to-orange-500"
               points={basherDetails?.points}
@@ -341,8 +383,8 @@ export default function Credits() {
             />
             <AchievementCard
               title="Best Leader"
-              name={credits?.best_leader || ""}
-              clanName={credits?.leader_clan_name || ""}
+              name={credits?.best_leader || ''}
+              clanName={credits?.leader_clan_name || ''}
               icon={<Star className="w-8 h-8 text-blue-400" />}
               gradient="from-blue-500 to-purple-500"
               points={leaderDetails?.points}
@@ -359,8 +401,12 @@ export default function Credits() {
             viewport={{ once: true }}
             className="text-center space-y-2"
           >
-            <h2 className="text-3xl font-bold text-purple-400">Monthly Awards</h2>
-            <p className="text-gray-400">Recognizing excellence in our community</p>
+            <h2 className="text-3xl font-bold text-purple-400">
+              Monthly Awards
+            </h2>
+            <p className="text-gray-400">
+              Recognizing excellence in our community
+            </p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -377,27 +423,32 @@ export default function Credits() {
                 <div
                   className={`absolute inset-0 bg-gradient-to-r ${award.borderGradient} opacity-0 group-hover:opacity-20 rounded-2xl transition-opacity`}
                 />
-                <Card className={`relative overflow-hidden bg-gradient-to-br ${award.gradient} border-0 h-full`}>
+                <Card
+                  className={`relative overflow-hidden bg-gradient-to-br ${award.gradient} border-0 h-full`}
+                >
                   <motion.div
                     className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"
                     initial={false}
                     animate={{ opacity: [0, 0.1, 0] }}
-                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+                    transition={{
+                      duration: 2,
+                      repeat: Number.POSITIVE_INFINITY,
+                    }}
                   />
                   <div className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <motion.div
-                      animate={{
-                        rotate: [0, 10, -10, 0],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Number.POSITIVE_INFINITY,
-                        repeatType: "reverse",
-                        ease: "easeInOut",
-                      }}
-                    >
-                      <span className="text-4xl">{award.icon}</span>
+                        animate={{
+                          rotate: [0, 10, -10, 0],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Number.POSITIVE_INFINITY,
+                          repeatType: 'reverse',
+                          ease: 'easeInOut',
+                        }}
+                      >
+                        <span className="text-4xl">{award.icon}</span>
                       </motion.div>
                       {getLucideIcon(award.lucideIcon)}
                     </div>
@@ -406,7 +457,9 @@ export default function Credits() {
                       <p className="text-2xl font-bold mt-1 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
                         {award.name}
                       </p>
-                      <p className="text-sm text-gray-300 mt-2">{award.description}</p>
+                      <p className="text-sm text-gray-300 mt-2">
+                        {award.description}
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -416,6 +469,5 @@ export default function Credits() {
         </section>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,28 +1,42 @@
-"use client"
+'use client';
 
-import { motion } from "framer-motion"
-import { Card } from "~/components/ui/card"
-import { Code2, Rocket, Sparkles, Star, Zap } from "lucide-react"
-import { Skeleton } from "~/components/ui/skeleton"
+import { motion } from 'framer-motion';
+import { Card } from '~/components/ui/card';
+import { Code2, Rocket, Sparkles, Star, Zap } from 'lucide-react';
+import { Skeleton } from '~/components/ui/skeleton';
 
 interface WeekAnnouncementProps {
   leadingClan?: {
-    name: string
-    score: number
-  }
-  isLoading?: boolean
-  leadingClanScore?: number
+    name: string;
+    score: number;
+  };
+  isLoading?: boolean;
+  members?: Array<{ bash_points?: number }>;
 }
 
-export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: WeekAnnouncementProps) {
+export function WeekAnnouncement({
+  leadingClan,
+  isLoading,
+  members,
+}: WeekAnnouncementProps) {
   // Array of decorative icons that will float around
   const icons = [
-    { Icon: Star, position: "top-10 left-10", delay: 0 },
-    { Icon: Rocket, position: "top-20 right-20", delay: 0.2 },
-    { Icon: Code2, position: "bottom-10 left-20", delay: 0.4 },
-    { Icon: Sparkles, position: "bottom-20 right-10", delay: 0.6 },
-    { Icon: Zap, position: "top-1/2 left-1/2", delay: 0.8 },
-  ]
+    { Icon: Star, position: 'top-10 left-10', delay: 0 },
+    { Icon: Rocket, position: 'top-20 right-20', delay: 0.2 },
+    { Icon: Code2, position: 'bottom-10 left-20', delay: 0.4 },
+    { Icon: Sparkles, position: 'bottom-20 right-10', delay: 0.6 },
+    { Icon: Zap, position: 'top-1/2 left-1/2', delay: 0.8 },
+  ];
+
+  const averagePoints =
+    (members ?? []).length > 0
+      ? Math.round(
+          (members ?? []).reduce(
+            (acc, member) => acc + (member?.bash_points || 0),
+            0
+          ) / (members ?? []).length
+        )
+      : 0;
 
   return (
     <motion.div
@@ -37,10 +51,10 @@ export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: W
           className="absolute inset-0 opacity-20"
           animate={{
             background: [
-              "radial-gradient(circle at 0% 0%, #4F46E5 0%, transparent 50%)",
-              "radial-gradient(circle at 100% 100%, #4F46E5 0%, transparent 50%)",
-              "radial-gradient(circle at 0% 100%, #4F46E5 0%, transparent 50%)",
-              "radial-gradient(circle at 100% 0%, #4F46E5 0%, transparent 50%)",
+              'radial-gradient(circle at 0% 0%, #4F46E5 0%, transparent 50%)',
+              'radial-gradient(circle at 100% 100%, #4F46E5 0%, transparent 50%)',
+              'radial-gradient(circle at 0% 100%, #4F46E5 0%, transparent 50%)',
+              'radial-gradient(circle at 100% 0%, #4F46E5 0%, transparent 50%)',
             ],
           }}
           transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY }}
@@ -57,7 +71,7 @@ export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: W
               delay,
               duration: 0.5,
               repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
+              repeatType: 'reverse',
             }}
           >
             <Icon className="w-6 h-6" />
@@ -78,20 +92,20 @@ export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: W
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{
                   delay: 0.3,
-                  type: "spring",
+                  type: 'spring',
                   stiffness: 100,
                 }}
                 className="text-6xl md:text-8xl font-bold text-center text-white mb-4"
-              ><motion.span
+              >
+                <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
                   className="bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text"
                 >
-                  {leadingClan?.name || "Loading..."}
+                  {leadingClan?.name || 'Loading...'}
                 </motion.span>
-                {""}&apos;s Week
-                
+                {''}&apos;s Week
               </motion.h2>
 
               {/* Score display */}
@@ -107,7 +121,7 @@ export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: W
                     animate={{ scale: 1 }}
                     transition={{
                       delay: 0.7,
-                      type: "spring",
+                      type: 'spring',
                       stiffness: 200,
                     }}
                     className="text-xl font-semibold text-blue-300"
@@ -119,12 +133,12 @@ export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: W
                     animate={{ scale: 1 }}
                     transition={{
                       delay: 0.8,
-                      type: "spring",
+                      type: 'spring',
                       stiffness: 200,
                     }}
                     className="text-2xl font-bold text-white"
                   >
-                    {leadingClanScore}
+                    {averagePoints} pts
                   </motion.div>
                 </motion.div>
               )}
@@ -154,6 +168,5 @@ export function WeekAnnouncement({ leadingClan, leadingClanScore, isLoading }: W
         </div>
       </Card>
     </motion.div>
-  )
+  );
 }
-

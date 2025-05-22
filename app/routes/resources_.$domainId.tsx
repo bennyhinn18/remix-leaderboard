@@ -1,90 +1,102 @@
-"use client"
+'use client';
 
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
-import { useLoaderData, Link } from "@remix-run/react"
-import { motion } from "framer-motion"
-import { useState, useEffect } from "react"
-import { createServerSupabase } from "~/utils/supabase.server"
-import { LucideExternalLink, LucideChevronLeft, LucideCalendar, LucideUser, LucidePlus } from "lucide-react"
+import { json, type LoaderFunctionArgs } from '@remix-run/node';
+import { useLoaderData, Link } from '@remix-run/react';
+import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { createServerSupabase } from '~/utils/supabase.server';
+import {
+  LucideExternalLink,
+  LucideChevronLeft,
+  LucideCalendar,
+  LucideUser,
+  LucidePlus,
+} from 'lucide-react';
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const response = new Response()
-  const supabase = createServerSupabase(request, response)
-  const domainId = Number(params.domainId)
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  const domainId = Number(params.domainId);
 
   // Fetch domain
-  const { data: domain, error: domainError } = await supabase.from("domains").select("*").eq("id", domainId).single()
+  const { data: domain, error: domainError } = await supabase
+    .from('domains')
+    .select('*')
+    .eq('id', domainId)
+    .single();
 
   if (domainError || !domain) {
-    throw new Response("Domain not found", { status: 404 })
+    throw new Response('Domain not found', { status: 404 });
   }
 
   // Fetch resources with member info
   const { data: resources = [], error: resourcesError } = await supabase
-    .from("resources")
-    .select(`
+    .from('resources')
+    .select(
+      `
       *,
       member:members (name)
-    `)
-    .eq("domain_id", domainId)
-    .order("added_at", { ascending: false })
+    `
+    )
+    .eq('domain_id', domainId)
+    .order('added_at', { ascending: false });
 
   if (resourcesError) {
-    console.error("Error fetching resources:", resourcesError)
+    console.error('Error fetching resources:', resourcesError);
     // Instead of throwing, we'll return empty resources array
-    return json({ domain, resources: [] })
+    return json({ domain, resources: [] });
   }
 
-  return json({ domain, resources })
-}
+  return json({ domain, resources });
+};
 
 type LoaderData = {
   domain: {
-    id: number
-    name: string
-    focus: string
-  }
+    id: number;
+    name: string;
+    focus: string;
+  };
   resources: Array<{
-    id: number
-    website_name: string
-    website_url: string
-    added_at: string
-    member?: { name: string } | null
-  }>
-}
+    id: number;
+    website_name: string;
+    website_url: string;
+    added_at: string;
+    member?: { name: string } | null;
+  }>;
+};
 
 export default function DomainResources() {
-  const { domain, resources } = useLoaderData<LoaderData>()
-  const [typedText, setTypedText] = useState("")
-  const [cursorVisible, setCursorVisible] = useState(true)
-  const [loadingResources, setLoadingResources] = useState(true)
-  const [activeResourceId, setActiveResourceId] = useState<number | null>(null)
+  const { domain, resources } = useLoaderData<LoaderData>();
+  const [typedText, setTypedText] = useState('');
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [loadingResources, setLoadingResources] = useState(true);
+  const [activeResourceId, setActiveResourceId] = useState<number | null>(null);
 
   // Typing animation for domain name
   useEffect(() => {
     if (typedText.length < domain.name.length) {
       const timeout = setTimeout(() => {
-        setTypedText(domain.name.slice(0, typedText.length + 1))
-      }, 70)
-      return () => clearTimeout(timeout)
+        setTypedText(domain.name.slice(0, typedText.length + 1));
+      }, 70);
+      return () => clearTimeout(timeout);
     }
-  }, [typedText, domain.name])
+  }, [typedText, domain.name]);
 
   // Blinking cursor effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setCursorVisible((prev) => !prev)
-    }, 530)
-    return () => clearInterval(interval)
-  }, [])
+      setCursorVisible((prev) => !prev);
+    }, 530);
+    return () => clearInterval(interval);
+  }, []);
 
   // Simulate loading resources
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setLoadingResources(false)
-    }, 800)
-    return () => clearTimeout(timeout)
-  }, [])
+      setLoadingResources(false);
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Animation variants
   const containerVariants = {
@@ -95,7 +107,7 @@ export default function DomainResources() {
         staggerChildren: 0.08,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -103,12 +115,12 @@ export default function DomainResources() {
       opacity: 1,
       y: 0,
       transition: {
-        type: "spring",
+        type: 'spring',
         stiffness: 260,
         damping: 20,
       },
     },
-  }
+  };
 
   // Terminal loading animation
   const LoadingAnimation = () => (
@@ -120,13 +132,13 @@ export default function DomainResources() {
       <div className="w-64 h-6 bg-[#111] rounded-sm overflow-hidden border border-[#00ff9d]/30">
         <motion.div
           className="h-full bg-[#00ff9d]/30"
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          initial={{ width: '0%' }}
+          animate={{ width: '100%' }}
+          transition={{ duration: 0.8, ease: 'easeInOut' }}
         />
       </div>
     </div>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#00ff9d] font-mono px-4 py-8 relative overflow-hidden">
@@ -150,7 +162,9 @@ export default function DomainResources() {
               <div className="h-3 w-3 rounded-full bg-red-500"></div>
               <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
               <div className="h-3 w-3 rounded-full bg-green-500"></div>
-              <div className="ml-4 text-xs text-[#00ff9d]/70">user@bytebashblitz:~/resources</div>
+              <div className="ml-4 text-xs text-[#00ff9d]/70">
+                user@bytebashblitz:~/resources
+              </div>
             </div>
 
             <Link
@@ -171,7 +185,9 @@ export default function DomainResources() {
               >
                 <span>{typedText}</span>
                 <span
-                  className={`ml-1 inline-block h-6 w-3 bg-[#00ff9d] ${cursorVisible ? "opacity-100" : "opacity-0"}`}
+                  className={`ml-1 inline-block h-6 w-3 bg-[#00ff9d] ${
+                    cursorVisible ? 'opacity-100' : 'opacity-0'
+                  }`}
                 ></span>
               </motion.h1>
             </div>
@@ -195,7 +211,12 @@ export default function DomainResources() {
               transition={{ duration: 0.5 }}
             >
               <div className="text-[#00ff9d]/60 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-16 h-16 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -205,11 +226,18 @@ export default function DomainResources() {
                 </svg>
               </div>
               <div className="terminal-text mb-4">
-                <span className="text-[#00ff9d]/70">$</span> find ./resources -type f
-                <div className="mt-2 text-[#ff5555]">No files found in directory.</div>
+                <span className="text-[#00ff9d]/70">$</span> find ./resources
+                -type f
+                <div className="mt-2 text-[#ff5555]">
+                  No files found in directory.
+                </div>
               </div>
-              <h2 className="text-xl font-medium text-[#00ff9d] mb-2">No resources yet</h2>
-              <p className="text-[#00ff9d]/80 mb-6">Be the first to add a learning resource for this domain!</p>
+              <h2 className="text-xl font-medium text-[#00ff9d] mb-2">
+                No resources yet
+              </h2>
+              <p className="text-[#00ff9d]/80 mb-6">
+                Be the first to add a learning resource for this domain!
+              </p>
               <Link
                 to={`/add-resource?domainId=${domain.id}`}
                 className="inline-flex items-center px-6 py-3 border border-[#00ff9d] text-base font-medium rounded-md 
@@ -230,12 +258,16 @@ export default function DomainResources() {
                 <motion.div
                   key={resource.id}
                   className={`bg-[#111] rounded-lg border overflow-hidden terminal-card
-                    ${activeResourceId === resource.id ? "border-[#00ff9d]" : "border-[#00ff9d]/30"}`}
+                    ${
+                      activeResourceId === resource.id
+                        ? 'border-[#00ff9d]'
+                        : 'border-[#00ff9d]/30'
+                    }`}
                   variants={itemVariants}
                   whileHover={{
                     y: -5,
-                    boxShadow: "0 0 20px rgba(0, 255, 157, 0.2)",
-                    borderColor: "rgba(0, 255, 157, 0.8)",
+                    boxShadow: '0 0 20px rgba(0, 255, 157, 0.2)',
+                    borderColor: 'rgba(0, 255, 157, 0.8)',
                   }}
                   onMouseEnter={() => setActiveResourceId(resource.id)}
                   onMouseLeave={() => setActiveResourceId(null)}
@@ -244,14 +276,18 @@ export default function DomainResources() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center">
                         <span className="text-[#00ff9d]/70 mr-2">$</span>
-                        <h2 className="text-xl font-semibold text-[#00ff9d]">{resource.website_name}</h2>
+                        <h2 className="text-xl font-semibold text-[#00ff9d]">
+                          {resource.website_name}
+                        </h2>
                       </div>
-                      <div className="text-xs text-[#00ff9d]/50 bg-[#0a0a0a] px-2 py-1 rounded">ID: {resource.id}</div>
+                      <div className="text-xs text-[#00ff9d]/50 bg-[#0a0a0a] px-2 py-1 rounded">
+                        ID: {resource.id}
+                      </div>
                     </div>
 
                     <div className="terminal-text mb-4 text-sm">
-                      <span className="text-[#00ff9d]/70">$</span> curl{" "}
-                      {resource.website_url.replace(/^https?:\/\//, "")}
+                      <span className="text-[#00ff9d]/70">$</span> curl{' '}
+                      {resource.website_url.replace(/^https?:\/\//, '')}
                     </div>
 
                     <a
@@ -267,11 +303,13 @@ export default function DomainResources() {
                     <div className="mt-auto pt-4 border-t border-[#00ff9d]/20 flex items-center justify-between">
                       <div className="text-sm text-[#00ff9d]/70 flex items-center">
                         <LucideUser className="w-3 h-3 mr-1" />
-                        <span>{resource.member?.name ?? "Unknown"}</span>
+                        <span>{resource.member?.name ?? 'Unknown'}</span>
                       </div>
                       <div className="text-xs text-[#00ff9d]/50 flex items-center">
                         <LucideCalendar className="w-3 h-3 mr-1" />
-                        <span>{new Date(resource.added_at).toLocaleDateString()}</span>
+                        <span>
+                          {new Date(resource.added_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -282,5 +320,5 @@ export default function DomainResources() {
         </motion.div>
       </div>
     </div>
-  )
+  );
 }

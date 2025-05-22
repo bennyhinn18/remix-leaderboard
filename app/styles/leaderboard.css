@@ -5,8 +5,8 @@
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Highlight pulse animation for current user */
@@ -15,7 +15,8 @@
 }
 
 @keyframes highlight-pulse {
-  0%, 100% {
+  0%,
+  100% {
     background-color: rgba(59, 130, 246, 0);
   }
   50% {
@@ -28,11 +29,11 @@
   .mobile-card {
     padding: 0.75rem;
   }
-  
+
   .mobile-card-content {
     gap: 0.5rem;
   }
-  
+
   .mobile-text-sm {
     font-size: 0.875rem;
   }

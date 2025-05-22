@@ -1,6 +1,6 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
-import { useLoaderData, Link } from "@remix-run/react"
-import { motion } from "framer-motion"
+import { json, type LoaderFunctionArgs } from '@remix-run/node';
+import { useLoaderData, Link } from '@remix-run/react';
+import { motion } from 'framer-motion';
 import {
   Users,
   Trophy,
@@ -12,31 +12,39 @@ import {
   Award,
   TrendingUp,
   MessageSquare,
-} from "lucide-react"
-import { createServerSupabase } from "~/utils/supabase.server"
-import { Button } from "~/components/ui/button"
-import { Progress } from "~/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import { Badge } from "~/components/ui/badge"
-import type { Clan } from "~/types/clans"
+} from 'lucide-react';
+import { createServerSupabase } from '~/utils/supabase.server';
+import { Button } from '~/components/ui/button';
+import { Progress } from '~/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Badge } from '~/components/ui/badge';
+import type { Clan } from '~/types/clans';
 
-export const loader = async ({ params,request }: LoaderFunctionArgs) => {
-  const response = new Response()
-  const supabase =createServerSupabase(request, response)
-  const { data: clan } = await supabase.from("clans").select("*").eq("id", params.id).single()
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  const { data: clan } = await supabase
+    .from('clans')
+    .select('*')
+    .eq('id', params.id)
+    .single();
   if (clan) {
-    const { data: members } = await supabase.from("members").select("*").eq("clan_id", clan.id).or("title.eq.Basher,title.eq.Organiser")
-    clan.members = members || []
+    const { data: members } = await supabase
+      .from('members')
+      .select('*')
+      .eq('clan_id', clan.id)
+      .or('title.eq.Basher,title.eq.Organiser');
+    clan.members = members || [];
   }
-  
+
   if (!clan) {
-    throw new Response("Clan not found", {
+    throw new Response('Clan not found', {
       status: 404,
-      statusText: "Not Found",
-    })
+      statusText: 'Not Found',
+    });
   }
-  return json({ clan })
-}
+  return json({ clan });
+};
 
 function ClanHeader({ clan }: { clan: Clan }) {
   return (
@@ -44,7 +52,7 @@ function ClanHeader({ clan }: { clan: Clan }) {
       {/* Banner */}
       <div className="absolute inset-0">
         <img
-          src={clan.banner_url || " "}
+          src={clan.banner_url || ' '}
           alt={`${clan.clan_name} banner`}
           className="w-full h-full object-cover"
         />
@@ -60,7 +68,7 @@ function ClanHeader({ clan }: { clan: Clan }) {
             className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white/10 bg-gradient-to-br from-blue-500/20 to-purple-500/20"
           >
             <img
-              src={clan.logo_url || " "}
+              src={clan.logo_url || ' '}
               alt={clan.clan_name}
               className="w-full h-full object-cover"
             />
@@ -71,8 +79,13 @@ function ClanHeader({ clan }: { clan: Clan }) {
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-3 mb-2"
             >
-              <h1 className="text-3xl font-bold text-white">{clan.clan_name}</h1>
-              <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+              <h1 className="text-3xl font-bold text-white">
+                {clan.clan_name}
+              </h1>
+              <Badge
+                variant="secondary"
+                className="bg-blue-500/20 text-blue-400"
+              >
                 #{clan.bash_clan_no}
               </Badge>
             </motion.div>
@@ -88,16 +101,42 @@ function ClanHeader({ clan }: { clan: Clan }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function ClanStats({ clan }: { clan: Clan }) {
   const stats = [
-    { icon: Users, label: "Members", value: clan.members.length, color: "blue" },
-    { icon: Trophy, label: "Hackathons Joined & Won", value: clan.members.reduce((acc, member) => acc + (member.stats?.hackathons || 0), 0), color: "purple" },
-    { icon: Activity, label: "Avg. Attendance", value: `${clan.avg_attendance}%`, color: "green" },
-    { icon: GitPullRequest, label: "Projects", value: clan.members.reduce((acc, member) => acc + (member.stats?.projects || 0), 0), color: "orange" },
-  ]
+    {
+      icon: Users,
+      label: 'Members',
+      value: clan.members.length,
+      color: 'blue',
+    },
+    {
+      icon: Trophy,
+      label: 'Hackathons Joined & Won',
+      value: clan.members.reduce(
+        (acc, member) => acc + (member.stats?.hackathons || 0),
+        0
+      ),
+      color: 'purple',
+    },
+    {
+      icon: Activity,
+      label: 'Avg. Attendance',
+      value: `${clan.avg_attendance}%`,
+      color: 'green',
+    },
+    {
+      icon: GitPullRequest,
+      label: 'Projects',
+      value: clan.members.reduce(
+        (acc, member) => acc + (member.stats?.projects || 0),
+        0
+      ),
+      color: 'orange',
+    },
+  ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -115,45 +154,50 @@ function ClanStats({ clan }: { clan: Clan }) {
         </motion.div>
       ))}
     </div>
-  )
+  );
 }
 
-function MemberList({ members }: { members: Clan["members"] }) {
+function MemberList({ members }: { members: Clan['members'] }) {
   return (
     <div className="space-y-4">
       {members.map((member, index) => (
-      <motion.div
-        key={member.id}
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.05 }}
-        className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
-      >
-        <Link to={`/profile/${member.github_username}`} className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-          {/* Add member avatar here if available */}
-          <div className="w-full h-full flex items-center justify-center text-xl font-bold">
-          {member.name.charAt(0)}
-          </div>
-        </div>
-        <div>
-          <div className="font-medium text-white group-hover:text-blue-400 transition-colors">{member.name}</div>
-          <div className="text-sm text-gray-400">{member.title}</div>
-        </div>
-        </Link>
-        <Badge
-        variant="secondary"
-        className={"bg-green-500/20 text-green-400"}
+        <motion.div
+          key={member.id}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.05 }}
+          className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
         >
-        {member.joined_date}
-        </Badge>
-      </motion.div>
+          <Link
+            to={`/profile/${member.github_username}`}
+            className="flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+              {/* Add member avatar here if available */}
+              <div className="w-full h-full flex items-center justify-center text-xl font-bold">
+                {member.name.charAt(0)}
+              </div>
+            </div>
+            <div>
+              <div className="font-medium text-white group-hover:text-blue-400 transition-colors">
+                {member.name}
+              </div>
+              <div className="text-sm text-gray-400">{member.title}</div>
+            </div>
+          </Link>
+          <Badge
+            variant="secondary"
+            className={'bg-green-500/20 text-green-400'}
+          >
+            {member.joined_date}
+          </Badge>
+        </motion.div>
       ))}
     </div>
-  )
+  );
 }
 
-function ActivityTimeline({ activities }: { activities: Clan["activities"] }) {
+function ActivityTimeline({ activities }: { activities: Clan['activities'] }) {
   return (
     <div className="space-y-4">
       {activities.map((activity, index) => (
@@ -165,24 +209,39 @@ function ActivityTimeline({ activities }: { activities: Clan["activities"] }) {
           className="relative pl-6 pb-6 last:pb-0"
         >
           {/* Timeline line */}
-          {index !== activities.length - 1 && <div className="absolute left-[11px] top-3 bottom-0 w-px bg-white/10" />}
+          {index !== activities.length - 1 && (
+            <div className="absolute left-[11px] top-3 bottom-0 w-px bg-white/10" />
+          )}
 
           {/* Timeline dot */}
           <div className="absolute left-0 top-2 w-[23px] h-[23px] rounded-full border-4 border-gray-900 bg-blue-400" />
 
           <div className="p-4 rounded-xl bg-white/5">
             <div className="flex items-center justify-between mb-2">
-              <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 capitalize">
+              <Badge
+                variant="secondary"
+                className="bg-blue-500/20 text-blue-400 capitalize"
+              >
                 {activity.type}
               </Badge>
-              <span className="text-sm text-gray-400">{new Date(activity.date).toLocaleDateString()}</span>
+              <span className="text-sm text-gray-400">
+                {new Date(activity.date).toLocaleDateString()}
+              </span>
             </div>
-            {activity.title && <h4 className="font-medium text-white mb-1">{activity.title}</h4>}
-            {activity.description && <p className="text-sm text-gray-400">{activity.description}</p>}
+            {activity.title && (
+              <h4 className="font-medium text-white mb-1">{activity.title}</h4>
+            )}
+            {activity.description && (
+              <p className="text-sm text-gray-400">{activity.description}</p>
+            )}
             {activity.achievements && activity.achievements.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {activity.achievements.map((achievement, i) => (
-                  <Badge key={i} variant="secondary" className="bg-purple-500/20 text-purple-400">
+                  <Badge
+                    key={i}
+                    variant="secondary"
+                    className="bg-purple-500/20 text-purple-400"
+                  >
                     {achievement}
                   </Badge>
                 ))}
@@ -192,21 +251,30 @@ function ActivityTimeline({ activities }: { activities: Clan["activities"] }) {
         </motion.div>
       ))}
     </div>
-  )
+  );
 }
 
-function PerformanceMetrics({ members }: { members: Clan["members"] }) {
+function PerformanceMetrics({ members }: { members: Clan['members'] }) {
   if (!members) return null;
 
   const totalMembers = members.length;
-  const totalProjects = members.reduce((acc, member) => acc + (member.stats.projects || 0), 0);
-  const totalHackathons = members.reduce((acc, member) => acc + (member.stats.hackathons || 0), 0);
-  const totalInternships = members.reduce((acc, member) => acc + (member.stats.internships || 0), 0);
+  const totalProjects = members.reduce(
+    (acc, member) => acc + (member.stats.projects || 0),
+    0
+  );
+  const totalHackathons = members.reduce(
+    (acc, member) => acc + (member.stats.hackathons || 0),
+    0
+  );
+  const totalInternships = members.reduce(
+    (acc, member) => acc + (member.stats.internships || 0),
+    0
+  );
 
   const metrics = [
-    { label: "Projects", value: totalProjects },
-    { label: "Hackathons", value: totalHackathons },
-    { label: "Internships", value: totalInternships },
+    { label: 'Projects', value: totalProjects },
+    { label: 'Hackathons', value: totalHackathons },
+    { label: 'Internships', value: totalInternships },
   ];
 
   return (
@@ -223,7 +291,10 @@ function PerformanceMetrics({ members }: { members: Clan["members"] }) {
             <span className="text-gray-400">{metric.label}</span>
             <span className="text-white">{metric.value}</span>
           </div>
-          <Progress value={(metric.value / totalMembers) * 100} className="h-2" />
+          <Progress
+            value={(metric.value / totalMembers) * 100}
+            className="h-2"
+          />
         </motion.div>
       ))}
     </div>
@@ -231,14 +302,18 @@ function PerformanceMetrics({ members }: { members: Clan["members"] }) {
 }
 
 export default function ClanPage() {
-  const { clan } = useLoaderData<typeof loader>()
+  const { clan } = useLoaderData<typeof loader>();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4">
       <div className="max-w-7xl  mx-auto space-y-8">
         {/* Back Button */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <Button variant="ghost" asChild className="text-gray-400 hover:text-white">
+          <Button
+            variant="ghost"
+            asChild
+            className="text-gray-400 hover:text-white"
+          >
             <Link to="/clans" className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" />
               Back to Clans
@@ -255,16 +330,28 @@ export default function ClanPage() {
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-white/10">
+            <TabsTrigger
+              value="overview"
+              className="data-[state=active]:bg-white/10"
+            >
               Overview
             </TabsTrigger>
-            <TabsTrigger value="members" className="data-[state=active]:bg-white/10">
+            <TabsTrigger
+              value="members"
+              className="data-[state=active]:bg-white/10"
+            >
               Members
             </TabsTrigger>
-            <TabsTrigger value="activities" className="data-[state=active]:bg-white/10">
+            <TabsTrigger
+              value="activities"
+              className="data-[state=active]:bg-white/10"
+            >
               Activities
             </TabsTrigger>
-            <TabsTrigger value="performance" className="data-[state=active]:bg-white/10">
+            <TabsTrigger
+              value="performance"
+              className="data-[state=active]:bg-white/10"
+            >
               Performance
             </TabsTrigger>
           </TabsList>
@@ -273,16 +360,18 @@ export default function ClanPage() {
             {/* Quotes */}
             <div className="grid gap-4">
               {clan.quotes.slice(0, 1).map((quote: string, index: number) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-white/10"
-              >
-                <MessageSquare className="w-5 h-5 text-blue-400 mb-2" />
-                <p className="text-lg italic text-gray-300">&quot;{quote}&quot;</p>
-              </motion.div>
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-white/10"
+                >
+                  <MessageSquare className="w-5 h-5 text-blue-400 mb-2" />
+                  <p className="text-lg italic text-gray-300">
+                    &quot;{quote}&quot;
+                  </p>
+                </motion.div>
               ))}
             </div>
 
@@ -296,7 +385,15 @@ export default function ClanPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Projects</span>
-                    <span className="text-green-400">{clan.members.reduce((acc: number, member: { stats: { projects: number } }) => acc + (member.stats?.projects || 0), 0)}</span>
+                    <span className="text-green-400">
+                      {clan.members.reduce(
+                        (
+                          acc: number,
+                          member: { stats: { projects: number } }
+                        ) => acc + (member.stats?.projects || 0),
+                        0
+                      )}
+                    </span>
                   </div>
                   <Progress value={80} className="h-2" />
                 </div>
@@ -308,13 +405,22 @@ export default function ClanPage() {
                   Achievements
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="bg-purple-500/20 text-purple-400">
+                  <Badge
+                    variant="secondary"
+                    className="bg-purple-500/20 text-purple-400"
+                  >
                     Best Team 2024
                   </Badge>
-                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-500/20 text-blue-400"
+                  >
                     Innovation Award
                   </Badge>
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-400">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-500/20 text-green-400"
+                  >
                     Perfect Attendance
                   </Badge>
                 </div>
@@ -332,13 +438,13 @@ export default function ClanPage() {
 
           <TabsContent value="performance">
             <div className="grid md:grid-cols-2 gap-6">
-                <div className="p-6 rounded-xl bg-white/5">
+              <div className="p-6 rounded-xl bg-white/5">
                 <h3 className="text-lg font-semibold flex items-center gap-2 mb-6">
                   <TrendingUp className="w-5 h-5 text-blue-400" />
                   Monthly Performance
                 </h3>
                 <PerformanceMetrics members={clan.members} />
-                </div>
+              </div>
 
               <div className="p-6 rounded-xl bg-white/5">
                 <h3 className="text-lg font-semibold flex items-center gap-2 mb-6">
@@ -348,11 +454,25 @@ export default function ClanPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Courses Completed</span>
-                    <span className="text-white">{clan.members.reduce((acc: number, member: { stats: { courses: number } }) => acc + (member.stats.courses || 0), 0)}</span>
+                    <span className="text-white">
+                      {clan.members.reduce(
+                        (acc: number, member: { stats: { courses: number } }) =>
+                          acc + (member.stats.courses || 0),
+                        0
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Certifications</span>
-                    <span className="text-white">{clan.members.reduce((acc: number, member: { stats: { certifications: number } }) => acc + (member.stats.certifications || 0), 0)}</span>
+                    <span className="text-white">
+                      {clan.members.reduce(
+                        (
+                          acc: number,
+                          member: { stats: { certifications: number } }
+                        ) => acc + (member.stats.certifications || 0),
+                        0
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Workshop Hours</span>
@@ -365,6 +485,5 @@ export default function ClanPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }
-

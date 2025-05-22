@@ -1,48 +1,56 @@
-"use client"
+'use client';
 
-import { json, type ActionFunctionArgs } from "@remix-run/node"
-import { Form, useActionData, useNavigation } from "@remix-run/react"
-import { createServerSupabase } from "~/utils/supabase.server"
-import { motion, AnimatePresence } from "framer-motion"
-import { UserPlus, Check, AlertCircle, ImageIcon } from "lucide-react"
+import { json, type ActionFunctionArgs } from '@remix-run/node';
+import { Form, useActionData, useNavigation } from '@remix-run/react';
+import { createServerSupabase } from '~/utils/supabase.server';
+import { motion, AnimatePresence } from 'framer-motion';
+import { UserPlus, Check, AlertCircle, ImageIcon } from 'lucide-react';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData()
-  const name = formData.get("name")
-  const avatarUrl = formData.get("avatarUrl")
-  const response =new  Response()
-  const supabase= createServerSupabase(request,response)
+  const formData = await request.formData();
+  const name = formData.get('name');
+  const avatarUrl = formData.get('avatarUrl');
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
 
   if (!name) {
-    return json({ error: "Name is required" })
+    return json({ error: 'Name is required' });
   }
 
-  const { error } = await supabase.from("members").insert([
+  const { error } = await supabase.from('members').insert([
     {
       name: name.toString(),
       avatar_url: avatarUrl?.toString(),
       bash_points: 0,
     },
-  ])
+  ]);
 
   if (error) {
-    return json({ error: error.message })
+    return json({ error: error.message });
   }
 
-  return json({ success: true })
-}
+  return json({ success: true });
+};
 
 export default function AddMember() {
-  const actionData = useActionData<{ error?: string; success?: boolean }>()
-  const navigation = useNavigation()
-  const isSubmitting = navigation.state === "submitting"
+  const actionData = useActionData<{ error?: string; success?: boolean }>();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
       <div className="container mx-auto px-4 py-16">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md mx-auto"
+        >
           {/* Header */}
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            className="text-center mb-8"
+          >
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -54,7 +62,9 @@ export default function AddMember() {
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
               Add New Member
             </h1>
-            <p className="mt-2 text-gray-400">Join the leaderboard and start your journey</p>
+            <p className="mt-2 text-gray-400">
+              Join the leaderboard and start your journey
+            </p>
           </motion.div>
 
           {/* Form Card */}
@@ -65,8 +75,15 @@ export default function AddMember() {
             className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl"
           >
             <Form method="post" className="space-y-6">
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-300"
+                >
                   Name
                 </label>
                 <input
@@ -79,8 +96,15 @@ export default function AddMember() {
                 />
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                <label htmlFor="avatarUrl" className="block text-sm font-medium text-gray-300">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <label
+                  htmlFor="avatarUrl"
+                  className="block text-sm font-medium text-gray-300"
+                >
                   Avatar URL
                 </label>
                 <div className="mt-1 relative rounded-lg shadow-sm">
@@ -97,7 +121,11 @@ export default function AddMember() {
                 </div>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -160,6 +188,5 @@ export default function AddMember() {
         </motion.div>
       </div>
     </div>
-  )
+  );
 }
-

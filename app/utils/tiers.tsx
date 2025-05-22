@@ -1,6 +1,15 @@
-import { 
-  GemIcon, Boxes, CircleDot, Sparkles, Leaf, Flame, 
-  Droplets, Trophy, Medal, Award, Crown 
+import {
+  GemIcon,
+  Boxes,
+  CircleDot,
+  Sparkles,
+  Leaf,
+  Flame,
+  Droplets,
+  Trophy,
+  Medal,
+  Award,
+  Crown,
 } from 'lucide-react';
 
 // Define tier thresholds once to ensure consistency
@@ -14,11 +23,21 @@ const TIER_THRESHOLDS = {
   sapphire: 700,
   gold: 450,
   silver: 250,
-  bronze: 0
+  bronze: 0,
 };
 
-type TierType = "diamond" | "obsidian" | "pearl" | "amethyst" | "emerald" | 
-                "ruby" | "sapphire" | "gold" | "silver" | "bronze" | "platinum";
+type TierType =
+  | 'diamond'
+  | 'obsidian'
+  | 'pearl'
+  | 'amethyst'
+  | 'emerald'
+  | 'ruby'
+  | 'sapphire'
+  | 'gold'
+  | 'silver'
+  | 'bronze'
+  | 'platinum';
 
 interface TierOptions {
   uppercase?: boolean;
@@ -33,20 +52,20 @@ interface TierOptions {
 export function getTier(points: number, options: TierOptions = {}): string {
   let tier: TierType;
 
-  if (points >= TIER_THRESHOLDS.diamond) tier = "diamond";
-  else if (points >= TIER_THRESHOLDS.obsidian) tier = "obsidian";
-  else if (points >= TIER_THRESHOLDS.pearl) tier = "pearl";
-  else if (points >= TIER_THRESHOLDS.amethyst) tier = "amethyst";
-  else if (points >= TIER_THRESHOLDS.emerald) tier = "emerald";
-  else if (points >= TIER_THRESHOLDS.ruby) tier = "ruby";
-  else if (points >= TIER_THRESHOLDS.sapphire) tier = "sapphire";
-  else if (points >= TIER_THRESHOLDS.gold) tier = "gold";
-  else if (points >= TIER_THRESHOLDS.silver) tier = "silver";
-  else tier = "bronze";
+  if (points >= TIER_THRESHOLDS.diamond) tier = 'diamond';
+  else if (points >= TIER_THRESHOLDS.obsidian) tier = 'obsidian';
+  else if (points >= TIER_THRESHOLDS.pearl) tier = 'pearl';
+  else if (points >= TIER_THRESHOLDS.amethyst) tier = 'amethyst';
+  else if (points >= TIER_THRESHOLDS.emerald) tier = 'emerald';
+  else if (points >= TIER_THRESHOLDS.ruby) tier = 'ruby';
+  else if (points >= TIER_THRESHOLDS.sapphire) tier = 'sapphire';
+  else if (points >= TIER_THRESHOLDS.gold) tier = 'gold';
+  else if (points >= TIER_THRESHOLDS.silver) tier = 'silver';
+  else tier = 'bronze';
 
   // Return with proper casing based on options
-  return options.uppercase 
-    ? tier.charAt(0).toUpperCase() + tier.slice(1) 
+  return options.uppercase
+    ? tier.charAt(0).toUpperCase() + tier.slice(1)
     : tier;
 }
 
@@ -57,27 +76,27 @@ export function getTier(points: number, options: TierOptions = {}): string {
  */
 export function getTierIcon(tier: string) {
   const lowerTier = tier.toLowerCase();
-  
+
   switch (lowerTier) {
-    case "diamond":
+    case 'diamond':
       return <GemIcon className="w-4 h-4" />;
-    case "obsidian":
+    case 'obsidian':
       return <Boxes className="w-4 h-4" />;
-    case "pearl":
+    case 'pearl':
       return <CircleDot className="w-4 h-4" />;
-    case "amethyst":
+    case 'amethyst':
       return <Sparkles className="w-4 h-4" />;
-    case "emerald":
+    case 'emerald':
       return <Leaf className="w-4 h-4" />;
-    case "ruby":
+    case 'ruby':
       return <Flame className="w-4 h-4" />;
-    case "sapphire":
+    case 'sapphire':
       return <Droplets className="w-4 h-4" />;
-    case "gold":
+    case 'gold':
       return <Trophy className="w-4 h-4" />;
-    case "silver":
+    case 'silver':
       return <Medal className="w-4 h-4" />;
-    case "platinum":
+    case 'platinum':
       return <Crown className="w-4 h-4" />;
     default:
       return <Award className="w-4 h-4" />;
@@ -91,30 +110,30 @@ export function getTierIcon(tier: string) {
  */
 export function getTierStyles(tier: string) {
   const lowerTier = tier.toLowerCase();
-  
+
   switch (lowerTier) {
-    case "diamond":
-      return "bg-gradient-to-r from-cyan-300 to-cyan-500 text-cyan-900";
-    case "obsidian":
-      return "bg-gradient-to-r from-gray-800 to-black text-white";
-    case "pearl":
-      return "bg-gradient-to-r from-pink-100 to-pink-400 text-pink-900";
-    case "amethyst":
-      return "bg-gradient-to-r from-purple-300 to-purple-500 text-purple-900";
-    case "emerald":
-      return "bg-gradient-to-r from-green-300 to-green-500 text-green-900";
-    case "ruby":
-      return "bg-gradient-to-r from-red-300 to-red-500 text-red-900";
-    case "sapphire":
-      return "bg-gradient-to-r from-blue-300 to-blue-500 text-blue-900";
-    case "gold":
-      return "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900";
-    case "silver":
-      return "bg-gradient-to-r from-gray-300 to-gray-500 text-gray-900";
-    case "platinum":
-      return "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900";
+    case 'diamond':
+      return 'bg-gradient-to-r from-cyan-300 to-cyan-500 text-cyan-900';
+    case 'obsidian':
+      return 'bg-gradient-to-r from-gray-800 to-black text-white';
+    case 'pearl':
+      return 'bg-gradient-to-r from-pink-100 to-pink-400 text-pink-900';
+    case 'amethyst':
+      return 'bg-gradient-to-r from-purple-300 to-purple-500 text-purple-900';
+    case 'emerald':
+      return 'bg-gradient-to-r from-green-300 to-green-500 text-green-900';
+    case 'ruby':
+      return 'bg-gradient-to-r from-red-300 to-red-500 text-red-900';
+    case 'sapphire':
+      return 'bg-gradient-to-r from-blue-300 to-blue-500 text-blue-900';
+    case 'gold':
+      return 'bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900';
+    case 'silver':
+      return 'bg-gradient-to-r from-gray-300 to-gray-500 text-gray-900';
+    case 'platinum':
+      return 'bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900';
     default:
-      return "bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900";
+      return 'bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900';
   }
 }
 
@@ -125,30 +144,30 @@ export function getTierStyles(tier: string) {
  */
 export function getTierColorScheme(tier: string) {
   const lowerTier = tier.toLowerCase();
-  
+
   switch (lowerTier) {
-    case "diamond":
-      return "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20";
-    case "obsidian":
-      return "bg-slate-500/10 text-slate-400 hover:bg-slate-500/20";
-    case "pearl":
-      return "bg-pink-500/10 text-pink-400 hover:bg-pink-500/20";
-    case "amethyst":
-      return "bg-violet-500/10 text-violet-400 hover:bg-violet-500/20";
-    case "emerald":
-      return "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20";
-    case "ruby":
-      return "bg-red-500/10 text-red-400 hover:bg-red-500/20";
-    case "sapphire":
-      return "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20";
-    case "gold":
-      return "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20";
-    case "silver":
-      return "bg-slate-400/10 text-slate-300 hover:bg-slate-400/20";
-    case "bronze":
-      return "bg-yellow-700/10 text-yellow-600 hover:bg-yellow-700/20";
+    case 'diamond':
+      return 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20';
+    case 'obsidian':
+      return 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20';
+    case 'pearl':
+      return 'bg-pink-500/10 text-pink-400 hover:bg-pink-500/20';
+    case 'amethyst':
+      return 'bg-violet-500/10 text-violet-400 hover:bg-violet-500/20';
+    case 'emerald':
+      return 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20';
+    case 'ruby':
+      return 'bg-red-500/10 text-red-400 hover:bg-red-500/20';
+    case 'sapphire':
+      return 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20';
+    case 'gold':
+      return 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20';
+    case 'silver':
+      return 'bg-slate-400/10 text-slate-300 hover:bg-slate-400/20';
+    case 'bronze':
+      return 'bg-yellow-700/10 text-yellow-600 hover:bg-yellow-700/20';
     default:
-      return "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20";
+      return 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20';
   }
 }
 
@@ -159,17 +178,27 @@ export function getTierColorScheme(tier: string) {
  */
 export function getTierThreshold(tier: string): number {
   const lowerTier = tier.toLowerCase();
-  
+
   switch (lowerTier) {
-    case "bronze": return TIER_THRESHOLDS.silver;
-    case "silver": return TIER_THRESHOLDS.gold;
-    case "gold": return TIER_THRESHOLDS.sapphire;
-    case "sapphire": return TIER_THRESHOLDS.ruby;
-    case "ruby": return TIER_THRESHOLDS.emerald;
-    case "emerald": return TIER_THRESHOLDS.amethyst;
-    case "amethyst": return TIER_THRESHOLDS.pearl;
-    case "pearl": return TIER_THRESHOLDS.obsidian;
-    case "obsidian": return TIER_THRESHOLDS.diamond;
-    default: return TIER_THRESHOLDS.diamond;
+    case 'bronze':
+      return TIER_THRESHOLDS.silver;
+    case 'silver':
+      return TIER_THRESHOLDS.gold;
+    case 'gold':
+      return TIER_THRESHOLDS.sapphire;
+    case 'sapphire':
+      return TIER_THRESHOLDS.ruby;
+    case 'ruby':
+      return TIER_THRESHOLDS.emerald;
+    case 'emerald':
+      return TIER_THRESHOLDS.amethyst;
+    case 'amethyst':
+      return TIER_THRESHOLDS.pearl;
+    case 'pearl':
+      return TIER_THRESHOLDS.obsidian;
+    case 'obsidian':
+      return TIER_THRESHOLDS.diamond;
+    default:
+      return TIER_THRESHOLDS.diamond;
   }
 }

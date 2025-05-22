@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
-import { Gem, Award } from "lucide-react";
-import { getTierIcon, getTierColorScheme, getTierThreshold } from "~/utils/tiers";
+import { motion } from 'framer-motion';
+import { Award } from 'lucide-react';
+import { getTierIcon, getTierThreshold } from '~/utils/tiers';
 
 interface LeagueBadgesProps {
   currentUserTier: string;
@@ -8,7 +8,11 @@ interface LeagueBadgesProps {
   currentUser?: any;
 }
 
-export default function LeagueBadges({ currentUserTier, daysToNextLeague = 2, currentUser }: LeagueBadgesProps) {
+export default function LeagueBadges({
+  currentUserTier,
+  daysToNextLeague = 2,
+  currentUser,
+}: LeagueBadgesProps) {
   // All available tiers/leagues
   const tiers = [
     { name: 'bronze', color: 'from-amber-700 to-amber-500' },
@@ -20,12 +24,12 @@ export default function LeagueBadges({ currentUserTier, daysToNextLeague = 2, cu
     { name: 'amethyst', color: 'from-purple-700 to-purple-500' },
     { name: 'pearl', color: 'from-gray-200 to-white' },
     { name: 'obsidian', color: 'from-gray-900 to-gray-700' },
-    { name: 'diamond', color: 'from-blue-400 to-blue-200' }
+    { name: 'diamond', color: 'from-blue-400 to-blue-200' },
   ];
 
   // Find current tier index
-  const currentTierIndex = tiers.findIndex(t => t.name === currentUserTier);
-  
+  const currentTierIndex = tiers.findIndex((t) => t.name === currentUserTier);
+
   // Function to check if tier should be shown as active, locked, or current
   const getTierStatus = (tierIndex: number) => {
     if (tierIndex === currentTierIndex) return 'current';
@@ -47,9 +51,14 @@ export default function LeagueBadges({ currentUserTier, daysToNextLeague = 2, cu
               <div>
                 {/* <span className="capitalize font-medium text-blue-400">{currentUser.tier}</span> tier: {currentUser.bash_points} points */}
               </div>
-              {currentUser.tier !== "diamond" && (
+              {currentUser.tier !== 'diamond' && (
                 <div className="mt-1">
-                  Need <span className="font-semibold text-green-400">{getTierThreshold(currentUser.tier) - currentUser.bash_points}</span> more for next tier!
+                  Need{' '}
+                  <span className="font-semibold text-green-400">
+                    {getTierThreshold(currentUser.tier) -
+                      currentUser.bash_points}
+                  </span>{' '}
+                  more for next tier!
                 </div>
               )}
             </>
@@ -66,15 +75,19 @@ export default function LeagueBadges({ currentUserTier, daysToNextLeague = 2, cu
       <div className="flex justify-start md:justify-center gap-2 w-full max-w-3xl overflow-x-auto px-2 md:px-4 py-2 no-scrollbar -mx-2 snap-x snap-mandatory">
         {tiers.map((tier, index) => {
           const status = getTierStatus(index);
-          
+
           return (
             <motion.div
               key={tier.name}
               whileHover={status !== 'locked' ? { scale: 1.1 } : {}}
-              className={`relative flex-shrink-0 snap-center ${status === 'locked' ? 'opacity-40' : ''}`}
+              className={`relative flex-shrink-0 snap-center ${
+                status === 'locked' ? 'opacity-40' : ''
+              }`}
             >
-              <div 
-                className={`w-12 h-12 md:w-14 md:h-14 rounded-lg bg-gradient-to-b ${tier.color} flex items-center justify-center
+              <div
+                className={`w-12 h-12 md:w-14 md:h-14 rounded-lg bg-gradient-to-b ${
+                  tier.color
+                } flex items-center justify-center
                   ${status === 'current' ? 'ring-4 ring-yellow-400' : ''}
                   ${status === 'next' ? 'ring-2 ring-blue-400' : ''}`}
               >
@@ -88,12 +101,14 @@ export default function LeagueBadges({ currentUserTier, daysToNextLeague = 2, cu
                     <Award className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                 ) : (
-                  <div className="text-white">
-                    {getTierIcon(tier.name)}
-                  </div>
+                  <div className="text-white">{getTierIcon(tier.name)}</div>
                 )}
               </div>
-              <div className={`text-[10px] md:text-xs text-center mt-1 capitalize ${status === 'locked' ? 'text-gray-500' : 'text-gray-200'}`}>
+              <div
+                className={`text-[10px] md:text-xs text-center mt-1 capitalize ${
+                  status === 'locked' ? 'text-gray-500' : 'text-gray-200'
+                }`}
+              >
                 {tier.name}
               </div>
             </motion.div>

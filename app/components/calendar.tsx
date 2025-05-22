@@ -10,7 +10,12 @@ interface CalendarProps {
   disabled?: (date: Date) => boolean;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ selected, onSelect, initialFocus, disabled }) => {
+const Calendar: React.FC<CalendarProps> = ({
+  selected,
+  onSelect,
+  initialFocus,
+  disabled,
+}) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(selected);
 
   useEffect(() => {
@@ -28,7 +33,7 @@ const Calendar: React.FC<CalendarProps> = ({ selected, onSelect, initialFocus, d
 
   return (
     <div className="calendar">
-      <DayPicker 
+      <DayPicker
         mode="single"
         selected={selectedDate}
         onSelect={handleSelect}

@@ -1,39 +1,39 @@
-"use client"
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "~/components/ui/button"
-import { Github, Linkedin, Instagram, Share2, Check } from "lucide-react"
-import { useState } from "react"
-import type { BasherProfile } from "~/types/profile"
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '~/components/ui/button';
+import { Github, Linkedin, Instagram, Share2, Check } from 'lucide-react';
+import { useState } from 'react';
+import type { BasherProfile } from '~/types/profile';
 
 interface SocialFooterProps {
-  socials: BasherProfile["socials"]
+  socials: BasherProfile['socials'];
 }
 
 export function SocialFooter({ socials }: SocialFooterProps) {
-  const [showShareSuccess, setShowShareSuccess] = useState(false)
+  const [showShareSuccess, setShowShareSuccess] = useState(false);
 
   const socialIcons = {
     github: Github,
     linkedin: Linkedin,
     instagram: Instagram,
-  }
+  };
 
   const handleShare = async () => {
     try {
       await navigator.share({
-        title: "Check out my BBT Profile",
+        title: 'Check out my BBT Profile',
         url: window.location.href,
-      })
-      setShowShareSuccess(true)
-      setTimeout(() => setShowShareSuccess(false), 2000)
+      });
+      setShowShareSuccess(true);
+      setTimeout(() => setShowShareSuccess(false), 2000);
     } catch (error) {
       // Fallback to clipboard copy if Web Share API is not available
-      await navigator.clipboard.writeText(window.location.href)
-      setShowShareSuccess(true)
-      setTimeout(() => setShowShareSuccess(false), 2000)
+      await navigator.clipboard.writeText(window.location.href);
+      setShowShareSuccess(true);
+      setTimeout(() => setShowShareSuccess(false), 2000);
     }
-  }
+  };
 
   return (
     <motion.div
@@ -43,7 +43,7 @@ export function SocialFooter({ socials }: SocialFooterProps) {
     >
       <div className="flex gap-2">
         {socials.map((social, index) => {
-          const Icon = socialIcons[social.platform as keyof typeof socialIcons]
+          const Icon = socialIcons[social.platform as keyof typeof socialIcons];
           return (
             <motion.div
               key={social.platform}
@@ -57,18 +57,23 @@ export function SocialFooter({ socials }: SocialFooterProps) {
                 variant="ghost"
                 size="icon"
                 className="text-[#4dc4f9] hover:bg-[#4dc4f9]/10"
-                onClick={() => window.open(social.url, "_blank")}
+                onClick={() => window.open(social.url, '_blank')}
               >
                 <Icon className="w-5 h-5" />
               </Button>
             </motion.div>
-          )
+          );
         })}
       </div>
 
       <div className="relative">
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-          <Button variant="ghost" size="icon" className="text-[#4dc4f9] hover:bg-[#4dc4f9]/10" onClick={handleShare}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-[#4dc4f9] hover:bg-[#4dc4f9]/10"
+            onClick={handleShare}
+          >
             <Share2 className="w-5 h-5" />
           </Button>
         </motion.div>
@@ -88,6 +93,5 @@ export function SocialFooter({ socials }: SocialFooterProps) {
         </AnimatePresence>
       </div>
     </motion.div>
-  )
+  );
 }
-

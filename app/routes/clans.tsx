@@ -1,30 +1,37 @@
-import { json, type ActionFunctionArgs } from "@remix-run/node"
-import { useLoaderData, useNavigation, Link } from "@remix-run/react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Users, Trophy, Star, ChevronRight, Activity, Sparkles } from "lucide-react"
-import { createServerSupabase } from "~/utils/supabase.server"
-import { CreateClanForm } from "~/components/create-clan-form"
+import { json, type ActionFunctionArgs } from '@remix-run/node';
+import { useLoaderData, useNavigation, Link } from '@remix-run/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Users,
+  Trophy,
+  Star,
+  ChevronRight,
+  Activity,
+  Sparkles,
+} from 'lucide-react';
+import { createServerSupabase } from '~/utils/supabase.server';
+import { CreateClanForm } from '~/components/create-clan-form';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData()
-  const clanName = formData.get("clan_name")
-  const description = formData.get("description")
-  const quote1 = formData.get("quote1")
-  const quote2 = formData.get("quote2")
-  const logoUrl = formData.get("logo_url")
-  const bannerUrl = formData.get("banner_url")
-  const response = new Response()
-  const supabase =createServerSupabase(request, response)
+  const formData = await request.formData();
+  const clanName = formData.get('clan_name');
+  const description = formData.get('description');
+  const quote1 = formData.get('quote1');
+  const quote2 = formData.get('quote2');
+  const logoUrl = formData.get('logo_url');
+  const bannerUrl = formData.get('banner_url');
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
   // Validate required fields
   if (!clanName || !description || !quote1) {
-    return json({ error: "Missing required fields" })
+    return json({ error: 'Missing required fields' });
   }
 
-  const quotes = [quote1.toString()]
-  if (quote2) quotes.push(quote2.toString())
+  const quotes = [quote1.toString()];
+  if (quote2) quotes.push(quote2.toString());
 
   try {
-    const { error } = await supabase.from("clans").insert([
+    const { error } = await supabase.from('clans').insert([
       {
         clan_name: clanName,
         description,
@@ -38,68 +45,70 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         workshops: 0,
         avg_attendance: 0,
       },
-    ])
+    ]);
 
-    if (error) throw error
+    if (error) throw error;
 
-    return json({ success: true })
+    return json({ success: true });
   } catch (error) {
-    return json({ error: "Failed to create clan" })
+    return json({ error: 'Failed to create clan' });
   }
-}
+};
 
 interface ClanMember {
-  id: number
-  name: string
-  role: string
-  status: string
-  bash_crew: number
+  id: number;
+  name: string;
+  role: string;
+  status: string;
+  bash_crew: number;
 }
 
 interface ClanActivity {
-  id: number
-  date: string
-  type: string
-  title?: string
-  description?: string
-  achievements?: string[]
-  participants?: number[]
-  resources?: string[]
+  id: number;
+  date: string;
+  type: string;
+  title?: string;
+  description?: string;
+  achievements?: string[];
+  participants?: number[];
+  resources?: string[];
 }
 
 interface Clan {
-  id: number
-  created_at: string
-  clan_name: string
-  quotes: string[]
-  projects: number
-  hackathons_won: number
-  workshops: number
-  avg_attendance: number
-  members: ClanMember[]
-  activities: ClanActivity[]
-  description: string
-  logo_url: string
-  banner_url: string | null
-  bash_clan_no: string
+  id: number;
+  created_at: string;
+  clan_name: string;
+  quotes: string[];
+  projects: number;
+  hackathons_won: number;
+  workshops: number;
+  avg_attendance: number;
+  members: ClanMember[];
+  activities: ClanActivity[];
+  description: string;
+  logo_url: string;
+  banner_url: string | null;
+  bash_clan_no: string;
 }
 
 export const loader = async ({ request }: ActionFunctionArgs) => {
-  const response = new Response()
-  const supabase = createServerSupabase(request, response)
-  const { data: clans } = await supabase.from("clans").select("*")
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  const { data: clans } = await supabase.from('clans').select('*');
   if (clans) {
     for (const clan of clans) {
       const { data: members } = await supabase
-        .from("members")
-        .select("*")
-        .eq("clan_id", clan.id)
-        .or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash,title.eq.Mentor')
-      clan.members = members || []
+        .from('members')
+        .select('*')
+        .eq('clan_id', clan.id)
+        .or(
+          'title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash,title.eq.Mentor'
+        );
+      clan.members = members || [];
     }
   }
-  return json({ clans })
-}
+  return json({ clans });
+};
 
 function ClanCard({ clan }: { clan: Clan }) {
   return (
@@ -124,31 +133,41 @@ function ClanCard({ clan }: { clan: Clan }) {
               </h3>
               <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" />
             </div>
-            <p className="text-sm text-gray-400 mt-1 line-clamp-2">{clan.description}</p>
+            <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+              {clan.description}
+            </p>
             <div className="flex items-center gap-4 mt-4">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-gray-400">{clan.members.length} members</span>
+                <span className="text-sm text-gray-400">
+                  {clan.members.length} members
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-gray-400">{clan.avg_attendance}% attendance</span>
+                <span className="text-sm text-gray-400">
+                  {clan.avg_attendance}% attendance
+                </span>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
     </Link>
-  )
+  );
 }
 
 export default function Clans() {
-  const { clans } = useLoaderData<typeof loader>()
-  const navigation = useNavigation()
-  const isSubmitting = navigation.state === "submitting"
+  const { clans } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
 
-  const totalMembers = clans ? clans.reduce((acc, clan) => acc + clan.members.length, 0) : 0
-  const avgAttendance = clans ? clans.reduce((acc, clan) => acc + clan.avg_attendance, 0) / clans.length : 0
+  const totalMembers = clans
+    ? clans.reduce((acc, clan) => acc + clan.members.length, 0)
+    : 0;
+  const avgAttendance = clans
+    ? clans.reduce((acc, clan) => acc + clan.avg_attendance, 0) / clans.length
+    : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4 md:p-4">
@@ -169,23 +188,28 @@ export default function Clans() {
             </motion.div>
             <div>
               <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400"
               >
-          Clans
+                Clans
               </motion.h1>
               <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-gray-400"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-gray-400"
               >
-          Explore our coding clans and their achievements
+                Explore our coding clans and their achievements
               </motion.p>
             </div>
           </div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="mt-4 sm:mt-0">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-4 sm:mt-0"
+          >
             <CreateClanForm />
           </motion.div>
         </div>
@@ -205,8 +229,12 @@ export default function Clans() {
               transition={{ duration: 0.3 }}
             />
             <Users className="w-6 h-6 text-blue-400 mb-2 relative z-10" />
-            <div className="text-2xl font-bold relative z-10">{clans ? clans.length : 0}</div>
-            <div className="text-sm text-gray-400 relative z-10">Active Clans</div>
+            <div className="text-2xl font-bold relative z-10">
+              {clans ? clans.length : 0}
+            </div>
+            <div className="text-sm text-gray-400 relative z-10">
+              Active Clans
+            </div>
           </motion.div>
 
           <motion.div
@@ -222,8 +250,12 @@ export default function Clans() {
               transition={{ duration: 0.3 }}
             />
             <Trophy className="w-6 h-6 text-purple-400 mb-2 relative z-10" />
-            <div className="text-2xl font-bold relative z-10">{totalMembers}</div>
-            <div className="text-sm text-gray-400 relative z-10">Total Members</div>
+            <div className="text-2xl font-bold relative z-10">
+              {totalMembers}
+            </div>
+            <div className="text-sm text-gray-400 relative z-10">
+              Total Members
+            </div>
           </motion.div>
 
           <motion.div
@@ -239,8 +271,12 @@ export default function Clans() {
               transition={{ duration: 0.3 }}
             />
             <Activity className="w-6 h-6 text-pink-400 mb-2 relative z-10" />
-            <div className="text-2xl font-bold relative z-10">{avgAttendance.toFixed(1)}%</div>
-            <div className="text-sm text-gray-400 relative z-10">Average Attendance</div>
+            <div className="text-2xl font-bold relative z-10">
+              {avgAttendance.toFixed(1)}%
+            </div>
+            <div className="text-sm text-gray-400 relative z-10">
+              Average Attendance
+            </div>
           </motion.div>
 
           <motion.div
@@ -257,9 +293,13 @@ export default function Clans() {
             />
             <Star className="w-6 h-6 text-orange-400 mb-2 relative z-10" />
             <div className="text-2xl font-bold relative z-10">
-              {clans ? clans.reduce((acc, clan) => acc + clan.hackathons_won, 0) : 0}
+              {clans
+                ? clans.reduce((acc, clan) => acc + clan.hackathons_won, 0)
+                : 0}
             </div>
-            <div className="text-sm text-gray-400 relative z-10">Hackathons Won</div>
+            <div className="text-sm text-gray-400 relative z-10">
+              Hackathons Won
+            </div>
           </motion.div>
         </div>
 
@@ -283,14 +323,19 @@ export default function Clans() {
 
         {/* Empty State */}
         {(!clans || clans.length === 0) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
             <Sparkles className="w-12 h-12 text-blue-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">No Clans Yet</h3>
-            <p className="text-gray-400 mb-6">Be the first to create a clan and start your journey!</p>
+            <p className="text-gray-400 mb-6">
+              Be the first to create a clan and start your journey!
+            </p>
           </motion.div>
         )}
       </motion.div>
     </div>
-  )
+  );
 }
-
