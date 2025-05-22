@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from "@remix-run/react"
-import { Trophy, Star, Mail, Globe, LogOut, Building, ChevronDown, Book, PanelRightOpen, Calendar, UserCheck } from "lucide-react"
+import { Trophy, Star, Mail, Globe, LogOut, Contact, Building, BookCheck, ChevronDown, Book, PanelRightOpen, Calendar, UserCheck } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/sheet"
 import {
@@ -70,7 +70,12 @@ const navigation = [
   {
     title: "Legacy-Bashers",
     href: "/legacy-bashers",
-    icon: UserCheck,
+    icon: Contact,
+  },
+  {
+    title: "Resources",
+    href: "/resources",
+    icon: BookCheck,
   },
 ]
 

@@ -35,6 +35,8 @@ function getEventStatus(date, time) {
   if (isAfter(eventDateTime, today)) return "upcoming";
   return "ongoing";
 }
+
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   
   return json({
@@ -43,6 +45,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   })
 }
+
+
 export default function Events() {
   const { SUPABASE_URL, SUPABASE_ANON_KEY,isOrganiser } = useLoaderData();
   const [events, setEvents] = useState<Event[]>([]);
@@ -68,13 +72,14 @@ export default function Events() {
     const supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY)
     async function fetchEvents() {
   try {
-    let { data: eventsData, error } = await supabase
+    const { data: eventsData, error } = await supabase
       .from("events")
       .select(`
         *,
         clans:clan_id (
           id,
           clan_name,
+          clan_score,
           members:members (
             id,
             name,
@@ -85,6 +90,8 @@ export default function Events() {
       `)
       .eq("type", "weeklybash")
       .order("date", { ascending: false });
+
+      console.log("Fetched events:", eventsData);
 
 
     if (error) throw error;
@@ -314,8 +321,8 @@ export default function Events() {
         )}
 
         {location.pathname === "/events/new" && (
-          <div id="create-event-section" className="mt-6 p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold">Create New Event</h2>
+          <div id="create-event-section" className="mt-6 p-6 rounded-lg shadow-lg border border-blue-700 bg-blue-800/50">
+            <h2 className="text-2xl text-white font-semibold">Create New Event</h2>
               <Outlet />
             {/* Create Event Form or content goes here */}
           </div>

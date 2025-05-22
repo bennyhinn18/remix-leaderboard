@@ -22,6 +22,7 @@ import { useState, useEffect, Suspense } from "react";
 import WhatsNewPanel from "~/components/WhatsNewPanel";
 import LeetCodeConnect from "~/components/leetcode-connect";
 import { NotificationManager } from "~/components/notification-manager";
+import UpdateClanScore from "~/components/update-clan-score";
 import {
   Dialog,
   DialogContent,
@@ -618,11 +619,18 @@ export default function Home() {
                   </Link>
                 </div>
                 
-                <div className="mt-4">
-                  <NotificationManager 
-                    allMembers={allMembers}
-                    recentNotifications={recentNotifications}
-                  />
+                <div className="mt-4 flex flex-col gap-4">
+                  <div className="flex justify-center">
+                    <NotificationManager 
+                      allMembers={allMembers}
+                      recentNotifications={recentNotifications}
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <div className="text-sm text-gray-400">
+                      <UpdateClanScore />
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
