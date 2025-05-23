@@ -760,6 +760,13 @@ export default function Home() {
                       <BarChart2 className="w-8 h-8 text-amber-400 mb-2" />
                       <span>Analytics</span>
                     </Link>
+                    <Link
+                      to="/add-members"
+                      className="bg-white/10 rounded-lg p-3 flex flex-col items-center text-center hover:bg-white/20 transition-colors"
+                    >
+                      <Plus className="w-8 h-8 text-purple-400 mb-2" />
+                      <span>Add Members</span>
+                    </Link>
                   </div>
 
                   <div className="mt-4 flex flex-col gap-4">
