@@ -1,15 +1,15 @@
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '~/types/database'
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '~/types/database';
 
-let supabaseClient: ReturnType<typeof createClient<Database>> | null = null
+let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
 
 export function initSupabase(supabaseUrl: string, supabaseKey: string) {
   if (!supabaseClient) {
     supabaseClient = createClient<Database>(supabaseUrl, supabaseKey, {
       auth: {
-        persistSession: false
-      }
-    })
+        persistSession: false,
+      },
+    });
   }
-  return supabaseClient
+  return supabaseClient;
 }

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 
 export function ActivitySkeleton() {
   return (
@@ -49,13 +49,17 @@ export function EventSkeleton() {
 }
 
 export function LoadingSkeleton({ type, count = 3 }) {
-  const Component = 
-    type === 'activity' ? ActivitySkeleton :
-    type === 'announcement' ? AnnouncementSkeleton :
-    type === 'event' ? EventSkeleton : ActivitySkeleton;
-  
+  const Component =
+    type === 'activity'
+      ? ActivitySkeleton
+      : type === 'announcement'
+      ? AnnouncementSkeleton
+      : type === 'event'
+      ? EventSkeleton
+      : ActivitySkeleton;
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0.5 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}

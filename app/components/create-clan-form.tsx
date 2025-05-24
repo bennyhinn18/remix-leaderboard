@@ -1,13 +1,19 @@
-"use client"
+'use client';
 
-import { Form } from "@remix-run/react"
-import { motion } from "framer-motion"
-import { Users, Quote, Flag } from "lucide-react"
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Label } from "~/components/ui/label"
-import { Textarea } from "~/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog"
+import { Form } from '@remix-run/react';
+import { motion } from 'framer-motion';
+import { Quote, Flag } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Textarea } from '~/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '~/components/ui/dialog';
 
 export function CreateClanForm() {
   return (
@@ -33,7 +39,10 @@ export function CreateClanForm() {
           <div className="space-y-4">
             {/* Clan Name */}
             <div className="grid gap-2">
-              <Label htmlFor="clan_name" className="text-white flex items-center gap-2">
+              <Label
+                htmlFor="clan_name"
+                className="text-white flex items-center gap-2"
+              >
                 <Flag className="w-4 h-4 text-blue-400" />
                 Clan Name
               </Label>
@@ -121,6 +130,5 @@ export function CreateClanForm() {
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

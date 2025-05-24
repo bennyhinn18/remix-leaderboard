@@ -1,70 +1,90 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Search, Plus, Calendar, Link2, MoreVertical, CheckCircle2, Copy, Repeat, UserPlus, Trash2 } from "lucide-react"
-import { format } from "date-fns"
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog"
-import { Label } from "~/components/ui/label"
-import CalendarCom from "~/components/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Search,
+  Plus,
+  Calendar,
+  Link2,
+  MoreVertical,
+  CheckCircle2,
+  Copy,
+  Repeat,
+  UserPlus,
+  Trash2,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
+import { Label } from '~/components/ui/label';
+import CalendarCom from '~/components/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu"
-import { cn } from "~/lib/utils"
+} from '~/components/ui/dropdown-menu';
+import { cn } from '~/lib/utils';
 
 interface Slido {
-  id: string
-  name: string
-  code: string
-  startDate: Date
-  endDate: Date
-  status: "active" | "upcoming" | "past"
-  owner: string
+  id: string;
+  name: string;
+  code: string;
+  startDate: Date;
+  endDate: Date;
+  status: 'active' | 'upcoming' | 'past';
+  owner: string;
 }
 
 const mockSlidos: Slido[] = [
   {
-    id: "1",
-    name: "Nim",
-    code: "#122846",
+    id: '1',
+    name: 'Nim',
+    code: '#122846',
     startDate: new Date(2025, 2, 1),
     endDate: new Date(2025, 2, 4),
-    status: "active",
-    owner: "Michal Nithesh (You)",
+    status: 'active',
+    owner: 'Michal Nithesh (You)',
   },
-]
+];
 
 export default function Slidos() {
-  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [startDate, setStartDate] = useState<Date>(new Date())
-  const [endDate, setEndDate] = useState<Date>(new Date())
-  const [slidoName, setSlidoName] = useState("")
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [slidoName, setSlidoName] = useState('');
 
   const handleCreateSlido = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsCreateFormOpen(false)
-    setSlidoName("")
-    setStartDate(new Date())
-    setEndDate(new Date())
-  }
+    e.preventDefault();
+    setIsCreateFormOpen(false);
+    setSlidoName('');
+    setStartDate(new Date());
+    setEndDate(new Date());
+  };
 
   const filteredSlidos = mockSlidos.filter(
     (slido) =>
       slido.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      slido.code.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      slido.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4 sm:p-8">
@@ -84,7 +104,10 @@ export default function Slidos() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Button onClick={() => setIsCreateFormOpen(true)} className="bg-green-600 hover:bg-green-700 text-white">
+            <Button
+              onClick={() => setIsCreateFormOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
               <Plus className="w-5 h-5 mr-2" />
               Create slido
             </Button>
@@ -93,16 +116,38 @@ export default function Slidos() {
 
         {/* Tabs and Search */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <Tabs defaultValue="all" className="w-full sm:w-auto" onValueChange={setActiveTab}>
+          <Tabs
+            defaultValue="all"
+            className="w-full sm:w-auto"
+            onValueChange={setActiveTab}
+          >
             <TabsList className="bg-white/5 border border-white/10">
-              <TabsTrigger value="all" className="data-[state=active]:bg-white/10">
-                All <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">1</span>
+              <TabsTrigger
+                value="all"
+                className="data-[state=active]:bg-white/10"
+              >
+                All{' '}
+                <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                  1
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="active" className="data-[state=active]:bg-white/10">
-                Active & upcoming <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">1</span>
+              <TabsTrigger
+                value="active"
+                className="data-[state=active]:bg-white/10"
+              >
+                Active & upcoming{' '}
+                <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                  1
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="past" className="data-[state=active]:bg-white/10">
-                Past <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">0</span>
+              <TabsTrigger
+                value="past"
+                className="data-[state=active]:bg-white/10"
+              >
+                Past{' '}
+                <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                  0
+                </span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -152,22 +197,34 @@ export default function Slidos() {
                 <div className="flex justify-end">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-white"
+                      >
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-72 bg-gray-900 border border-white/10">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-72 bg-gray-900 border border-white/10"
+                    >
                       <div className="px-2 py-3 border-b border-white/10">
-                        <div className="font-medium text-white">{slido.name}</div>
+                        <div className="font-medium text-white">
+                          {slido.name}
+                        </div>
                         <div className="text-sm text-green-400 flex items-center gap-2 mt-1">
                           <CheckCircle2 className="w-4 h-4" />
                           Active now
                         </div>
                         <div className="text-sm text-gray-400 flex items-center gap-2 mt-1">
                           <Calendar className="w-4 h-4" />
-                          {format(slido.startDate, "MMM d")} – {format(slido.endDate, "d, yyyy")}
+                          {format(slido.startDate, 'MMM d')} –{' '}
+                          {format(slido.endDate, 'd, yyyy')}
                         </div>
-                        <div className="text-sm text-gray-400 mt-1">{slido.owner}</div>
+                        <div className="text-sm text-gray-400 mt-1">
+                          {slido.owner}
+                        </div>
                       </div>
 
                       <div className="p-1">
@@ -188,7 +245,8 @@ export default function Slidos() {
                         </DropdownMenuItem>
                         <div className="px-2 py-1">
                           <p className="text-xs text-gray-400">
-                            Create a fresh slido using polls and settings from this slido.
+                            Create a fresh slido using polls and settings from
+                            this slido.
                           </p>
                         </div>
 
@@ -217,7 +275,9 @@ export default function Slidos() {
       <Dialog open={isCreateFormOpen} onOpenChange={setIsCreateFormOpen}>
         <DialogContent className="sm:max-w-md bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-white">Create slido</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-white">
+              Create slido
+            </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleCreateSlido} className="space-y-6">
@@ -243,16 +303,20 @@ export default function Slidos() {
                     <Button
                       variant="outline"
                       className={cn(
-                        "justify-start text-left font-normal bg-white/5 border-white/10 text-white",
-                        !startDate && "text-gray-400",
+                        'justify-start text-left font-normal bg-white/5 border-white/10 text-white',
+                        !startDate && 'text-gray-400'
                       )}
                     >
                       <Calendar className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP") : "Pick a date"}
+                      {startDate ? format(startDate, 'PPP') : 'Pick a date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10">
-                    <CalendarCom selected={startDate} onSelect={setStartDate} initialFocus />
+                    <CalendarCom
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -264,16 +328,20 @@ export default function Slidos() {
                     <Button
                       variant="outline"
                       className={cn(
-                        "justify-start text-left font-normal bg-white/5 border-white/10 text-white",
-                        !endDate && "text-gray-400",
+                        'justify-start text-left font-normal bg-white/5 border-white/10 text-white',
+                        !endDate && 'text-gray-400'
                       )}
                     >
                       <Calendar className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "PPP") : "Pick a date"}
+                      {endDate ? format(endDate, 'PPP') : 'Pick a date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10">
-                    <CalendarCom selected={endDate} onSelect={setEndDate} initialFocus />
+                    <CalendarCom
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -293,7 +361,10 @@ export default function Slidos() {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+              <Button
+                type="submit"
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
                 Create slido
               </Button>
             </div>
@@ -301,6 +372,5 @@ export default function Slidos() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-

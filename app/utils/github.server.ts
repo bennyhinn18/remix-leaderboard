@@ -1,5 +1,5 @@
 export async function getGitHubStreak(username: string) {
- /*{ try {
+  /*{ try {
     const response = await fetch(`https://api.github.com/users/${username}/events/public`, {
       headers: {
         "Authorization": `token ${process.env.GITHUB_ACCESS_TOKEN}`,
@@ -48,5 +48,5 @@ export async function getGitHubStreak(username: string) {
     console.error(`Error fetching GitHub stats for ${username}:`, error);
     }return 0;
   }*/
- return 0;
+  return 0;
 }

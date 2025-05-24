@@ -1,21 +1,22 @@
-"use client"
+'use client';
 
-import { Link } from "@remix-run/react"
-import { motion } from "framer-motion"
-import { AlertOctagon, ArrowLeft, ShieldOff, Lock } from "lucide-react"
-import { Button } from "~/components/ui/button"
+import { Link } from '@remix-run/react';
+import { motion } from 'framer-motion';
+import { AlertOctagon, ArrowLeft, ShieldOff, Lock } from 'lucide-react';
+import { Button } from '~/components/ui/button';
 
 const funnyMessages = [
   "Looks like you're trying to sneak into the cool kids' club! 🕵️‍♂️",
   "Hold up! This area is more exclusive than a cat's personal space! 🐱",
-  "Error 401: Your access card seems to be made of cardboard! 🎨",
+  'Error 401: Your access card seems to be made of cardboard! 🎨',
   "Nice try, but our AI bouncer says 'nope'! 🤖",
-  "Unauthorized? More like un-awesome-orized! 😎",
-]
+  'Unauthorized? More like un-awesome-orized! 😎',
+];
 
 export default function NotAuthorized() {
   // Get a random funny message
-  const randomMessage = funnyMessages[Math.floor(Math.random() * funnyMessages.length)]
+  const randomMessage =
+    funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex items-center justify-center p-4">
@@ -25,7 +26,7 @@ export default function NotAuthorized() {
           initial={{ scale: 0 }}
           animate={{ scale: 1, rotate: [0, -10, 10, -10, 10, 0] }}
           transition={{
-            type: "spring",
+            type: 'spring',
             stiffness: 260,
             damping: 20,
             duration: 1,
@@ -42,7 +43,7 @@ export default function NotAuthorized() {
             transition={{
               duration: 2,
               repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
+              repeatType: 'reverse',
             }}
             className="absolute inset-0 bg-red-500/20 rounded-full blur-xl"
           />
@@ -56,7 +57,7 @@ export default function NotAuthorized() {
               transition={{
                 duration: 2,
                 repeat: Number.POSITIVE_INFINITY,
-                repeatType: "reverse",
+                repeatType: 'reverse',
               }}
             >
               <ShieldOff className="w-12 h-12 text-red-400" />
@@ -75,14 +76,14 @@ export default function NotAuthorized() {
                 duration: 8,
                 delay: i * 0.5,
                 repeat: Number.POSITIVE_INFINITY,
-                ease: "linear",
+                ease: 'linear',
               }}
             >
               <motion.div
                 className="absolute"
                 style={{
-                  top: "0%",
-                  left: "50%",
+                  top: '0%',
+                  left: '50%',
                   transform: `rotate(${i * 120}deg) translateY(-40px)`,
                 }}
               >
@@ -143,7 +144,7 @@ export default function NotAuthorized() {
 
         {/* Binary Rain Effect */}
         <div className="fixed inset-0 pointer-events-none select-none overflow-hidden">
-          {typeof window !== "undefined" &&
+          {typeof window !== 'undefined' &&
             [...Array(10)].map((_, i) => (
               <motion.div
                 key={i}
@@ -162,6 +163,5 @@ export default function NotAuthorized() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

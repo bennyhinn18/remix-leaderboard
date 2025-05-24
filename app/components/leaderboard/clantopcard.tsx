@@ -1,9 +1,8 @@
-import { useMobile } from "~/hooks/useMobile"
-import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Trophy, Sparkles, Rocket, Crown, Star} from "lucide-react";
-import { Link } from "@remix-run/react";
-
+import { useMobile } from '~/hooks/useMobile';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Sparkles, Rocket, Crown, Star } from 'lucide-react';
+import { Link } from '@remix-run/react';
 
 type MemberWithStats = {
   originalRank: number;
@@ -18,164 +17,169 @@ type MemberWithStats = {
   duolingoStreak?: number;
   discordPoints?: number;
   bookRead?: number;
-}
+};
 
 interface Clan {
-  id: string
-  clan_name: string
-  members: MemberWithStats[]
-  logo_url?: string
+  id: string;
+  clan_name: string;
+  members: MemberWithStats[];
+  logo_url?: string;
 }
 
 interface ClanCardProps {
   clan: Clan;
   index: number;
-  pointsPercentage: number
+  pointsPercentage: number;
 }
 
+// Mobile version of the component
+const ClanTopOneCard = ({ clan, index }: ClanCardProps) => {
+  const [sparklePositions, setSparklePositions] = useState<
+    Array<{ x: number; y: number; size: number; delay: number }>
+  >([]);
+  const [isHovered, setIsHovered] = useState(false);
+  const isMobile = useMobile(); // Ensure this hook works
 
+  // Calculate points percentage for the clan
+  const totalPoints = clan.members.reduce(
+    (acc, member) => acc + member.bash_points,
+    0
+  );
+  const pointsPercentage = totalPoints / clan.members.length;
+
+  // Generate random sparkle positions
+  useEffect(() => {
+    const newPositions = Array.from({ length: 20 }, () => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      delay: Math.random() * 5,
+    }));
+    setSparklePositions(newPositions);
+  }, []);
 
   // Mobile version of the component
-  const ClanTopOneCard = ({ clan, index }: ClanCardProps) => {
-    const [sparklePositions, setSparklePositions] = useState<
-      Array<{ x: number; y: number; size: number; delay: number }>
-    >([]);
-    const [isHovered, setIsHovered] = useState(false);
-    const isMobile = useMobile(); // Ensure this hook works
-  
-    // Calculate points percentage for the clan
-    const totalPoints = clan.members.reduce(
-      (acc, member) => acc + member.bash_points,
-      0
-    );
-    const pointsPercentage = totalPoints / clan.members.length;
-  
-    // Generate random sparkle positions
-    useEffect(() => {
-      const newPositions = Array.from({ length: 20 }, () => ({
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: Math.random() * 3 + 1,
-        delay: Math.random() * 5,
-      }));
-      setSparklePositions(newPositions);
-    }, []);
-
-  
-    // Mobile version of the component
-    if (isMobile) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="relative z-20 w-full max-w-sm mx-auto"
-        >
-  
-          {/* Main Card Content */}
-          <motion.div className="relative rounded-2xl overflow-hidden backdrop-blur-sm bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-purple-900/60 border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.3)]">
-            <div className="p-6 flex flex-col items-center gap-6">
-              {/* Rank Trophy and Clan Name */}
-              <div className="flex items-center gap-4 w-full">
-                <motion.div whileTap={{ scale: 0.95 }} className="flex flex-col items-center">
-                  <div className="relative">
-                    <motion.div
-                      animate={{
-                        boxShadow: "0 0 20px 5px rgba(250,204,21,0.3)",
-                      }}
-                      className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center"
-                    >
-                      <Trophy className="w-8 h-8 text-yellow-900" />
-                    </motion.div>
-                    <motion.div
-                      animate={{
-                        rotate: 360,
-                        opacity: 0.5,
-                      }}
-                      transition={{
-                        rotate: { duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
-                      }}
-                      className="absolute inset-0 rounded-full border-2 border-dashed border-yellow-400/50"
-                    />
-                  </div>
-                  <motion.span className="text-3xl font-bold mt-1 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500">
-                    #1
-                  </motion.span>
-                </motion.div>
-  
-                <div className="flex-1">
-                  <Link
-                    to={`/clans/${clan.id}`}
-                    className="inline-block text-3xl font-extrabold hover:underline bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300"
+  if (isMobile) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, delay: 0.5 }}
+        className="relative z-20 w-full max-w-sm mx-auto"
+      >
+        {/* Main Card Content */}
+        <motion.div className="relative rounded-2xl overflow-hidden backdrop-blur-sm bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-purple-900/60 border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.3)]">
+          <div className="p-6 flex flex-col items-center gap-6">
+            {/* Rank Trophy and Clan Name */}
+            <div className="flex items-center gap-4 w-full">
+              <motion.div
+                whileTap={{ scale: 0.95 }}
+                className="flex flex-col items-center"
+              >
+                <div className="relative">
+                  <motion.div
+                    animate={{
+                      boxShadow: '0 0 20px 5px rgba(250,204,21,0.3)',
+                    }}
+                    className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center"
                   >
-                    {clan.clan_name}
-                  </Link>
-  
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex items-center gap-1 bg-purple-900/50 px-2 py-1 rounded-full">
-                      <Sparkles className="w-3 h-3 text-purple-300" />
-                      <span className="text-sm text-purple-200">{clan.members.length} members</span>
-                    </div>
+                    <Trophy className="w-8 h-8 text-yellow-900" />
+                  </motion.div>
+                  <motion.div
+                    animate={{
+                      rotate: 360,
+                      opacity: 0.5,
+                    }}
+                    transition={{
+                      rotate: {
+                        duration: 20,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: 'linear',
+                      },
+                    }}
+                    className="absolute inset-0 rounded-full border-2 border-dashed border-yellow-400/50"
+                  />
+                </div>
+                <motion.span className="text-3xl font-bold mt-1 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500">
+                  #1
+                </motion.span>
+              </motion.div>
+
+              <div className="flex-1">
+                <Link
+                  to={`/clans/${clan.id}`}
+                  className="inline-block text-3xl font-extrabold hover:underline bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300"
+                >
+                  {clan.clan_name}
+                </Link>
+
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1 bg-purple-900/50 px-2 py-1 rounded-full">
+                    <Sparkles className="w-3 h-3 text-purple-300" />
+                    <span className="text-sm text-purple-200">
+                      {clan.members.length} members
+                    </span>
                   </div>
                 </div>
               </div>
-  
-              {/* Total Points */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full"
-              >
-                <motion.div
-                  animate={{
-                    boxShadow: [
-                      "0 0 20px 0px rgba(139,92,246,0.3)",
-                      "0 0 30px 5px rgba(139,92,246,0.5)",
-                      "0 0 20px 0px rgba(139,92,246,0.3)",
-                    ],
-                  }}
-                  transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
-                  className="bg-gradient-to-br from-indigo-600/50 to-purple-700/50 backdrop-blur-sm p-4 rounded-xl border border-indigo-500/30 flex justify-between items-center"
-                >
-                  <div className="flex items-center gap-3">
-                    <Rocket className="w-6 h-6 text-indigo-300" />
-                    <div className="text-lg text-indigo-200">Points</div>
-                  </div>
-                  <motion.span
-                    animate={{
-                      textShadow: "0 0 8px rgba(139,92,246,0.8)",
-                    }}
-                    className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300"
-                  >
-                    {pointsPercentage.toFixed(0)}
-                  </motion.span>
-                </motion.div>
-              </motion.div>
             </div>
 
-            {/* Bottom Banner */}
+            {/* Total Points */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-              className="bg-gradient-to-r from-purple-900/80 via-indigo-900/80 to-purple-900/80 py-3 px-4 text-center"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full"
             >
-                <motion.p
+              <motion.div
                 animate={{
-                  scale: [1, 1.02, 1],
+                  boxShadow: [
+                    '0 0 20px 0px rgba(139,92,246,0.3)',
+                    '0 0 30px 5px rgba(139,92,246,0.5)',
+                    '0 0 20px 0px rgba(139,92,246,0.3)',
+                  ],
                 }}
-                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                className="text-2xl font-medium text-purple-100"
+                transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
+                className="bg-gradient-to-br from-indigo-600/50 to-purple-700/50 backdrop-blur-sm p-4 rounded-xl border border-indigo-500/30 flex justify-between items-center"
+              >
+                <div className="flex items-center gap-3">
+                  <Rocket className="w-6 h-6 text-indigo-300" />
+                  <div className="text-lg text-indigo-200">Points</div>
+                </div>
+                <motion.span
+                  animate={{
+                    textShadow: '0 0 8px rgba(139,92,246,0.8)',
+                  }}
+                  className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300"
                 >
-                <span className="font-bold text-yellow-300">Master</span> Clan
-                </motion.p>
+                  {pointsPercentage.toFixed(0)}
+                </motion.span>
+              </motion.div>
             </motion.div>
+          </div>
+
+          {/* Bottom Banner */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+            className="bg-gradient-to-r from-purple-900/80 via-indigo-900/80 to-purple-900/80 py-3 px-4 text-center"
+          >
+            <motion.p
+              animate={{
+                scale: [1, 1.02, 1],
+              }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+              className="text-2xl font-medium text-purple-100"
+            >
+              <span className="font-bold text-yellow-300">Master</span> Clan
+            </motion.p>
           </motion.div>
         </motion.div>
-      );
-    }
+      </motion.div>
+    );
+  }
 
   // Desktop version
   return (
@@ -261,7 +265,7 @@ interface ClanCardProps {
         {/* Main Card Content */}
         <motion.div
           whileHover={{ scale: 1.02 }}
-          transition={{ type: "spring", stiffness: 300 }}
+          transition={{ type: 'spring', stiffness: 300 }}
           className="relative rounded-2xl overflow-hidden backdrop-blur-sm bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-purple-900/60 border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.3)]"
         >
           {/* Crown decoration */}
@@ -285,11 +289,11 @@ interface ClanCardProps {
                   animate={{
                     boxShadow: isHovered
                       ? [
-                          "0 0 20px 5px rgba(250,204,21,0.3)",
-                          "0 0 30px 10px rgba(250,204,21,0.5)",
-                          "0 0 20px 5px rgba(250,204,21,0.3)",
+                          '0 0 20px 5px rgba(250,204,21,0.3)',
+                          '0 0 30px 10px rgba(250,204,21,0.5)',
+                          '0 0 20px 5px rgba(250,204,21,0.3)',
                         ]
-                      : "0 0 20px 5px rgba(250,204,21,0.3)",
+                      : '0 0 20px 5px rgba(250,204,21,0.3)',
                   }}
                   transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                   className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center"
@@ -302,7 +306,11 @@ interface ClanCardProps {
                     opacity: isHovered ? [0.5, 0.8, 0.5] : 0.5,
                   }}
                   transition={{
-                    rotate: { duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                    rotate: {
+                      duration: 20,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: 'linear',
+                    },
                     opacity: { duration: 2, repeat: Number.POSITIVE_INFINITY },
                   }}
                   className="absolute inset-0 rounded-full border-4 border-dashed border-yellow-400/50"
@@ -310,7 +318,10 @@ interface ClanCardProps {
               </div>
               <motion.span
                 animate={{ scale: isHovered ? [1, 1.1, 1] : 1 }}
-                transition={{ duration: 1, repeat: isHovered ? Number.POSITIVE_INFINITY : 0 }}
+                transition={{
+                  duration: 1,
+                  repeat: isHovered ? Number.POSITIVE_INFINITY : 0,
+                }}
                 className="text-6xl font-bold mt-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500"
               >
                 #1
@@ -322,9 +333,9 @@ interface ClanCardProps {
               <motion.div
                 animate={{
                   boxShadow: [
-                    "0 0 20px 0px rgba(139,92,246,0.3)",
-                    "0 0 30px 5px rgba(139,92,246,0.5)",
-                    "0 0 20px 0px rgba(139,92,246,0.3)",
+                    '0 0 20px 0px rgba(139,92,246,0.3)',
+                    '0 0 30px 5px rgba(139,92,246,0.5)',
+                    '0 0 20px 0px rgba(139,92,246,0.3)',
                   ],
                 }}
                 transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
@@ -332,13 +343,15 @@ interface ClanCardProps {
               >
                 {clan.logo_url ? (
                   <img
-                    src={clan.logo_url || "/placeholder.svg"}
+                    src={clan.logo_url || '/placeholder.svg'}
                     alt={clan.clan_name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center">
-                    <span className="text-7xl font-bold text-white">{clan.clan_name.charAt(0)}</span>
+                    <span className="text-7xl font-bold text-white">
+                      {clan.clan_name.charAt(0)}
+                    </span>
                   </div>
                 )}
               </motion.div>
@@ -356,8 +369,12 @@ interface ClanCardProps {
                         transition={{ delay: i * 0.1 }}
                         className="absolute"
                         style={{
-                          top: `${Math.sin(i * ((Math.PI * 2) / 5)) * 100 + 50}%`,
-                          left: `${Math.cos(i * ((Math.PI * 2) / 5)) * 100 + 50}%`,
+                          top: `${
+                            Math.sin(i * ((Math.PI * 2) / 5)) * 100 + 50
+                          }%`,
+                          left: `${
+                            Math.cos(i * ((Math.PI * 2) / 5)) * 100 + 50
+                          }%`,
                         }}
                       >
                         <Star className="w-6 h-6 text-yellow-300 fill-yellow-300" />
@@ -385,7 +402,9 @@ interface ClanCardProps {
                 <div className="flex items-center gap-4 mt-3 justify-center md:justify-start">
                   <div className="flex items-center gap-2 bg-purple-900/50 px-4 py-2 rounded-full">
                     <Sparkles className="w-5 h-5 text-purple-300" />
-                    <span className="text-xl text-purple-200">{clan.members.length} members</span>
+                    <span className="text-xl text-purple-200">
+                      {clan.members.length} members
+                    </span>
                   </div>
                 </div>
 
@@ -413,9 +432,9 @@ interface ClanCardProps {
               <motion.div
                 animate={{
                   boxShadow: [
-                    "0 0 20px 0px rgba(139,92,246,0.3)",
-                    "0 0 30px 5px rgba(139,92,246,0.5)",
-                    "0 0 20px 0px rgba(139,92,246,0.3)",
+                    '0 0 20px 0px rgba(139,92,246,0.3)',
+                    '0 0 30px 5px rgba(139,92,246,0.5)',
+                    '0 0 20px 0px rgba(139,92,246,0.3)',
                   ],
                 }}
                 transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
@@ -426,9 +445,14 @@ interface ClanCardProps {
                   <motion.span
                     animate={{
                       scale: isHovered ? [1, 1.1, 1] : 1,
-                      textShadow: isHovered ? "0 0 8px rgba(139,92,246,0.8)" : "none",
+                      textShadow: isHovered
+                        ? '0 0 8px rgba(139,92,246,0.8)'
+                        : 'none',
                     }}
-                    transition={{ duration: 1, repeat: isHovered ? Number.POSITIVE_INFINITY : 0 }}
+                    transition={{
+                      duration: 1,
+                      repeat: isHovered ? Number.POSITIVE_INFINITY : 0,
+                    }}
                     className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300"
                   >
                     {pointsPercentage.toFixed(0)}
@@ -459,7 +483,7 @@ interface ClanCardProps {
         </motion.div>
       </motion.div>
     </motion.div>
-  )
+  );
 };
 
 export default ClanTopOneCard;

@@ -1,10 +1,11 @@
-import { supabase } from "~/utils/supabase.server"
-import type { Event } from "~/types/events"
+import { supabase } from '~/utils/supabase.server';
+import type { Event } from '~/types/events';
 
 export async function getEvents() {
   const { data: events, error } = await supabase
-    .from("events")
-    .select(`
+    .from('events')
+    .select(
+      `
       *,
       agenda_items (
         id,
@@ -14,10 +15,11 @@ export async function getEvents() {
         description,
         order_index
       )
-    `)
-    .order("date", { ascending: true })
+    `
+    )
+    .order('date', { ascending: true });
 
-  if (error) throw error
+  if (error) throw error;
 
   return events.map((event: any) => ({
     ...event,
@@ -34,12 +36,14 @@ export async function getEvents() {
         description: item.description,
         orderIndex: item.order_index,
       })),
-  }))
+  }));
 }
 
-export async function createEvent(event: Omit<Event, "id" | "createdAt" | "attendees">) {
+export async function createEvent(
+  event: Omit<Event, 'id' | 'createdAt' | 'attendees'>
+) {
   const { data: newEvent, error: eventError } = await supabase
-    .from("events")
+    .from('events')
     .insert([
       {
         title: event.title,
@@ -53,12 +57,12 @@ export async function createEvent(event: Omit<Event, "id" | "createdAt" | "atten
       },
     ])
     .select()
-    .single()
+    .single();
 
-  if (eventError) throw eventError
+  if (eventError) throw eventError;
 
   if (event.agenda && event.agenda.length > 0) {
-    const { error: agendaError } = await supabase.from("agenda_items").insert(
+    const { error: agendaError } = await supabase.from('agenda_items').insert(
       event.agenda.map((item, index) => ({
         event_id: newEvent.id,
         title: item.title,
@@ -66,16 +70,15 @@ export async function createEvent(event: Omit<Event, "id" | "createdAt" | "atten
         presenter: item.presenter,
         description: item.description,
         order_index: index,
-      })),
-    )
+      }))
+    );
 
     if (agendaError) {
       // Rollback event creation if agenda items insertion fails
-      await supabase.from("events").delete().eq("id", newEvent.id)
-      throw agendaError
+      await supabase.from('events').delete().eq('id', newEvent.id);
+      throw agendaError;
     }
   }
 
-  return newEvent
+  return newEvent;
 }
-

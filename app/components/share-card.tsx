@@ -1,64 +1,64 @@
-import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog"
-import { Share2 } from 'lucide-react'
-import { useState } from "react"
+import { Dialog, DialogContent, DialogTrigger } from '~/components/ui/dialog';
+import { Share2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface ShareCardProps {
   member: {
-    name: string
-    avatar_url?: string
-    github_username: string
-    points: number
-    tier: string
-    projects?: number
-    certifications?: number
-    internships?: number
-    courses?: number
-    hackathons?: number
-    domains?: string[]
+    name: string;
+    avatar_url?: string;
+    github_username: string;
+    points: number;
+    tier: string;
+    projects?: number;
+    certifications?: number;
+    internships?: number;
+    courses?: number;
+    hackathons?: number;
+    domains?: string[];
     languages?: Array<{
-      name: string
-      level: string
-    }>
-    gpa?: number
-    attendance?: number
+      name: string;
+      level: string;
+    }>;
+    gpa?: number;
+    attendance?: number;
     streaks?: {
-      github?: number
-      leetcode?: number
-      duolingo?: number
-      discord?: number
-      books?: number
-    }
-    hobbies?: string[]
-    testimonial?: string
-  }
+      github?: number;
+      leetcode?: number;
+      duolingo?: number;
+      discord?: number;
+      books?: number;
+    };
+    hobbies?: string[];
+    testimonial?: string;
+  };
 }
 
 export function ShareCard({ member }: ShareCardProps) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/profile/${member.github_username}`
-    
+    const url = `${window.location.origin}/profile/${member.github_username}`;
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: `${member.name}'s ByteBash Profile`,
           text: `Check out ${member.name}'s ByteBash profile!`,
-          url
-        })
+          url,
+        });
       } catch (err) {
-        console.error('Error sharing:', err)
+        console.error('Error sharing:', err);
       }
     } else {
       try {
-        await navigator.clipboard.writeText(url)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (err) {
-        console.error('Error copying to clipboard:', err)
+        console.error('Error copying to clipboard:', err);
       }
     }
-  }
+  };
 
   return (
     <Dialog>
@@ -74,13 +74,15 @@ export function ShareCard({ member }: ShareCardProps) {
             <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-700">
               {member.avatar_url ? (
                 <img
-                  src={member.avatar_url || "/placeholder.svg"}
+                  src={member.avatar_url || '/placeholder.svg'}
                   alt={member.name}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-3xl font-bold">{member.name.charAt(0)}</span>
+                  <span className="text-3xl font-bold">
+                    {member.name.charAt(0)}
+                  </span>
                 </div>
               )}
             </div>
@@ -100,11 +102,15 @@ export function ShareCard({ member }: ShareCardProps) {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <div className="text-3xl font-bold text-blue-300">{member.projects || 0}</div>
+              <div className="text-3xl font-bold text-blue-300">
+                {member.projects || 0}
+              </div>
               <div className="text-sm text-gray-400">Projects</div>
             </div>
             <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <div className="text-3xl font-bold text-green-300">{member.certifications || 0}</div>
+              <div className="text-3xl font-bold text-green-300">
+                {member.certifications || 0}
+              </div>
               <div className="text-sm text-gray-400">Certifications</div>
             </div>
           </div>
@@ -116,19 +122,25 @@ export function ShareCard({ member }: ShareCardProps) {
               <div className="grid grid-cols-3 gap-3">
                 {member.streaks.github && (
                   <div className="bg-white bg-opacity-10 rounded-lg p-3">
-                    <div className="text-xl font-bold text-purple-300">{member.streaks.github}</div>
+                    <div className="text-xl font-bold text-purple-300">
+                      {member.streaks.github}
+                    </div>
                     <div className="text-xs text-gray-400">GitHub</div>
                   </div>
                 )}
                 {member.streaks.leetcode && (
                   <div className="bg-white bg-opacity-10 rounded-lg p-3">
-                    <div className="text-xl font-bold text-orange-300">{member.streaks.leetcode}</div>
+                    <div className="text-xl font-bold text-orange-300">
+                      {member.streaks.leetcode}
+                    </div>
                     <div className="text-xs text-gray-400">LeetCode</div>
                   </div>
                 )}
                 {member.streaks.discord && (
                   <div className="bg-white bg-opacity-10 rounded-lg p-3">
-                    <div className="text-xl font-bold text-indigo-300">{member.streaks.discord}</div>
+                    <div className="text-xl font-bold text-indigo-300">
+                      {member.streaks.discord}
+                    </div>
                     <div className="text-xs text-gray-400">Discord</div>
                   </div>
                 )}
@@ -151,5 +163,5 @@ export function ShareCard({ member }: ShareCardProps) {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

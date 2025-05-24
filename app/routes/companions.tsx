@@ -1,33 +1,33 @@
-import { motion } from "framer-motion"
-import { Heart, MessageSquare, UserPlus, Users } from "lucide-react"
-import { Button } from "~/components/ui/button"
+import { motion } from 'framer-motion';
+import { Heart, MessageSquare, UserPlus, Users } from 'lucide-react';
+import { Button } from '~/components/ui/button';
 
 const companions = [
   {
-    name: "Alice Chen",
-    role: "Full Stack Developer",
-    avatar: "/placeholder.svg?height=100&width=100",
-    status: "online",
+    name: 'Alice Chen',
+    role: 'Full Stack Developer',
+    avatar: '/placeholder.svg?height=100&width=100',
+    status: 'online',
     level: 42,
     matchRate: 95,
   },
   {
-    name: "Bob Smith",
-    role: "UI/UX Designer",
-    avatar: "/placeholder.svg?height=100&width=100",
-    status: "offline",
+    name: 'Bob Smith',
+    role: 'UI/UX Designer',
+    avatar: '/placeholder.svg?height=100&width=100',
+    status: 'offline',
     level: 38,
     matchRate: 88,
   },
   {
-    name: "Carol Johnson",
-    role: "Backend Developer",
-    avatar: "/placeholder.svg?height=100&width=100",
-    status: "online",
+    name: 'Carol Johnson',
+    role: 'Backend Developer',
+    avatar: '/placeholder.svg?height=100&width=100',
+    status: 'online',
     level: 45,
     matchRate: 92,
   },
-]
+];
 
 export default function Companions() {
   return (
@@ -54,7 +54,9 @@ export default function Companions() {
           className="grid md:grid-cols-2 gap-6"
         >
           <div className="p-6 rounded-2xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-white/10">
-            <h2 className="text-xl font-semibold mb-4">Your Companion Status</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              Your Companion Status
+            </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="text-gray-400">Active Companions</div>
@@ -103,13 +105,17 @@ export default function Companions() {
               >
                 <div className="absolute top-3 right-3">
                   <div
-                    className={`w-3 h-3 rounded-full ${companion.status === "online" ? "bg-green-500" : "bg-gray-500"}`}
+                    className={`w-3 h-3 rounded-full ${
+                      companion.status === 'online'
+                        ? 'bg-green-500'
+                        : 'bg-gray-500'
+                    }`}
                   />
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/10">
                     <img
-                      src={companion.avatar || "/placeholder.svg"}
+                      src={companion.avatar || '/placeholder.svg'}
                       alt={companion.name}
                       className="w-full h-full object-cover"
                     />
@@ -126,7 +132,9 @@ export default function Companions() {
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <div className="flex items-center justify-between text-sm">
                     <div className="text-gray-400">Match Rate</div>
-                    <div className="font-semibold text-green-400">{companion.matchRate}%</div>
+                    <div className="font-semibold text-green-400">
+                      {companion.matchRate}%
+                    </div>
                   </div>
                   <div className="mt-4">
                     <Button variant="secondary" className="w-full">
@@ -141,6 +149,5 @@ export default function Companions() {
         </motion.div>
       </motion.div>
     </div>
-  )
+  );
 }
-

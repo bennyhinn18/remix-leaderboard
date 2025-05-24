@@ -1,21 +1,33 @@
-"use client"
+'use client';
 
-import { useState, type ReactNode } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { format } from "date-fns"
-import { Button } from "~/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Clock, Calendar, MapPin, User, ChevronDown, ChevronUp } from "lucide-react"
-import type { Event, AgendaItem } from "~/types/events"
+import { useState, type ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
+import { Button } from '~/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
+import { Skeleton } from '~/components/ui/skeleton';
+import {
+  Clock,
+  Calendar,
+  MapPin,
+  User,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import type { Event, AgendaItem } from '~/types/events';
 
 interface AgendaSectionProps {
-  event: Event
-  isVisible: boolean
-  isLoading?: boolean
-  onAgendaItemClick?: (item: AgendaItem) => void
-  customHeader?: ReactNode
-  customBackground?: string
+  event: Event;
+  isVisible: boolean;
+  isLoading?: boolean;
+  onAgendaItemClick?: (item: AgendaItem) => void;
+  customHeader?: ReactNode;
+  customBackground?: string;
 }
 
 export function AgendaSection({
@@ -26,32 +38,32 @@ export function AgendaSection({
   customHeader,
   customBackground,
 }: AgendaSectionProps) {
-  const [expandedItem, setExpandedItem] = useState<number | null>(null)
-  const [selectedItem, setSelectedItem] = useState<AgendaItem | null>(null)
+  const [expandedItem, setExpandedItem] = useState<number | null>(null);
+  const [selectedItem, setSelectedItem] = useState<AgendaItem | null>(null);
 
   const handleItemClick = (item: AgendaItem, index: number) => {
     if (onAgendaItemClick) {
-      onAgendaItemClick(item)
+      onAgendaItemClick(item);
     } else {
-      setSelectedItem(item)
+      setSelectedItem(item);
     }
-    setExpandedItem(expandedItem === index ? null : index)
-  }
+    setExpandedItem(expandedItem === index ? null : index);
+  };
 
   const backgroundStyle = {
     backgroundImage: customBackground
       ? `url('${customBackground}')`
       : `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-01-24%20at%2000.49.00-8Q8hni4GI8mrTfZP6fUya29z2NKYuz.jpeg')`,
-    backgroundPosition: "bottom",
-    backgroundSize: "cover",
-  }
+    backgroundPosition: 'bottom',
+    backgroundSize: 'cover',
+  };
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
+          animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.3 }}
           className="overflow-hidden"
@@ -86,7 +98,9 @@ export function AgendaSection({
                       >
                         <div className="flex items-center justify-end gap-2">
                           <Calendar className="w-4 h-4" />
-                          <span>{format(new Date(event.date), "dd/MM/yy")}</span>
+                          <span>
+                            {format(new Date(event.date), 'dd/MM/yy')}
+                          </span>
                         </div>
                         <div className="flex items-center justify-end gap-2">
                           <Clock className="w-4 h-4" />
@@ -101,7 +115,10 @@ export function AgendaSection({
                   )}
                 </>
               )}
-              <div className="absolute bottom-0 left-0 right-0 h-16 opacity-20" style={backgroundStyle} />
+              <div
+                className="absolute bottom-0 left-0 right-0 h-16 opacity-20"
+                style={backgroundStyle}
+              />
             </div>
 
             {/* Agenda Table */}
@@ -109,9 +126,15 @@ export function AgendaSection({
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="w-1/4 p-4 text-left bg-pink-400 text-white font-bold">TIME</th>
-                    <th className="w-2/5 p-4 text-left bg-purple-400 text-white font-bold">EVENT</th>
-                    <th className="w-1/3 p-4 text-left bg-cyan-400 text-white font-bold">BY</th>
+                    <th className="w-1/4 p-4 text-left bg-pink-400 text-white font-bold">
+                      TIME
+                    </th>
+                    <th className="w-2/5 p-4 text-left bg-purple-400 text-white font-bold">
+                      EVENT
+                    </th>
+                    <th className="w-1/3 p-4 text-left bg-cyan-400 text-white font-bold">
+                      BY
+                    </th>
                     <th className="w-10 p-4 text-left bg-cyan-400 text-white font-bold"></th>
                   </tr>
                 </thead>
@@ -142,13 +165,15 @@ export function AgendaSection({
                           className="border-b border-blue-800 cursor-pointer hover:bg-slate-700/70"
                           onClick={() => handleItemClick(item, index)}
                         >
-                          <td className="p-4 bg-slate-700/50 text-white">{item.time}</td>
+                          <td className="p-4 bg-slate-700/50 text-white">
+                            {item.time}
+                          </td>
                           <td className="p-4 bg-slate-700/50 text-white">
                             <div>{item.title}</div>
                             {expandedItem === index && (
                               <motion.div
                                 initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
+                                animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
                                 className="text-sm text-gray-300 mt-2"
                               >
@@ -159,11 +184,15 @@ export function AgendaSection({
                           <td className="p-4 bg-slate-700/50 text-white">
                             <div className="flex items-center gap-2">
                               <User className="w-4 h-4" />
-                              {item.speaker || "-"}
+                              {item.speaker || '-'}
                             </div>
                           </td>
                           <td className="p-4 bg-slate-700/50 text-white">
-                            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-gray-300 hover:text-white"
+                            >
                               {expandedItem === index ? (
                                 <ChevronUp className="w-4 h-4" />
                               ) : (
@@ -187,7 +216,10 @@ export function AgendaSection({
           </div>
 
           {/* Details Dialog */}
-          <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+          <Dialog
+            open={!!selectedItem}
+            onOpenChange={() => setSelectedItem(null)}
+          >
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{selectedItem?.title}</DialogTitle>
@@ -210,6 +242,5 @@ export function AgendaSection({
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }
-

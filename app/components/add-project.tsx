@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import { useActionData, Form } from "@remix-run/react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useState, useEffect, useRef } from "react"
+import { useActionData, Form } from '@remix-run/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
 import {
   LucideX,
   LucideCheck,
@@ -13,79 +13,79 @@ import {
   LucideGithub,
   LucideFileText,
   LucideBarChart,
-} from "lucide-react"
+} from 'lucide-react';
 
 interface Domain {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface AddProjectProps {
-  domains: Domain[]
-  onClose: () => void
+  domains: Domain[];
+  onClose: () => void;
 }
 
 interface ActionData {
   errors?: {
-    domainId?: string
-    title?: string
-    projectUrl?: string
-    description?: string
-    difficultyLevel?: string
-    memberName?: string
-  }
+    domainId?: string;
+    title?: string;
+    projectUrl?: string;
+    description?: string;
+    difficultyLevel?: string;
+    memberName?: string;
+  };
 }
 
-const DIFFICULTY_LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"]
+const DIFFICULTY_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 
 export default function AddProject({ domains, onClose }: AddProjectProps) {
-  const actionData = useActionData<ActionData>()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [activeField, setActiveField] = useState<string | null>(null)
-  const [typedTitle, setTypedTitle] = useState("")
-  const fullTitle = "Add Your Project"
-  const [cursorVisible, setCursorVisible] = useState(true)
-  const [showScrollIndicator, setShowScrollIndicator] = useState(false)
-  const formContainerRef = useRef<HTMLDivElement>(null)
+  const actionData = useActionData<ActionData>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeField, setActiveField] = useState<string | null>(null);
+  const [typedTitle, setTypedTitle] = useState('');
+  const fullTitle = 'Add Your Project';
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const formContainerRef = useRef<HTMLDivElement>(null);
 
   // Typing animation for title
   useEffect(() => {
     if (typedTitle.length < fullTitle.length) {
       const timeout = setTimeout(() => {
-        setTypedTitle(fullTitle.slice(0, typedTitle.length + 1))
-      }, 50)
-      return () => clearTimeout(timeout)
+        setTypedTitle(fullTitle.slice(0, typedTitle.length + 1));
+      }, 50);
+      return () => clearTimeout(timeout);
     }
-  }, [typedTitle, fullTitle])
+  }, [typedTitle, fullTitle]);
 
   // Blinking cursor effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setCursorVisible((prev) => !prev)
-    }, 530)
-    return () => clearInterval(interval)
-  }, [])
+      setCursorVisible((prev) => !prev);
+    }, 530);
+    return () => clearInterval(interval);
+  }, []);
 
   // Check if form needs scroll indicator
   useEffect(() => {
     const checkScroll = () => {
       if (formContainerRef.current) {
-        const { scrollHeight, clientHeight } = formContainerRef.current
-        setShowScrollIndicator(scrollHeight > clientHeight)
+        const { scrollHeight, clientHeight } = formContainerRef.current;
+        setShowScrollIndicator(scrollHeight > clientHeight);
       }
-    }
+    };
 
-    checkScroll()
-    window.addEventListener("resize", checkScroll)
-    return () => window.removeEventListener("resize", checkScroll)
-  }, [])
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, []);
 
   // Animation variants
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.3 } },
     exit: { opacity: 0, transition: { duration: 0.2 } },
-  }
+  };
 
   const modalVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -94,7 +94,7 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
       y: 0,
       scale: 1,
       transition: {
-        type: "spring",
+        type: 'spring',
         damping: 25,
         stiffness: 300,
       },
@@ -107,7 +107,7 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
         duration: 0.2,
       },
     },
-  }
+  };
 
   const formFieldVariants = {
     hidden: { opacity: 0, x: -10 },
@@ -119,16 +119,16 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
         duration: 0.3,
       },
     }),
-  }
+  };
 
   const scrollToBottom = () => {
     if (formContainerRef.current) {
       formContainerRef.current.scrollTo({
         top: formContainerRef.current.scrollHeight,
-        behavior: "smooth",
-      })
+        behavior: 'smooth',
+      });
     }
-  }
+  };
 
   return (
     <AnimatePresence>
@@ -156,9 +156,9 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                   tabIndex={0}
                   onClick={onClose}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault()
-                      onClose()
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onClose();
                     }
                   }}
                   aria-label="Close"
@@ -178,7 +178,9 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                   {typedTitle}
                   <span
                     className={`ml-1 inline-block h-5 w-2.5 bg-[#00ccff] ${
-                      cursorVisible && typedTitle.length >= fullTitle.length ? "opacity-100" : "opacity-0"
+                      cursorVisible && typedTitle.length >= fullTitle.length
+                        ? 'opacity-100'
+                        : 'opacity-0'
                     }`}
                   ></span>
                 </h1>
@@ -186,7 +188,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
               <motion.button
                 onClick={onClose}
                 className="text-[#00ccff]/70 hover:text-[#00ccff] bg-[#111] h-8 w-8 rounded-md flex items-center justify-center"
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 50, 50, 0.2)" }}
+                whileHover={{
+                  scale: 1.1,
+                  backgroundColor: 'rgba(255, 50, 50, 0.2)',
+                }}
                 whileTap={{ scale: 0.9 }}
                 aria-label="Close"
               >
@@ -195,8 +200,11 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
             </div>
 
             <div className="px-6 pt-4 terminal-text text-sm bg-[#111] text-[#00ccff]/90 rounded-md mx-6">
-              <span className="text-[#00ccff]/70">$</span> ./submit-project.sh --interactive
-              <div className="text-xs text-[#00ccff]/60 mt-1">// Share your coding projects with the community</div>
+              <span className="text-[#00ccff]/70">$</span> ./submit-project.sh
+              --interactive
+              <div className="text-xs text-[#00ccff]/60 mt-1">
+                // Share your coding projects with the community
+              </div>
             </div>
 
             {/* Scroll indicator */}
@@ -217,11 +225,16 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
             ref={formContainerRef}
             className="overflow-y-auto flex-grow px-6 py-4 custom-scrollbar-blue"
             style={{
-              scrollbarWidth: "thin",
-              scrollbarColor: "#00ccff30 transparent",
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#00ccff30 transparent',
             }}
           >
-            <Form method="post" className="space-y-6" onSubmit={() => setIsSubmitting(true)} id="project-form">
+            <Form
+              method="post"
+              className="space-y-6"
+              onSubmit={() => setIsSubmitting(true)}
+              id="project-form"
+            >
               <motion.div
                 variants={formFieldVariants}
                 initial="hidden"
@@ -231,7 +244,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ccff]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="domainId" className="block text-sm font-medium text-[#00ccff] mb-1">
+                  <label
+                    htmlFor="domainId"
+                    className="block text-sm font-medium text-[#00ccff] mb-1"
+                  >
                     SELECT_DOMAIN
                   </label>
                 </div>
@@ -242,25 +258,31 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                     className={`w-full px-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ccff] 
                       focus:outline-none focus:ring-1 transition-all
                       ${
-                        activeField === "domainId"
-                          ? "border-[#00ccff] ring-[#00ccff]/30"
-                          : "border-[#00ccff]/30 hover:border-[#00ccff]/50"
+                        activeField === 'domainId'
+                          ? 'border-[#00ccff] ring-[#00ccff]/30'
+                          : 'border-[#00ccff]/30 hover:border-[#00ccff]/50'
                       }
-                      ${actionData?.errors?.domainId ? "border-[#ff5555]" : ""}`}
+                      ${
+                        actionData?.errors?.domainId ? 'border-[#ff5555]' : ''
+                      }`}
                     defaultValue=""
-                    onFocus={() => setActiveField("domainId")}
+                    onFocus={() => setActiveField('domainId')}
                     onBlur={() => setActiveField(null)}
                   >
                     <option value="" disabled className="text-gray-500">
                       Select a domain
                     </option>
                     {domains.map((domain) => (
-                      <option key={domain.id} value={domain.id} className="bg-[#111] text-[#00ccff]">
+                      <option
+                        key={domain.id}
+                        value={domain.id}
+                        className="bg-[#111] text-[#00ccff]"
+                      >
                         {domain.name}
                       </option>
                     ))}
                   </select>
-                  {activeField === "domainId" && (
+                  {activeField === 'domainId' && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ccff]/70"
                       initial={{ opacity: 0 }}
@@ -279,7 +301,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.domainId}</p>
                     </motion.div>
                   )}
@@ -295,7 +320,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ccff]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="title" className="block text-sm font-medium text-[#00ccff]">
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-[#00ccff]"
+                  >
                     PROJECT_TITLE
                   </label>
                 </div>
@@ -310,16 +338,16 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                     className={`w-full pl-10 pr-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ccff] 
                       focus:outline-none focus:ring-1 transition-all
                       ${
-                        activeField === "title"
-                          ? "border-[#00ccff] ring-[#00ccff]/30"
-                          : "border-[#00ccff]/30 hover:border-[#00ccff]/50"
+                        activeField === 'title'
+                          ? 'border-[#00ccff] ring-[#00ccff]/30'
+                          : 'border-[#00ccff]/30 hover:border-[#00ccff]/50'
                       }
-                      ${actionData?.errors?.title ? "border-[#ff5555]" : ""}`}
+                      ${actionData?.errors?.title ? 'border-[#ff5555]' : ''}`}
                     placeholder="e.g., Portfolio Site"
-                    onFocus={() => setActiveField("title")}
+                    onFocus={() => setActiveField('title')}
                     onBlur={() => setActiveField(null)}
                   />
-                  {activeField === "title" && (
+                  {activeField === 'title' && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ccff]/70"
                       initial={{ opacity: 0 }}
@@ -338,7 +366,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.title}</p>
                     </motion.div>
                   )}
@@ -354,7 +385,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ccff]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="description" className="block text-sm font-medium text-[#00ccff]">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-[#00ccff]"
+                  >
                     PROJECT_DESCRIPTION
                   </label>
                 </div>
@@ -369,16 +403,20 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                     className={`w-full pl-10 pr-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ccff] 
                       focus:outline-none focus:ring-1 transition-all resize-none
                       ${
-                        activeField === "description"
-                          ? "border-[#00ccff] ring-[#00ccff]/30"
-                          : "border-[#00ccff]/30 hover:border-[#00ccff]/50"
+                        activeField === 'description'
+                          ? 'border-[#00ccff] ring-[#00ccff]/30'
+                          : 'border-[#00ccff]/30 hover:border-[#00ccff]/50'
                       }
-                      ${actionData?.errors?.description ? "border-[#ff5555]" : ""}`}
+                      ${
+                        actionData?.errors?.description
+                          ? 'border-[#ff5555]'
+                          : ''
+                      }`}
                     placeholder="Describe your project in detail..."
-                    onFocus={() => setActiveField("description")}
+                    onFocus={() => setActiveField('description')}
                     onBlur={() => setActiveField(null)}
                   />
-                  {activeField === "description" && (
+                  {activeField === 'description' && (
                     <motion.div
                       className="absolute right-3 top-4 text-[#00ccff]/70"
                       initial={{ opacity: 0 }}
@@ -397,7 +435,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.description}</p>
                     </motion.div>
                   )}
@@ -413,7 +454,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ccff]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="difficultyLevel" className="block text-sm font-medium text-[#00ccff]">
+                  <label
+                    htmlFor="difficultyLevel"
+                    className="block text-sm font-medium text-[#00ccff]"
+                  >
                     DIFFICULTY_LEVEL
                   </label>
                 </div>
@@ -427,25 +471,33 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                     className={`w-full pl-10 pr-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ccff] 
                       focus:outline-none focus:ring-1 transition-all
                       ${
-                        activeField === "difficultyLevel"
-                          ? "border-[#00ccff] ring-[#00ccff]/30"
-                          : "border-[#00ccff]/30 hover:border-[#00ccff]/50"
+                        activeField === 'difficultyLevel'
+                          ? 'border-[#00ccff] ring-[#00ccff]/30'
+                          : 'border-[#00ccff]/30 hover:border-[#00ccff]/50'
                       }
-                      ${actionData?.errors?.difficultyLevel ? "border-[#ff5555]" : ""}`}
+                      ${
+                        actionData?.errors?.difficultyLevel
+                          ? 'border-[#ff5555]'
+                          : ''
+                      }`}
                     defaultValue=""
-                    onFocus={() => setActiveField("difficultyLevel")}
+                    onFocus={() => setActiveField('difficultyLevel')}
                     onBlur={() => setActiveField(null)}
                   >
                     <option value="" disabled className="text-gray-500">
                       Select difficulty level
                     </option>
                     {DIFFICULTY_LEVELS.map((level) => (
-                      <option key={level} value={level} className="bg-[#111] text-[#00ccff]">
+                      <option
+                        key={level}
+                        value={level}
+                        className="bg-[#111] text-[#00ccff]"
+                      >
                         {level}
                       </option>
                     ))}
                   </select>
-                  {activeField === "difficultyLevel" && (
+                  {activeField === 'difficultyLevel' && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ccff]/70"
                       initial={{ opacity: 0 }}
@@ -464,7 +516,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.difficultyLevel}</p>
                     </motion.div>
                   )}
@@ -480,7 +535,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
               >
                 <div className="flex items-center mb-1">
                   <span className="text-[#00ccff]/70 mr-2 text-sm">$</span>
-                  <label htmlFor="projectUrl" className="block text-sm font-medium text-[#00ccff]">
+                  <label
+                    htmlFor="projectUrl"
+                    className="block text-sm font-medium text-[#00ccff]"
+                  >
                     PROJECT_URL
                   </label>
                 </div>
@@ -495,16 +553,18 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                     className={`w-full pl-10 pr-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ccff] 
                       focus:outline-none focus:ring-1 transition-all
                       ${
-                        activeField === "projectUrl"
-                          ? "border-[#00ccff] ring-[#00ccff]/30"
-                          : "border-[#00ccff]/30 hover:border-[#00ccff]/50"
+                        activeField === 'projectUrl'
+                          ? 'border-[#00ccff] ring-[#00ccff]/30'
+                          : 'border-[#00ccff]/30 hover:border-[#00ccff]/50'
                       }
-                      ${actionData?.errors?.projectUrl ? "border-[#ff5555]" : ""}`}
+                      ${
+                        actionData?.errors?.projectUrl ? 'border-[#ff5555]' : ''
+                      }`}
                     placeholder="https://github.com/yourusername/project"
-                    onFocus={() => setActiveField("projectUrl")}
+                    onFocus={() => setActiveField('projectUrl')}
                     onBlur={() => setActiveField(null)}
                   />
-                  {activeField === "projectUrl" && (
+                  {activeField === 'projectUrl' && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ccff]/70"
                       initial={{ opacity: 0 }}
@@ -523,7 +583,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                      <LucideAlertCircle
+                        size={16}
+                        className="mt-0.5 flex-shrink-0"
+                      />
                       <p>{actionData.errors.projectUrl}</p>
                     </motion.div>
                   )}
@@ -539,13 +602,18 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
               >
                 <div className="flex items-center mb-4">
                   <span className="text-[#00ccff]/70 mr-2 text-sm">$</span>
-                  <h2 className="text-lg font-medium text-[#00ccff]">USER_INFO</h2>
+                  <h2 className="text-lg font-medium text-[#00ccff]">
+                    USER_INFO
+                  </h2>
                 </div>
 
                 <div className="form-field">
                   <div className="flex items-center mb-1">
                     <span className="text-[#00ccff]/70 mr-2 text-sm">$</span>
-                    <label htmlFor="memberName" className="block text-sm font-medium text-[#00ccff]">
+                    <label
+                      htmlFor="memberName"
+                      className="block text-sm font-medium text-[#00ccff]"
+                    >
                       YOUR_NAME
                     </label>
                   </div>
@@ -557,16 +625,20 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                       className={`w-full px-4 py-3 border rounded-md shadow-sm bg-[#111] text-[#00ccff] 
                         focus:outline-none focus:ring-1 transition-all
                         ${
-                          activeField === "memberName"
-                            ? "border-[#00ccff] ring-[#00ccff]/30"
-                            : "border-[#00ccff]/30 hover:border-[#00ccff]/50"
+                          activeField === 'memberName'
+                            ? 'border-[#00ccff] ring-[#00ccff]/30'
+                            : 'border-[#00ccff]/30 hover:border-[#00ccff]/50'
                         }
-                        ${actionData?.errors?.memberName ? "border-[#ff5555]" : ""}`}
+                        ${
+                          actionData?.errors?.memberName
+                            ? 'border-[#ff5555]'
+                            : ''
+                        }`}
                       placeholder="e.g., Michal Nithesh"
-                      onFocus={() => setActiveField("memberName")}
+                      onFocus={() => setActiveField('memberName')}
                       onBlur={() => setActiveField(null)}
                     />
-                    {activeField === "memberName" && (
+                    {activeField === 'memberName' && (
                       <motion.div
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ccff]/70"
                         initial={{ opacity: 0 }}
@@ -585,7 +657,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                       >
-                        <LucideAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                        <LucideAlertCircle
+                          size={16}
+                          className="mt-0.5 flex-shrink-0"
+                        />
                         <p>{actionData.errors.memberName}</p>
                       </motion.div>
                     )}
@@ -606,7 +681,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                 onClick={onClose}
                 className="px-5 py-2.5 border border-[#00ccff]/50 rounded-md text-[#00ccff] bg-[#111] 
                   hover:bg-[#1a1a1a] hover:border-[#00ccff] transition-all flex items-center gap-2"
-                whileHover={{ scale: 1.02, boxShadow: "0 0 8px rgba(0, 204, 255, 0.3)" }}
+                whileHover={{
+                  scale: 1.02,
+                  boxShadow: '0 0 8px rgba(0, 204, 255, 0.3)',
+                }}
                 whileTap={{ scale: 0.98 }}
               >
                 <LucideX size={16} />
@@ -619,7 +697,10 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                 className="px-6 py-2.5 bg-[#00ccff] text-black rounded-md hover:bg-[#00a3cc] 
                   disabled:opacity-50 disabled:hover:bg-[#00ccff] transition-all flex items-center gap-2 font-medium"
                 disabled={isSubmitting}
-                whileHover={{ scale: 1.02, boxShadow: "0 0 12px rgba(0, 204, 255, 0.5)" }}
+                whileHover={{
+                  scale: 1.02,
+                  boxShadow: '0 0 12px rgba(0, 204, 255, 0.5)',
+                }}
                 whileTap={{ scale: 0.98 }}
                 onClick={scrollToBottom}
               >
@@ -646,5 +727,5 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
         </motion.div>
       </motion.div>
     </AnimatePresence>
-  )
+  );
 }
