@@ -82,10 +82,10 @@ export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState<
     | 'overall'
     | 'bashclan'
-    | 'github'
     | 'leetcode'
-    | 'duolingo'
+    | 'github'
     | 'discord'
+    | 'duolingo'
     | 'books'
   >('overall');
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,10 +195,10 @@ export default function Leaderboard() {
           ...member,
           tier: getTier(member.bash_points),
           tierIcon: getTierIcon(getTier(member.bash_points)),
-          githubStreak: stats.github_streak || 0,
           leetcodeStreak: stats.leetcode_streak || 0,
-          duolingoStreak: stats.duolingo_streak || 0,
+          githubStreak: stats.github_streak || 0,
           discordPoints: stats.discord_points || 0,
+          duolingoStreak: stats.duolingo_streak || 0,
           bookRead: stats.books_read || 0,
         };
       });
@@ -253,10 +253,10 @@ export default function Leaderboard() {
     const savedTab = localStorage.getItem('activeTab') as
       | 'overall'
       | 'bashclan'
-      | 'github'
       | 'leetcode'
-      | 'duolingo'
+      | 'github'
       | 'discord'
+      | 'duolingo'
       | 'books'
       | null;
     if (savedTab) {
@@ -370,10 +370,10 @@ export default function Leaderboard() {
                 {[
                   'overall',
                   'bashclan',
-                  'github',
-                  'duolingo',
                   'leetcode',
+                  'github',
                   'discord',
+                  'duolingo',
                   'books',
                 ].map((tab) => (
                   <motion.button
@@ -392,10 +392,10 @@ export default function Leaderboard() {
                   >
                     {tab === 'overall' && <Trophy className="w-4 h-4" />}
                     {tab === 'bashclan' && <Building className="w-4 h-4" />}
-                    {tab === 'github' && <Github className="w-4 h-4" />}
                     {tab === 'leetcode' && <Code className="w-4 h-4" />}
-                    {tab === 'duolingo' && <Feather className="w-4 h-4" />}
+                    {tab === 'github' && <Github className="w-4 h-4" />}
                     {tab === 'discord' && <MessageCircle className="w-4 h-4" />}
+                    {tab === 'duolingo' && <Feather className="w-4 h-4" />}
                     {tab === 'books' && <Book className="w-4 h-4" />}
                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </motion.button>

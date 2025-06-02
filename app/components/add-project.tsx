@@ -634,7 +634,7 @@ export default function AddProject({ domains, onClose }: AddProjectProps) {
                             ? 'border-[#ff5555]'
                             : ''
                         }`}
-                      placeholder="e.g., Michal Nithesh"
+                      placeholder="Full Name"
                       onFocus={() => setActiveField('memberName')}
                       onBlur={() => setActiveField(null)}
                     />
