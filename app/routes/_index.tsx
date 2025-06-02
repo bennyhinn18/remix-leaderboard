@@ -34,9 +34,9 @@ import { Badge } from '~/components/ui/badge';
 import { MainNav } from '~/components/main-nav';
 import { useState, useEffect, Suspense } from 'react';
 import WhatsNewPanel from '~/components/WhatsNewPanel';
-import LeetCodeConnect from '~/components/leetcode-connect';
 import { NotificationManager } from '~/components/notification-manager';
 import UpdateClanScore from '~/components/update-clan-score';
+import ProfileConnections from '~/components/profile-connections';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,7 @@ import {
 } from '~/components/ui/dialog';
 
 import { getUserNotifications } from '~/services/notifications.server';
+
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request);
@@ -423,11 +424,8 @@ export default function Home() {
             </div>
           </motion.div>
           {/* LeetCode Connect Component */}
-          <LeetCodeConnect
-            hasLeetCodeUsername={!!member?.leetcode_username}
-            username={member?.leetcode_username || ''}
-            memberId={member?.id}
-          />
+          <ProfileConnections member={member} />
+
           {/* What's New Section */}
           <WhatsNewPanel />
           {/* Stats Overview Grid */}
