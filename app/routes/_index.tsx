@@ -759,7 +759,7 @@ export default function Home() {
                       <span>Analytics</span>
                     </Link>
                     <Link
-                      to="/add-members"
+                      to="/add-member"
                       className="bg-white/10 rounded-lg p-3 flex flex-col items-center text-center hover:bg-white/20 transition-colors"
                     >
                       <Plus className="w-8 h-8 text-purple-400 mb-2" />
