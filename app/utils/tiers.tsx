@@ -27,17 +27,17 @@ const TIER_THRESHOLDS = {
 };
 
 type TierType =
-  | 'diamond'
-  | 'obsidian'
-  | 'pearl'
-  | 'amethyst'
-  | 'emerald'
-  | 'ruby'
-  | 'sapphire'
-  | 'gold'
-  | 'silver'
-  | 'bronze'
-  | 'platinum';
+  | 'Diamond'
+  | 'Obsidian'
+  | 'Pearl'
+  | 'Amethyst'
+  | 'Emerald'
+  | 'Ruby'
+  | 'Sapphire'
+  | 'Gold'
+  | 'Silver'
+  | 'Bronze'
+  | 'Platinum';
 
 interface TierOptions {
   uppercase?: boolean;
@@ -52,16 +52,16 @@ interface TierOptions {
 export function getTier(points: number, options: TierOptions = {}): string {
   let tier: TierType;
 
-  if (points >= TIER_THRESHOLDS.diamond) tier = 'diamond';
-  else if (points >= TIER_THRESHOLDS.obsidian) tier = 'obsidian';
-  else if (points >= TIER_THRESHOLDS.pearl) tier = 'pearl';
-  else if (points >= TIER_THRESHOLDS.amethyst) tier = 'amethyst';
-  else if (points >= TIER_THRESHOLDS.emerald) tier = 'emerald';
-  else if (points >= TIER_THRESHOLDS.ruby) tier = 'ruby';
-  else if (points >= TIER_THRESHOLDS.sapphire) tier = 'sapphire';
-  else if (points >= TIER_THRESHOLDS.gold) tier = 'gold';
-  else if (points >= TIER_THRESHOLDS.silver) tier = 'silver';
-  else tier = 'bronze';
+  if (points >= TIER_THRESHOLDS.diamond) tier = 'Diamond';
+  else if (points >= TIER_THRESHOLDS.obsidian) tier = 'Obsidian';
+  else if (points >= TIER_THRESHOLDS.pearl) tier = 'Pearl';
+  else if (points >= TIER_THRESHOLDS.amethyst) tier = 'Amethyst';
+  else if (points >= TIER_THRESHOLDS.emerald) tier = 'Emerald';
+  else if (points >= TIER_THRESHOLDS.ruby) tier = 'Ruby';
+  else if (points >= TIER_THRESHOLDS.sapphire) tier = 'Sapphire';
+  else if (points >= TIER_THRESHOLDS.gold) tier = 'Gold';
+  else if (points >= TIER_THRESHOLDS.silver) tier = 'Silver';
+  else tier = 'Bronze';
 
   // Return with proper casing based on options
   return options.uppercase

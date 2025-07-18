@@ -153,7 +153,7 @@ export function ProfileInfo({
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200 }}
-              className="text-2xl sm:text-4xl font-bold text-white"
+              className="text-2xl sm:text-4xl font-bold text-white mb-1 sm:mb-2 tracking-tight"
             >
               {profile.name}
             </motion.h1>
@@ -166,13 +166,13 @@ export function ProfileInfo({
             >
               <Badge
                 variant="secondary"
-                className="bg-[#4dc4f9]/10  text-[#4dc4f9] hover:bg-[#4dc4f9]/20"
+                className="bg-[#4dc4f9]/10  text-[#4dc4f9] hover:bg-[#4dc4f9]/20 rounded-[4px]"
               >
                 {profile.title}
               </Badge>
               <Badge
                 variant="secondary"
-                className={getTierColorScheme(profile.basherLevel)}
+                className={`${getTierColorScheme(profile.basherLevel)} rounded-[4px]`}
               >
                 <div className="flex items-center gap-2">
                   {profile.tierIcon} {/* Display the tier icon */}

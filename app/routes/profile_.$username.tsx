@@ -86,11 +86,30 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // Function to fetch Duolingo streak data - defer this
   const fetchDuolingoStreak = async () => {
+    if (!member.duolingo_username) return 0;
+    
     try {
       const duolingoResponse = await fetch(
-        `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`
+        `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`,
+        {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
+          },
+        }
       );
-      const duolingoData = await duolingoResponse.json();
+      
+      if (!duolingoResponse.ok) {
+        console.warn(`Duolingo API returned ${duolingoResponse.status} for ${member.duolingo_username}`);
+        return 0;
+      }
+      
+      const responseText = await duolingoResponse.text();
+      if (!responseText.trim()) {
+        console.warn(`Empty response from Duolingo API for ${member.duolingo_username}`);
+        return 0;
+      }
+      
+      const duolingoData = JSON.parse(responseText);
       const userData = duolingoData.users?.[0] || {};
       return Math.max(
         userData.streak ?? 0,
@@ -105,11 +124,30 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // Function to fetch GitHub contributions - defer this
   const fetchGithubData = async () => {
+    if (!member.github_username) return [];
+    
     try {
       const githubResponse = await fetch(
-        `https://api.github.com/users/${member.github_username}/events/public`
+        `https://api.github.com/users/${member.github_username}/events/public`,
+        {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
+          },
+        }
       );
-      const githubEvents = await githubResponse.json();
+
+      if (!githubResponse.ok) {
+        console.warn(`GitHub API returned ${githubResponse.status} for ${member.github_username}`);
+        return [];
+      }
+
+      const responseText = await githubResponse.text();
+      if (!responseText.trim()) {
+        console.warn(`Empty response from GitHub API for ${member.github_username}`);
+        return [];
+      }
+
+      const githubEvents = JSON.parse(responseText);
 
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -131,16 +169,34 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   //Fetch LeetCode data
   const fetchLeetCodeData = async () => {
+    if (!member.leetcode_username) return 0;
+    
     try {
       const leetCodeResponse = await fetch(
-        `https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`
+        `https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`,
+        {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
+          },
+        }
       );
 
-      const leetCodeData = await leetCodeResponse.json();
+      if (!leetCodeResponse.ok) {
+        console.warn(`LeetCode API returned ${leetCodeResponse.status} for ${member.leetcode_username}`);
+        return 0;
+      }
+
+      const responseText = await leetCodeResponse.text();
+      if (!responseText.trim()) {
+        console.warn(`Empty response from LeetCode API for ${member.leetcode_username}`);
+        return 0;
+      }
+
+      const leetCodeData = JSON.parse(responseText);
       return leetCodeData?.totalSolved || 0;
     } catch (error) {
       console.error('Error fetching LeetCode data:', error);
-      return null;
+      return 0;
     }
   };
 

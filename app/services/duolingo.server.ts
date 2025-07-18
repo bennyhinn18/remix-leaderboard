@@ -11,9 +11,18 @@ export async function fetchDuolingoStats(username: string) {
       }
     );
 
-    if (!response.ok) return { streak: 0 };
+    if (!response.ok) {
+      console.warn(`Duolingo API returned ${response.status} for ${username}`);
+      return { streak: 0 };
+    }
 
-    const data = await response.json();
+    const responseText = await response.text();
+    if (!responseText.trim()) {
+      console.warn(`Empty response from Duolingo API for ${username}`);
+      return { streak: 0 };
+    }
+
+    const data = JSON.parse(responseText);
     const userData = data.users?.[0] || {};
 
     const streak = Math.max(
