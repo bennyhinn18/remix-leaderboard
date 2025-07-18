@@ -29,11 +29,6 @@ export default function ProfileConnections({ member }: ProfileConnectionsProps) 
           memberId={member?.id}
         />
         
-        <RollNumberUpdate
-          hasRollNumber={!!member?.roll_number}
-          rollNumber={member?.roll_number || ''}
-          memberId={member?.id}
-        />
       </div>
     </motion.div>
   );
