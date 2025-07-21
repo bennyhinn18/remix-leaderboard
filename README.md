@@ -102,14 +102,17 @@ docs/                  # Documentation
 
 ### Database Management
 
-This project uses Supabase for the database. We have comprehensive tools for managing schema changes:
+This project uses Supabase for the database. We have comprehensive tools for managing schema changes, including **remote database sync**.
 
 ```bash
 # Check for schema differences
 npm run db:check
 
-# Create migration for changes made in Supabase
+# Create migration for changes made in Supabase Dashboard
 npm run db:create-migration "describe_your_changes"
+
+# Check Supabase CLI setup for remote sync
+npm run db:remote
 
 # Generate TypeScript types from database
 npm run types:generate
@@ -118,7 +121,9 @@ npm run types:generate
 npm run db:sync
 ```
 
-**Important**: If you make changes directly in Supabase's SQL editor, follow our [Database Workflow Guide](docs/database-workflow.md) to sync them with the codebase.
+**🌐 Remote Database Sync**: If you make changes directly in Supabase's SQL editor, follow our [Supabase Remote Sync Guide](docs/supabase-remote-sync.md) to sync them with the codebase.
+
+**📋 Database Workflow**: For complete database change management, see our [Database Workflow Guide](docs/database-workflow.md).
 
 ### Available Scripts
 

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { BadgeCheck, ChevronRight, XCircle, CheckCircle, UserRound } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { safeFetcherData } from '~/types/fetcher';
 import {
   Dialog,
   DialogContent,
@@ -55,8 +56,10 @@ export default function RollNumberUpdate({
     if (fetcher.data && fetcher.state === 'idle') {
       setIsSubmitting(false);
       
-      if (fetcher.data.success) {
-        setSuccessMessage(fetcher.data.message || 'Roll number successfully updated!');
+      const fetcherData = safeFetcherData(fetcher.data);
+      
+      if (fetcherData.success) {
+        setSuccessMessage(fetcherData.message || 'Roll number successfully updated!');
         
         // Close dialog after success
         setTimeout(() => {
@@ -65,8 +68,8 @@ export default function RollNumberUpdate({
           // Force a page refresh to update the UI with new roll number
           window.location.reload();
         }, 2000);
-      } else if (fetcher.data.error) {
-        setValidationError(fetcher.data.error);
+      } else if (fetcherData.error) {
+        setValidationError(fetcherData.error);
       }
     }
   }, [fetcher.data, fetcher.state]);

@@ -1,5 +1,5 @@
 import { createCookieSessionStorage, redirect } from '@remix-run/node';
-import { supabase } from './supabase.server';
+import { createServerSupabase } from './supabase.server';
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
@@ -14,6 +14,7 @@ export const sessionStorage = createCookieSessionStorage({
 export async function name() {}
 
 export async function createUserSession(
+  request: Request,
   accessToken: string,
   refreshToken: string,
   redirectTo: string
@@ -22,6 +23,9 @@ export async function createUserSession(
   session.set('accessToken', accessToken);
   session.set('refreshToken', refreshToken);
 
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  
   await supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken,
@@ -33,8 +37,10 @@ export async function createUserSession(
     },
   });
 }
-
 export async function getUserSession(request: Request) {
+  const response = new Response();
+  const supabase = createServerSupabase(request, response);
+  
   const { data } = await supabase.auth.getSession();
   console.log('session', data.session?.access_token);
   const accessToken = data.session?.access_token;
@@ -50,6 +56,7 @@ export async function getUserSession(request: Request) {
 
   return user;
 }
+
 
 export async function requireUser(request: Request) {
   const user = await getUserSession(request);

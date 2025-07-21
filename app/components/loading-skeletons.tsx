@@ -48,7 +48,7 @@ export function EventSkeleton() {
   );
 }
 
-export function LoadingSkeleton({ type, count = 3 }) {
+export function LoadingSkeleton({ type, count = 3 }: { type: string; count?: number }) {
   const Component =
     type === 'activity'
       ? ActivitySkeleton

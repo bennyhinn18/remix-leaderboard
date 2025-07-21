@@ -42,7 +42,7 @@ export function SocialFooter({ socials }: SocialFooterProps) {
       className="flex items-center justify-between p-4 border-t border-[#4dc4f9]/10"
     >
       <div className="flex gap-2">
-        {socials.map((social, index) => {
+        {socials?.map((social: any, index: number) => {
           const Icon = socialIcons[social.platform as keyof typeof socialIcons];
           return (
             <motion.div

@@ -19,6 +19,7 @@
     "db:sync": "./scripts/db-sync.sh",
     "db:create-migration": "./scripts/db-sync.sh create",
     "db:check": "./scripts/db-sync.sh check",
+    "db:remote": "./scripts/db-sync.sh remote",
     "db:dump": "./scripts/db-sync.sh dump",
     "db:docs": "./scripts/db-sync.sh docs",
     "types:generate": "./scripts/types-generator.sh generate",

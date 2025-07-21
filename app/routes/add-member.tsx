@@ -146,7 +146,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 // Particle component for background animation
-const Particle = ({ index }) => {
+const Particle = ({ index }: { index: number }) => {
   const randomSize = Math.floor(Math.random() * 8) + 4
   const randomDelay = Math.random() * 5
   const randomDuration = Math.random() * 10 + 10
@@ -218,7 +218,7 @@ export default function AddMember() {
     },
   }
 
-  const handlePrimaryDomainChange = (e) => {
+  const handlePrimaryDomainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     if (e.target.checked) {
       setSelectedPrimaryDomains([...selectedPrimaryDomains, value])
@@ -227,7 +227,7 @@ export default function AddMember() {
     }
   }
 
-  const handleSecondaryDomainChange = (e) => {
+  const handleSecondaryDomainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     if (e.target.checked) {
       setSelectedSecondaryDomains([...selectedSecondaryDomains, value])

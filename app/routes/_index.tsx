@@ -467,66 +467,6 @@ export default function Home() {
             </div>
           </motion.div>
 
-
-          {/* Project Showcase Event Announcement */}
-            {(member?.title?.toLowerCase().includes('basher') ||
-            member?.title?.toLowerCase().includes('organiser') ||
-            member?.title?.toLowerCase().includes('captain bash')) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-lg"
-            >
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-3 rounded-full">
-                <Trophy className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                  🎉 Project Showcase 1
-                </h3>
-                <p className="text-gray-300 mt-1">
-                  Exclusive presentation opportunity for Bashers! Only 25 slots available.
-                </p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
-                  <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  July 19, 2025
-                  </div>
-                  <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  25 Slots Max
-                  </div>
-                  <div className="flex items-center gap-1">
-                  <Award className="w-4 h-4" />
-                  Random Selection
-                  </div>
-                </div>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button asChild className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold">
-                <Link to="/events/project-showcase">
-                  🎲 Secure Your Slot
-                </Link>
-                </Button>
-                <Button asChild variant="outline" className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10">
-                <Link to="https://bytebashblitz.org/events/project-showcase" target="_blank" rel="noopener noreferrer">
-                  📋 View Details
-                </Link>
-                </Button>
-              </div>
-              </div>
-              <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <p className="text-yellow-200 text-sm flex items-center gap-2">
-                <span className="text-yellow-400">⚡</span>
-                <strong>Limited Time:</strong> Slot allocation is random and first-come-first-served. Present your best project to the community!
-              </p>
-              </div>
-            </motion.div>
-            )}
           {/* LeetCode Connect Component */}
           <ProfileConnections member={member} />
           {/* What's New Section */}
@@ -803,29 +743,6 @@ export default function Home() {
                   >
                     View all
                     <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-
-                {/* Featured Project Showcase Event */}
-                <div className="mb-4 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-2 rounded-full">
-                      <Trophy className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-yellow-400">Project Showcase 1</h4>
-                      <p className="text-xs text-gray-400">July 19, 2025 • Innovation Center</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-300 mb-3">
-                    Exclusive presentation event for Bashers. 25 slots available through random allocation.
-                  </p>
-                  <Link 
-                    to="/events/project-showcase"
-                    className="text-xs text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
-                  >
-                    Learn more & register
-                    <ChevronRight className="w-3 h-3" />
                   </Link>
                 </div>
 

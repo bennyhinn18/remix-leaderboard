@@ -32,4 +32,10 @@ export interface BasherProfile {
   testimonial: string;
   gpa: number;
   attendance: number;
+  socials?: Array<{
+    platform: string;
+    url: string;
+    username?: string;
+  }>;
+  tierIcon?: string;
 }

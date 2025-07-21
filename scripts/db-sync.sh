@@ -91,7 +91,9 @@ dump_current_schema() {
     
     local output_file="docs/current-schema-$(date +%Y%m%d).sql"
     
-    print_info "To get your current schema:"
+    print_info "🌐 To sync with your REMOTE Supabase database:"
+    echo ""
+    echo "📋 Method 1: Using Supabase Dashboard"
     echo "1. Go to Supabase Dashboard > SQL Editor"
     echo "2. Run this query to get your table definitions:"
     echo ""
@@ -103,10 +105,26 @@ dump_current_schema() {
     echo "3. Copy the results and save them to: ${output_file}"
     echo ""
     
-    print_info "For complete schema dump:"
-    echo "1. Use Supabase CLI: supabase db dump --schema-only"
-    echo "2. Or export from your database management tool"
-    echo "3. Save the output to compare with your migration files"
+    print_info "🚀 Method 2: Using Supabase CLI (Recommended)"
+    echo "1. Link to your remote project:"
+    echo "   supabase link --project-ref YOUR_PROJECT_REF"
+    echo ""
+    echo "2. Pull remote schema changes:"
+    echo "   supabase db pull"
+    echo ""
+    echo "3. Generate migration from remote changes:"
+    echo "   supabase db diff --schema public > new_migration.sql"
+    echo ""
+    
+    print_info "🔍 Method 3: Compare Remote vs Local"
+    echo "1. Dump your remote schema:"
+    echo "   supabase db dump --schema-only --linked > remote-schema.sql"
+    echo ""
+    echo "2. Compare with your local migrations"
+    echo "3. Create migration files for any differences"
+    echo ""
+    
+    print_warning "⚠️  Remember: Changes made in Supabase Dashboard affect your LIVE database!"
 }
 
 check_migration_status() {
@@ -139,41 +157,96 @@ check_migration_status() {
 }
 
 sync_workflow() {
-    print_step "Database Change Workflow"
+    print_step "🌐 Supabase Remote Database Sync Workflow"
     echo ""
     
-    print_info "When you make changes in Supabase SQL Editor:"
+    print_info "🔄 When you make changes in Supabase Dashboard (REMOTE):"
     echo ""
-    echo "1. 📝 Document the changes:"
-    echo "   - What tables/columns were modified"
-    echo "   - What indexes were added/removed"
-    echo "   - What constraints were changed"
+    echo "1. 📝 Document what you changed:"
+    echo "   - Which tables/columns were modified"
+    echo "   - What indexes were added/removed" 
+    echo "   - What constraints/policies were changed"
+    echo "   - Copy the exact SQL you ran"
     echo ""
-    echo "2. 🔄 Create a migration file:"
-    echo "   ./scripts/db-sync.sh create 'description_of_changes'"
+    echo "2. 🔄 Create a local migration file:"
+    echo "   ./scripts/db-sync.sh create 'description_of_remote_changes'"
     echo ""
-    echo "3. 📋 Copy your SQL changes to the migration file"
+    echo "3. 📋 Add your SQL to the migration file:"
+    echo "   - Paste the exact SQL you ran in Supabase"
+    echo "   - Add comments explaining the purpose"
+    echo "   - Include any rollback instructions"
     echo ""
-    echo "4. 🧪 Test in development:"
-    echo "   - Apply migration to a fresh database"
+    echo "4. 🔍 Verify with Supabase CLI (optional but recommended):"
+    echo "   supabase db pull  # Pull remote changes"
+    echo "   supabase db diff  # Compare local vs remote"
+    echo ""
+    echo "5. 🧪 Test the workflow:"
+    echo "   - Apply migration to a test database"
     echo "   - Ensure application still works"
-    echo "   - Update TypeScript types if needed"
+    echo "   - Update TypeScript types: npm run types:generate"
     echo ""
-    echo "5. 📚 Update documentation:"
-    echo "   - Update database schema docs"
-    echo "   - Update API documentation if needed"
-    echo "   - Update component documentation if data structure changed"
+    echo "6. 📚 Update documentation:"
+    echo "   ./scripts/db-sync.sh docs  # Update schema documentation"
     echo ""
-    echo "6. 🔒 Commit to version control:"
-    echo "   git add supabase/migrations/new_migration.sql"
-    echo "   git commit -m 'feat: add new database migration for XYZ'"
+    echo "7. 🔒 Commit to version control:"
+    echo "   git add supabase/migrations/ docs/ app/types/"
+    echo "   git commit -m 'feat(db): sync remote changes - [description]'"
     echo ""
     
-    print_warning "⚠️  Important Notes:"
-    echo "- Never edit existing migration files after they've been applied"
-    echo "- Always create new migration files for changes"
-    echo "- Test migrations thoroughly before production"
-    echo "- Keep migrations reversible when possible"
+    print_warning "🚨 IMPORTANT for Remote Database:"
+    echo "❌ Changes in Supabase Dashboard are applied IMMEDIATELY to production"
+    echo "❌ There's no 'undo' button for schema changes"
+    echo "❌ Always test schema changes in a staging environment first"
+    echo ""
+    print_success "✅ Best Practices for Remote Changes:"
+    echo "✅ Use Supabase CLI for safer schema management"
+    echo "✅ Create staging/development projects for testing"
+    echo "✅ Always backup before major schema changes"
+    echo "✅ Coordinate with team before making changes"
+    echo "✅ Document every change immediately"
+}
+
+check_supabase_setup() {
+    print_step "Checking Supabase CLI setup for remote sync..."
+    
+    # Check if Supabase CLI is installed
+    if ! command -v supabase &> /dev/null; then
+        print_warning "Supabase CLI not found"
+        echo ""
+        print_info "To install Supabase CLI:"
+        echo "npm install -g supabase"
+        echo ""
+        print_info "Or using other methods:"
+        echo "https://supabase.com/docs/guides/cli/getting-started"
+        return 1
+    fi
+    
+    print_success "Supabase CLI is installed"
+    
+    # Check if project is linked
+    if [ -f "supabase/config.toml" ]; then
+        local project_ref=$(grep -o 'project_id = "[^"]*"' supabase/config.toml | cut -d'"' -f2)
+        if [ -n "$project_ref" ]; then
+            print_success "Project linked to: $project_ref"
+        else
+            print_warning "Project configuration found but no project_id"
+        fi
+    else
+        print_warning "Project not linked to remote Supabase"
+        echo ""
+        print_info "To link your project:"
+        echo "supabase link --project-ref YOUR_PROJECT_REF"
+        echo ""
+        print_info "Find your project ref in Supabase Dashboard > Settings > General"
+    fi
+    
+    echo ""
+    print_info "Useful Supabase CLI commands for remote sync:"
+    echo "📥 supabase db pull          # Pull remote schema changes"
+    echo "📤 supabase db push          # Push local migrations to remote"
+    echo "🔍 supabase db diff          # Compare local vs remote"
+    echo "📋 supabase migration list   # List applied migrations"
+    echo "💾 supabase db dump          # Backup remote database"
 }
 
 create_schema_documentation() {
@@ -374,6 +447,7 @@ show_help() {
     echo "Commands:"
     echo "  create <description>    Create a new migration file"
     echo "  check                   Check current migration status"
+    echo "  remote                  Check Supabase CLI setup for remote sync"
     echo "  dump                    Show how to dump current schema"
     echo "  workflow                Show the complete sync workflow"
     echo "  docs                    Create schema documentation template"
@@ -382,7 +456,11 @@ show_help() {
     echo "Examples:"
     echo "  $0 create 'add_user_preferences_table'"
     echo "  $0 check"
+    echo "  $0 remote"
     echo "  $0 workflow"
+    echo ""
+    echo "🌐 For remote Supabase database sync, see:"
+    echo "   docs/supabase-remote-sync.md"
 }
 
 # Main script logic
@@ -400,6 +478,9 @@ main() {
             ;;
         "check")
             check_migration_status
+            ;;
+        "remote")
+            check_supabase_setup
             ;;
         "dump")
             dump_current_schema

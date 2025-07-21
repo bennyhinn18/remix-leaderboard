@@ -1,7 +1,8 @@
-import { supabase } from '~/utils/supabase.server';
+import { createServerSupabase } from '~/utils/supabase.server';
 import type { Event } from '~/types/events';
 
-export async function getEvents() {
+export async function getEvents(request: Request, response: Response) {
+  const supabase = createServerSupabase(request, response);
   const { data: events, error } = await supabase
     .from('events')
     .select(
@@ -40,8 +41,11 @@ export async function getEvents() {
 }
 
 export async function createEvent(
-  event: Omit<Event, 'id' | 'createdAt' | 'attendees'>
+  event: Omit<Event, 'id' | 'createdAt' | 'attendees'>,
+  request: Request,
+  response: Response
 ) {
+  const supabase = createServerSupabase(request, response);
   const { data: newEvent, error: eventError } = await supabase
     .from('events')
     .insert([

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { safeFetcherData } from '~/types/fetcher';
 import { Textarea } from '~/components/ui/textarea';
 import {
   Select,
@@ -58,7 +59,8 @@ export function NotificationManager({
 
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state !== 'idle';
-  const isSuccess = fetcher.data?.success;
+  const fetcherData = safeFetcherData(fetcher.data);
+  const isSuccess = fetcherData?.success;
 
   // Reset form when dialog opens/closes or on successful submission
   useEffect(() => {
@@ -477,13 +479,13 @@ export function NotificationManager({
                   </motion.div>
                 )}
 
-                {fetcher.data?.error && (
+                {fetcherData?.error && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-red-500/10 text-red-400 border border-red-500/30 rounded-md p-3 text-center"
                   >
-                    {fetcher.data.error}
+                    {fetcherData.error}
                   </motion.div>
                 )}
               </fetcher.Form>
