@@ -11,12 +11,19 @@ import iconImage from '~/assets/bashers.png';
 import './tailwind.css';
 import { BottomNav } from './components/bottom-nav';
 import { AuthProvider } from '~/contexts/auth';
+import { ErrorProvider } from '~/contexts/error-context';
+import { ReactErrorBoundary } from '~/components/react-error-boundary';
 import { Suspense, useEffect, useState } from 'react';
+import { globalErrorHandler } from '~/utils/error-handler';
 
 import './styles/global-spinner.css';
 import './styles/transitions.css';
 import './styles/loading-effects.css';
 import TechLoader from './components/main-loader';
+
+// Export the ErrorBoundary for Remix to use
+export { ErrorBoundary } from '~/components/error-boundary';
+
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
@@ -69,6 +76,12 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  // Initialize global error handler
+  useEffect(() => {
+    // Global error handler is initialized as singleton
+    globalErrorHandler;
+  }, []);
+
   useEffect(() => {
     // Mark initial load as complete after first render
     if (isInitialLoad) {
@@ -95,29 +108,33 @@ export default function App() {
   }, [navigation.state, navigation.location, isInitialLoad]);
 
   return (
-    <AuthProvider>
-      {/* Only show the PageLoadingIndicator on initial app load or major route changes */}
-      {(isInitialLoad || isLoading) && (
-        <div
-          style={{
-            opacity: navigation.state === 'idle' ? 0 : 1,
-            transition: 'opacity 0.3s ease-out',
-            pointerEvents: 'none', // Prevent interaction with loading overlay
-          }}
-        >
-          <TechLoader />
-        </div>
-      )}
-      <Suspense
-        fallback={
-          // For component-level suspense, use a less intrusive indicator
-          <div className="flex justify-center p-4">
-            <div className="loading-spinner-small"></div>
-          </div>
-        }
-      >
-        <Outlet />
-      </Suspense>
-    </AuthProvider>
+    <ReactErrorBoundary>
+      <ErrorProvider>
+        <AuthProvider>
+          {/* Only show the PageLoadingIndicator on initial app load or major route changes */}
+          {(isInitialLoad || isLoading) && (
+            <div
+              style={{
+                opacity: navigation.state === 'idle' ? 0 : 1,
+                transition: 'opacity 0.3s ease-out',
+                pointerEvents: 'none', // Prevent interaction with loading overlay
+              }}
+            >
+              <TechLoader />
+            </div>
+          )}
+          <Suspense
+            fallback={
+              // For component-level suspense, use a less intrusive indicator
+              <div className="flex justify-center p-4">
+                <div className="loading-spinner-small"></div>
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
+        </AuthProvider>
+      </ErrorProvider>
+    </ReactErrorBoundary>
   );
 }
