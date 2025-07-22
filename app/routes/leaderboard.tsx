@@ -101,7 +101,7 @@ export default function Leaderboard() {
     id: string;
     name: string;
     clan_name: string;
-    members: MemberWithStats[];
+     members: MemberWithStats[];
   }
 
   const [clans, setClans] = useState<Clan[]>([]);
@@ -219,6 +219,7 @@ export default function Leaderboard() {
           const clanMembers = membersData.filter(
             (member) => member.clan_id === clan.id
           );
+      
           return {
             ...clan,
             members: clanMembers,

@@ -33,7 +33,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       .from('members')
       .select('*')
       .eq('clan_id', clan.id)
-      .or('title.eq.Basher,title.eq.Organiser');
+      .or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash,title.eq.Mentor');
     clan.members = members || [];
   }
 

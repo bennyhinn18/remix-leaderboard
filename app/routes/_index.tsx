@@ -280,12 +280,34 @@ export default function Home() {
     minutes: 0,
     seconds: 0
   });
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: 1200,
+    height: 800
+  });
+  const [isClient, setIsClient] = useState(false);
 
   // 🎉 EVENT MODE: 3rd Badge Day - August 1st, 2025
   const eventDate = useMemo(() => new Date('2025-08-01'), []);
   const currentDate = new Date();
   const daysUntilEvent = Math.ceil((eventDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
   const isEventMode = daysUntilEvent > 0 && daysUntilEvent <= 31; // Show event mode for 1 month before
+
+  // Handle window dimensions safely for SSR
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      const updateDimensions = () => {
+        setWindowDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+      };
+
+      updateDimensions();
+      window.addEventListener('resize', updateDimensions);
+      return () => window.removeEventListener('resize', updateDimensions);
+    }
+  }, []);
 
   // Countdown timer effect
   useEffect(() => {
@@ -316,13 +338,15 @@ export default function Home() {
   const handleExcitement = async () => {
     if (isExcited) return;
 
-    // Trigger confetti animation
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#ff6b9d', '#c44569', '#f8b500', '#6c5ce7', '#a29bfe']
-    });
+    // Trigger confetti animation - only on client side
+    if (typeof window !== 'undefined') {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ff6b9d', '#c44569', '#f8b500', '#6c5ce7', '#a29bfe']
+      });
+    }
 
     setIsExcited(true);
 
@@ -485,28 +509,36 @@ export default function Home() {
           } text-white`}
         >
         {/* 🎉 EVENT MODE: Floating particles and celebration effects */}
-        {isEventMode && (
+        {isEventMode && isClient && (
           <>
             {/* Animated background particles */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-pink-500 rounded-full"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{
-                    opacity: [0, 1, 0],
-                    scale: [0, 1, 0],
-                    x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
-                    y: [Math.random() * window.innerHeight, Math.random() * window.innerHeight],
-                  }}
-                  transition={{
-                    duration: 3 + Math.random() * 2,
-                    repeat: Infinity,
-                    delay: Math.random() * 3,
-                  }}
-                />
-              ))}
+              {Array.from({ length: 20 }).map((_, i) => {
+                // Generate consistent positions for each particle based on index
+                const xStart = (i * 137.5) % windowDimensions.width; // Golden ratio distribution
+                const yStart = (i * 73.6) % windowDimensions.height;
+                const xEnd = ((i + 10) * 137.5) % windowDimensions.width;
+                const yEnd = ((i + 10) * 73.6) % windowDimensions.height;
+                
+                return (
+                  <motion.div
+                    key={i}
+                    className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-pink-500 rounded-full"
+                    initial={{ opacity: 0, scale: 0, x: xStart, y: yStart }}
+                    animate={{
+                      opacity: [0, 1, 0],
+                      scale: [0, 1, 0],
+                      x: [xStart, xEnd, xStart],
+                      y: [yStart, yEnd, yStart],
+                    }}
+                    transition={{
+                      duration: 3 + (i % 3),
+                      repeat: Infinity,
+                      delay: i * 0.15,
+                    }}
+                  />
+                );
+              })}
             </div>
             
             {/* Event countdown banner */}
@@ -555,27 +587,35 @@ export default function Home() {
               className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 rounded-2xl p-8 text-center relative overflow-hidden"
             >
               {/* Sparkle effects */}
-              <div className="absolute inset-0">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-1 h-1 bg-yellow-300 rounded-full"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                    }}
-                    animate={{
-                      opacity: [0, 1, 0],
-                      scale: [0, 1.5, 0],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      delay: Math.random() * 2,
-                    }}
-                  />
-                ))}
-              </div>
+              {isClient && (
+                <div className="absolute inset-0">
+                  {Array.from({ length: 10 }).map((_, i) => {
+                    // Use deterministic positions based on index
+                    const leftPos = (i * 23.7 + 15) % 100;
+                    const topPos = (i * 37.3 + 10) % 100;
+                    
+                    return (
+                      <motion.div
+                        key={i}
+                        className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+                        style={{
+                          left: `${leftPos}%`,
+                          top: `${topPos}%`,
+                        }}
+                        animate={{
+                          opacity: [0, 1, 0],
+                          scale: [0, 1.5, 0],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          delay: i * 0.2,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
               
               <div className="relative z-10">
                 <motion.h2 
