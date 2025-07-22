@@ -1,0 +1,248 @@
+
+🤖 BASHER TERMINAL VERIFICATION BOT READY
+Workflow:
+1. New members get "newcomer" role (limited access)
+2. Members verify through Basher Terminal website
+3. Bot assigns "basher" role after verification
+4. Admins manually assign leadership roles
+
+🔧 Processing active member: joeljohnsondavid6020
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to joeljohnsondavid6020
+✅ Terminal verification successful! Added 'basher' role to joeljohnsondavid6020
+🔧 Processing active member: sriiiharshiii
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to sriiiharshiii
+✅ Terminal verification successful! Added 'basher' role to sriiiharshiii
+🔧 Processing active member: johnshalamon
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to johnshalamon
+✅ Terminal verification successful! Added 'basher' role to johnshalamon
+🔧 Processing active member: ajisha.v
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to ajisha.v
+✅ Terminal verification successful! Added 'basher' role to ajisha.v
+🔧 Processing active member: jijorogerz
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to jijorogerz
+✅ Terminal verification successful! Added 'basher' role to jijorogerz
+🔧 Processing active member: aslin_joel_r
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to aslin_joel_r
+✅ Terminal verification successful! Added 'basher' role to aslin_joel_r
+🔧 Processing active member: joevinstany
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to joevinstany
+✅ Terminal verification successful! Added 'basher' role to joevinstany
+🔧 Processing active member: sherin2003
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to sherin2003
+✅ Terminal verification successful! Added 'basher' role to sherin2003
+🔧 Processing active member: bennyhinn18
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to bennyhinn18
+Cannot manage bennyhinn18 - their highest role 'moderator' (20) is >= bot's highest role 'BashEye' (19)
+❌ Cannot add 'basher' role to bennyhinn18 - insufficient permissions
+❌ Error handling active member bennyhinn18: Error: Cannot add 'basher' role to bennyhinn18 - insufficient permissions
+    at handleActiveMember (/workspaces/remix-leaderboard/scripts/discord-role-sync.ts:176:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at syncUserRoles (/workspaces/remix-leaderboard/scripts/discord-role-sync.ts:54:9)
+Error processing user bennyhinn18: Error: Cannot add 'basher' role to bennyhinn18 - insufficient permissions
+    at handleActiveMember (/workspaces/remix-leaderboard/scripts/discord-role-sync.ts:176:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at syncUserRoles (/workspaces/remix-leaderboard/scripts/discord-role-sync.ts:54:9)
+🔧 Processing active member: infancetony
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to infancetony
+✅ Terminal verification successful! Added 'basher' role to infancetony
+Added 'visitor' role to suspended user luxicabency_62658
+🔧 Processing active member: maxwellrubert
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to maxwellrubert
+✅ Terminal verification successful! Added 'basher' role to maxwellrubert
+🔧 Processing active member: michalnithesh
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to michalnithesh
+✅ Terminal verification successful! Added 'basher' role to michalnithesh
+🔧 Processing active member: shabi_04
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to shabi_04
+✅ Terminal verification successful! Added 'basher' role to shabi_04
+🔧 Processing active member: sri_ram_s
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to sri_ram_s
+✅ Terminal verification successful! Added 'basher' role to sri_ram_s
+🔧 Processing active member: falin_sando
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to falin_sando
+✅ Terminal verification successful! Added 'basher' role to falin_sando
+🔧 Processing active member: shaniya2710
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to shaniya2710
+✅ Terminal verification successful! Added 'basher' role to shaniya2710
+🔧 Processing active member: roshanlal_dia
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to roshanlal_dia
+✅ Terminal verification successful! Added 'basher' role to roshanlal_dia
+🔧 Processing active member: vishal._.24
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to vishal._.24
+✅ Terminal verification successful! Added 'basher' role to vishal._.24
+🔧 Processing active member: _remay_.__09618
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to _remay_.__09618
+✅ Terminal verification successful! Added 'basher' role to _remay_.__09618
+Discord user not found: d.hal.
+🔧 Processing active member: mohamedashif
+✅ Bot has 'Manage Roles' permission
+🗑️ Removing 'visitor' role from verified user
+✅ Removed 'visitor' role from verified user mohamedashif
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to mohamedashif
+✅ Terminal verification successful! Added 'basher' role to mohamedashif
+🔧 Processing active member: ashva0376
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to ashva0376
+✅ Terminal verification successful! Added 'basher' role to ashva0376
+🔧 Processing active member: lethinkj
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to lethinkj
+✅ Terminal verification successful! Added 'basher' role to lethinkj
+Added 'visitor' role to suspended user ram_05_
+🔧 Processing active member: amruthab
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to amruthab
+✅ Terminal verification successful! Added 'basher' role to amruthab
+🔧 Processing active member: jenish_prog
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to jenish_prog
+✅ Terminal verification successful! Added 'basher' role to jenish_prog
+🔧 Processing active member: abin_i_05
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to abin_i_05
+✅ Terminal verification successful! Added 'basher' role to abin_i_05
+Discord user not found: jajashini
+🔧 Processing active member: primsajun
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to primsajun
+✅ Terminal verification successful! Added 'basher' role to primsajun
+🔧 Processing active member: jesh04
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to jesh04
+✅ Terminal verification successful! Added 'basher' role to jesh04
+🔧 Processing active member: hamdhan1712_89008
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to hamdhan1712_89008
+✅ Terminal verification successful! Added 'basher' role to hamdhan1712_89008
+🔧 Processing active member: anjai
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to anjai
+✅ Terminal verification successful! Added 'basher' role to anjai
+Added 'visitor' role to suspended user libin07
+🔧 Processing active member: ari_18_18
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to ari_18_18
+✅ Terminal verification successful! Added 'basher' role to ari_18_18
+🔧 Processing active member: isabelle0625
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to isabelle0625
+✅ Terminal verification successful! Added 'basher' role to isabelle0625
+🔧 Processing active member: archana0237
+✅ Bot has 'Manage Roles' permission
+ℹ️ User doesn't have 'visitor' role or role not found
+ℹ️ User doesn't have 'visitor' role or role not found
+✅ Found 'basher' role (ID: 1163057919428939876)
+🎯 Adding 'basher' role to archana0237
+✅ Terminal verification successful! Added 'basher' role to archana0237
+Role sync completed successfully
