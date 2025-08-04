@@ -86,7 +86,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // Function to fetch Duolingo streak data - defer this
   const fetchDuolingoStreak = async () => {
-    if (!member.duolingo_username) return 0;
+    if (!member.duolingo_username) return { streak: 0, error: null };
     
     try {
       const duolingoResponse = await fetch(
@@ -100,31 +100,32 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       
       if (!duolingoResponse.ok) {
         console.warn(`Duolingo API returned ${duolingoResponse.status} for ${member.duolingo_username}`);
-        return 0;
+        return { streak: 0, error: `API returned ${duolingoResponse.status}` };
       }
       
       const responseText = await duolingoResponse.text();
       if (!responseText.trim()) {
         console.warn(`Empty response from Duolingo API for ${member.duolingo_username}`);
-        return 0;
+        return { streak: 0, error: 'Empty response' };
       }
       
       const duolingoData = JSON.parse(responseText);
       const userData = duolingoData.users?.[0] || {};
-      return Math.max(
+      const streak = Math.max(
         userData.streak ?? 0,
         userData.streakData?.currentStreak?.length ?? 0,
         userData.streakData?.previousStreak?.length ?? 0
       );
+      return { streak, error: null };
     } catch (error) {
       console.error('Error fetching Duolingo data:', error);
-      return 0;
+      return { streak: 0, error: 'Failed to fetch data' };
     }
   };
 
   // Function to fetch GitHub contributions - defer this
   const fetchGithubData = async () => {
-    if (!member.github_username) return [];
+    if (!member.github_username) return { events: [], error: null };
     
     try {
       const githubResponse = await fetch(
@@ -138,13 +139,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
       if (!githubResponse.ok) {
         console.warn(`GitHub API returned ${githubResponse.status} for ${member.github_username}`);
-        return [];
+        return { events: [], error: `API returned ${githubResponse.status}` };
       }
 
       const responseText = await githubResponse.text();
       if (!responseText.trim()) {
         console.warn(`Empty response from GitHub API for ${member.github_username}`);
-        return [];
+        return { events: [], error: 'Empty response' };
       }
 
       const githubEvents = JSON.parse(responseText);
@@ -152,7 +153,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      return Array.isArray(githubEvents)
+      const events = Array.isArray(githubEvents)
         ? githubEvents.filter(
             (event: any) =>
               new Date(event.created_at) > thirtyDaysAgo &&
@@ -161,15 +162,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
               )
           )
         : [];
+      
+      return { events, error: null };
     } catch (error) {
       console.error('Error fetching GitHub data:', error);
-      return [];
+      return { events: [], error: 'Failed to fetch data' };
     }
   };
 
   //Fetch LeetCode data
   const fetchLeetCodeData = async () => {
-    if (!member.leetcode_username) return 0;
+    if (!member.leetcode_username) return { solved: 0, error: null };
     
     try {
       const leetCodeResponse = await fetch(
@@ -183,20 +186,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
       if (!leetCodeResponse.ok) {
         console.warn(`LeetCode API returned ${leetCodeResponse.status} for ${member.leetcode_username}`);
-        return 0;
+        return { solved: 0, error: `API returned ${leetCodeResponse.status}` };
       }
 
       const responseText = await leetCodeResponse.text();
       if (!responseText.trim()) {
         console.warn(`Empty response from LeetCode API for ${member.leetcode_username}`);
-        return 0;
+        return { solved: 0, error: 'Empty response' };
       }
 
       const leetCodeData = JSON.parse(responseText);
-      return leetCodeData?.totalSolved || 0;
+      return { solved: leetCodeData?.totalSolved || 0, error: null };
     } catch (error) {
       console.error('Error fetching LeetCode data:', error);
-      return 0;
+      return { solved: 0, error: 'Failed to fetch data' };
     }
   };
 
@@ -296,9 +299,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 interface LoaderData {
   member: any;
   user: any;
-  duolingoStreak: Promise<number>;
-  githubData: Promise<any[]>;
-  leetCodeData: Promise<number | null>;
+  duolingoStreak: Promise<{ streak: number; error: string | null }>;
+  githubData: Promise<{ events: any[]; error: string | null }>;
+  leetCodeData: Promise<{ solved: number; error: string | null }>;
   SUPABASE_URL: string | undefined;
   SUPABASE_ANON_KEY: string | undefined;
   organiserStatus: boolean;
@@ -727,7 +730,7 @@ export default function Profile() {
                     <Await resolve={githubData}>
                       {(data) => (
                         <div className="text-2xl font-bold text-purple-400">
-                          {data?.length || profile.streaks.github}
+                          {data?.error ? '0' : (data?.events?.length || profile.streaks.github)}
                         </div>
                       )}
                     </Await>
@@ -746,7 +749,7 @@ export default function Profile() {
                     <Await resolve={leetCodeData}>
                       {(data) => (
                         <div className="text-2xl font-bold text-orange-400">
-                          {data || profile.streaks.leetcode}
+                          {data?.error ? '0' : (data?.solved || profile.streaks.leetcode)}
                         </div>
                       )}
                     </Await>
@@ -763,9 +766,9 @@ export default function Profile() {
                     }
                   >
                     <Await resolve={duolingoStreak}>
-                      {(streak) => (
+                      {(data) => (
                         <div className="text-2xl font-bold text-green-400">
-                          {streak || profile.streaks.duolingo}
+                          {data?.error ? '0' : (data?.streak || profile.streaks.duolingo)}
                         </div>
                       )}
                     </Await>
@@ -857,9 +860,9 @@ export default function Profile() {
       {/* GitHub data resolver component */}
       <Suspense fallback={null}>
         <Await resolve={githubData}>
-          {(githubEvents) => {
+          {(githubData) => {
             useEffect(() => {
-              if (!githubEvents || !profile) return;
+              if (!githubData || !profile || githubData.error) return;
 
               // Update the profile with GitHub streak data
               setProfile((prevProfile) => {
@@ -868,11 +871,11 @@ export default function Profile() {
                   ...prevProfile,
                   streaks: {
                     ...prevProfile.streaks,
-                    github: githubEvents.length,
+                    github: githubData.events?.length || 0,
                   },
                 };
               });
-            }, [githubEvents]);
+            }, [githubData]);
 
             return null; // This component only updates state, doesn't render anything
           }}
@@ -882,9 +885,9 @@ export default function Profile() {
       {/* Duolingo data resolver component */}
       <Suspense fallback={null}>
         <Await resolve={duolingoStreak}>
-          {(duolingoStreak) => {
+          {(duolingoData) => {
             useEffect(() => {
-              if (typeof duolingoStreak !== 'number' || !profile) return;
+              if (!duolingoData || !profile || duolingoData.error) return;
 
               // Update the profile with Duolingo streak data
               setProfile((prevProfile) => {
@@ -893,11 +896,36 @@ export default function Profile() {
                   ...prevProfile,
                   streaks: {
                     ...prevProfile.streaks,
-                    duolingo: duolingoStreak,
+                    duolingo: duolingoData.streak || 0,
                   },
                 };
               });
-            }, [duolingoStreak]);
+            }, [duolingoData]);
+
+            return null; // This component only updates state, doesn't render anything
+          }}
+        </Await>
+      </Suspense>
+
+      {/* LeetCode data resolver component */}
+      <Suspense fallback={null}>
+        <Await resolve={leetCodeData}>
+          {(leetCodeData) => {
+            useEffect(() => {
+              if (!leetCodeData || !profile || leetCodeData.error) return;
+
+              // Update the profile with LeetCode streak data
+              setProfile((prevProfile) => {
+                if (!prevProfile) return null;
+                return {
+                  ...prevProfile,
+                  streaks: {
+                    ...prevProfile.streaks,
+                    leetcode: leetCodeData.solved || 0,
+                  },
+                };
+              });
+            }, [leetCodeData]);
 
             return null; // This component only updates state, doesn't render anything
           }}

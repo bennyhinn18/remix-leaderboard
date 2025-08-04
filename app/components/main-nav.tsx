@@ -119,7 +119,7 @@ const bottomNav = [
 ];
 
 interface MainNavProps {
-  user: BasherProfile;
+  user?: BasherProfile | null;
   notifications?: Array<any>;
   unreadCount?: number;
 }
@@ -159,10 +159,10 @@ export function MainNav({
               <SheetTitle className="text-lg font-bold text-white">
                 Byte Bash Blitz
               </SheetTitle>
-              <p className="text-sm text-blue-400">{user.basherLevel} Basher</p>
+              <p className="text-sm text-blue-400">{user?.basherLevel || 'Unknown'} Basher</p>
             </div>
             <NotificationDropdown
-              memberId={user.id}
+              memberId={user?.id}
               notifications={notifications}
               unreadCount={unreadCount}
             />
@@ -256,19 +256,19 @@ export function MainNav({
         <div className="mt-auto border-t border-white/10 p-4">
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-10 w-10 rounded-lg border border-white/10">
-              <AvatarImage src={user.avatar_url} />
+              <AvatarImage src={user?.avatar_url} />
               <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-                {user.name.slice(0, 2).toUpperCase()}
+                {user?.name ? user.name.slice(0, 2).toUpperCase() : 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-white">{user.name}</p>
+                <p className="text-sm font-medium text-white">{user?.name || 'Unknown User'}</p>
                 <div className="px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs">
-                  {user.basherNo}
+                  {user?.basherNo || 'N/A'}
                 </div>
               </div>
-              <p className="text-xs text-gray-400 truncate">{user.clanName}</p>
+              <p className="text-xs text-gray-400 truncate">{user?.clanName || 'No Clan'}</p>
             </div>
           </div>
           <Button

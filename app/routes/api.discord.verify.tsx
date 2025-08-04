@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { createServerSupabase } from '~/utils/supabase.server';
 import { syncSpecificUser } from '../../scripts/discord-role-sync';
+import { Client, GatewayIntentBits } from 'discord.js';
 
 interface VerificationRequest {
   discordId: string;
@@ -9,20 +10,169 @@ interface VerificationRequest {
   discordDiscriminator?: string;
 }
 
-// Direct Discord role assignment using the sync function
-async function triggerRoleAssignment(discordUsername: string): Promise<boolean> {
+// Initialize Discord client for verification
+const discord = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
+});
+
+// Real Discord username verification - check if user exists in server
+async function verifyDiscordUser(discordUsername: string): Promise<{
+  exists: boolean;
+  member?: any;
+  currentRoles?: string[];
+  hasBasherRole?: boolean;
+  hasRookieRole?: boolean;
+  error?: string;
+}> {
   try {
-    console.log(`🚀 Starting role assignment for ${discordUsername}`);
+    const GUILD_ID = process.env.DISCORD_GUILD_ID;
+    const DISCORD_TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+    if (!GUILD_ID || !DISCORD_TOKEN) {
+      return { 
+        exists: false, 
+        error: 'Discord configuration missing' 
+      };
+    }
+
+    // Ensure Discord bot is connected
+    if (!discord.isReady()) {
+      await discord.login(DISCORD_TOKEN);
+      
+      // Wait for bot to be ready
+      await new Promise((resolve) => {
+        if (discord.isReady()) {
+          resolve(true);
+        } else {
+          discord.once('ready', () => resolve(true));
+        }
+      });
+    }
+
+    const guild = await discord.guilds.fetch(GUILD_ID);
     
-    // Call the sync function directly
+    // Find member by username (case insensitive, check username, globalName, and displayName)
+    const members = await guild.members.fetch();
+    const cleanUsername = discordUsername.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    
+    const member = members.find((m: any) => 
+      m.user.username.toLowerCase() === cleanUsername ||
+      m.user.globalName?.toLowerCase() === cleanUsername ||
+      m.displayName.toLowerCase() === cleanUsername ||
+      m.user.username.toLowerCase() === discordUsername.toLowerCase() ||
+      m.user.globalName?.toLowerCase() === discordUsername.toLowerCase() ||
+      m.displayName.toLowerCase() === discordUsername.toLowerCase()
+    );
+
+    if (!member) {
+      return { 
+        exists: false, 
+        error: 'Discord user not found in server. Please ensure you have joined the Discord server.' 
+      };
+    }
+
+    // Get current roles
+    const currentRoles = member.roles.cache.map((role: any) => role.name);
+    const hasBasherRole = currentRoles.includes('basher');
+    const hasRookieRole = currentRoles.includes('rookie') || currentRoles.includes('visitor');
+
+    console.log(`✅ Discord user verified: ${member.user.tag}`);
+    console.log(`📋 Current roles: ${currentRoles.join(', ')}`);
+
+    return {
+      exists: true,
+      member,
+      currentRoles,
+      hasBasherRole,
+      hasRookieRole
+    };
+
+  } catch (error) {
+    console.error('Discord verification error:', error);
+    return { 
+      exists: false, 
+      error: error instanceof Error ? error.message : 'Discord verification failed' 
+    };
+  }
+}
+
+// Enhanced role assignment that handles Rookie -> Basher transition
+async function triggerRoleAssignment(discordUsername: string, memberData: any): Promise<{
+  success: boolean;
+  message: string;
+  rolesChanged?: string[];
+}> {
+  try {
+    console.log(`🚀 Starting enhanced role assignment for ${discordUsername}`);
+    
+    // First verify the Discord user exists and get their current roles
+    const verification = await verifyDiscordUser(discordUsername);
+    
+    if (!verification.exists) {
+      return {
+        success: false,
+        message: verification.error || 'Discord user verification failed'
+      };
+    }
+
+    // Check eligibility for Basher role
+    const isEligibleForBasher = memberData.title && 
+      ['Basher', 'Captain Bash', 'Organiser', 'Mentor', 'Legacy Basher', 'Rookie'].includes(memberData.title) &&
+      memberData.title !== 'Null Basher';
+
+    if (!isEligibleForBasher) {
+      return {
+        success: false,
+        message: `User with title '${memberData.title}' is not eligible for Basher role`
+      };
+    }
+
+    // If user already has Basher role and no Rookie role, they're good
+    if (verification.hasBasherRole && !verification.hasRookieRole) {
+      console.log(`✅ User ${discordUsername} already has correct roles`);
+      return {
+        success: true,
+        message: 'User already has appropriate Discord roles',
+        rolesChanged: []
+      };
+    }
+
+    // Use the sync function to assign roles properly (handles Rookie -> Basher transition)
     await syncSpecificUser(discordUsername);
     
-    console.log(`✅ Discord role assigned successfully for ${discordUsername}`);
-    return true;
+    // Verify the role assignment worked
+    const postVerification = await verifyDiscordUser(discordUsername);
+    
+    if (postVerification.exists && postVerification.hasBasherRole) {
+      const rolesChanged = [];
+      
+      if (verification.hasRookieRole && !postVerification.hasRookieRole) {
+        rolesChanged.push('Removed Rookie/Visitor role');
+      }
+      
+      if (!verification.hasBasherRole && postVerification.hasBasherRole) {
+        rolesChanged.push('Added Basher role');
+      }
+
+      console.log(`✅ Discord role assignment successful for ${discordUsername}`);
+      return {
+        success: true,
+        message: 'Discord roles updated successfully! Welcome to the terminal!',
+        rolesChanged
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Role assignment completed but verification failed. Please contact an admin.'
+      };
+    }
     
   } catch (error) {
-    console.error(`❌ Discord role assignment failed for ${discordUsername}:`, error);
-    return false;
+    console.error(`❌ Enhanced role assignment failed for ${discordUsername}:`, error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Role assignment failed'
+    };
   }
 }
 
@@ -174,26 +324,57 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       member = newMember;
     }
 
-    // Trigger Discord role assignment using the working manual sync script
-    let roleAssigned = false;
-    let roleAssignmentError = '';
+    // Enhanced Discord role assignment with real verification
+    let roleAssignmentResult: { success: boolean; message: string; rolesChanged?: string[] } = { 
+      success: false, 
+      message: '', 
+      rolesChanged: [] 
+    };
     
     try {
       // Add a small delay to ensure database transaction is committed
       await new Promise(resolve => setTimeout(resolve, 1000));
-      roleAssigned = await triggerRoleAssignment(discordUsername);
+      
+      // First verify Discord user exists in server
+      const discordVerification = await verifyDiscordUser(discordUsername);
+      
+      if (!discordVerification.exists) {
+        return json(
+          { 
+            success: false, 
+            error: discordVerification.error || 'Discord username not found in server. Please join the Discord server first.',
+            member: {
+              id: member.id,
+              github_username: member.github_username,
+              discord_username: member.discord_username,
+              title: member.title,
+              bash_points: member.bash_points,
+              clan_id: member.clan_id,
+            },
+          },
+          { status: 400 }
+        );
+      }
+
+      // Perform enhanced role assignment
+      roleAssignmentResult = await triggerRoleAssignment(discordUsername, member);
+      
     } catch (error) {
       console.error('Discord role assignment error:', error);
-      roleAssignmentError = error instanceof Error ? error.message : 'Unknown error';
+      roleAssignmentResult = {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        rolesChanged: []
+      };
     }
     
-    if (!roleAssigned) {
-      console.error(`Discord role assignment failed for ${discordUsername}: ${roleAssignmentError}`);
+    if (!roleAssignmentResult.success) {
+      console.error(`Discord role assignment failed for ${discordUsername}: ${roleAssignmentResult.message}`);
       // Return error if role assignment fails - this is critical for verification
       return json(
         { 
           success: false, 
-          error: 'Discord account linked but role assignment failed. Please try again or contact an admin.',
+          error: `Discord verification failed: ${roleAssignmentResult.message}`,
           member: {
             id: member.id,
             github_username: member.github_username,
@@ -207,11 +388,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
-    // Return success only if both database update and role assignment succeeded
+    // Return success with detailed role information
     return json({
       success: true,
-      message: 'Discord account linked and basher role assigned successfully! Welcome to the terminal!',
+      message: roleAssignmentResult.message,
       roleAssigned: true,
+      rolesChanged: roleAssignmentResult.rolesChanged,
+      discordVerification: {
+        userExists: true,
+        currentRoles: (await verifyDiscordUser(discordUsername)).currentRoles || []
+      },
       member: {
         id: member.id,
         github_username: member.github_username,

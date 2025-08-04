@@ -1,0 +1,43 @@
+--- a/app/components/profile-info.tsx
++++ b/app/components/profile-info.tsx
+@@ -217,7 +217,6 @@
+               <div className="flex justify-center mt-6">
+                 <EditProfileButton 
+                 member={member}
+-                isOrganiser={isOrganiser} // Pass this prop to EditProfileButton
+                 />
+               </div>
+             )}
+
+--- a/app/routes/add-member.tsx
++++ b/app/routes/add-member.tsx
+@@ -220,7 +220,7 @@
+                             type="checkbox"
+                             onChange={(e) => {
+-    if (e.target.checked) {
++    if ((e.target as HTMLInputElement).checked) {
+       setSelectedDomains([...selectedDomains, domain.id]);
+     } else {
+       setSelectedDomains(selectedDomains.filter(id => id !== domain.id));
+@@ -229,7 +229,7 @@
+                             type="checkbox"
+                             onChange={(e) => {
+-    if (e.target.checked) {
++    if ((e.target as HTMLInputElement).checked) {
+       setSelectedSecondaryDomains([...selectedSecondaryDomains, domain.id]);
+     } else {
+       setSelectedSecondaryDomains(selectedSecondaryDomains.filter(id => id !== domain.id));
+@@ -920,7 +920,7 @@
+                               type="text"
+                               placeholder="Enter your primary domain expertise"
+-                              onChange={handlePrimaryDomainChange}
++                              onChange={(e) => handlePrimaryDomainChange(e as any)}
+                               className="flex-1 px-3 py-2 border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                             />
+@@ -982,7 +982,7 @@
+                               type="text"
+                               placeholder="Enter your secondary domain expertise"
+-                              onChange={handleSecondaryDomainChange}
++                              onChange={(e) => handleSecondaryDomainChange(e as any)}
+                               className="flex-1 px-3 py-2 border border-gray-600 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                             />

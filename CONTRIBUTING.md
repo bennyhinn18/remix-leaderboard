@@ -14,7 +14,7 @@ Thank you for your interest in contributing to the ByteBashBlitz community platf
 
 1. **Fork and Clone**
 ```bash
-git clone https://github.com/YOUR_USERNAME/remix-leaderboard.git
+git clone https://github.com/bennyhinn18/remix-leaderboard.git
 cd remix-leaderboard
 ```
 

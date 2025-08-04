@@ -4,6 +4,7 @@ import { userCache, getCacheKeyFromRequest } from './cache.server';
 interface User {
   id: string;
   title: string;
+  member_id?: number;
 }
 
 async function getCurrentUser(request: Request): Promise<User | null> {

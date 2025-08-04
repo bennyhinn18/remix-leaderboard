@@ -20,8 +20,8 @@ import {
   Flame,
   User,
   Code,
-  Sparkles,
   Star,
+  MessageSquare,
 } from 'lucide-react';
 import {
   RecentActivitiesData,
@@ -34,8 +34,7 @@ import iconImage from '~/assets/bashers.png';
 import { Button } from '~/components/ui/button';
 import { Badge } from '~/components/ui/badge';
 import { MainNav } from '~/components/main-nav';
-import { useState, useEffect, useMemo, Suspense } from 'react';
-import confetti from 'canvas-confetti';
+import { useState, useEffect, Suspense } from 'react';
 import WhatsNewPanel from '~/components/WhatsNewPanel';
 import { NotificationManager } from '~/components/notification-manager';
 import UpdateClanScore from '~/components/update-clan-score';
@@ -273,24 +272,11 @@ export default function Home() {
     leetcode: 0,
   });
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<any>(null);
-  const [isExcited, setIsExcited] = useState(false);
-  const [countdown, setCountdown] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
   const [windowDimensions, setWindowDimensions] = useState({
     width: 1200,
     height: 800
   });
   const [isClient, setIsClient] = useState(false);
-
-  // 🎉 EVENT MODE: 3rd Badge Day - August 1st, 2025
-  const eventDate = useMemo(() => new Date('2025-08-01'), []);
-  const currentDate = new Date();
-  const daysUntilEvent = Math.ceil((eventDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
-  const isEventMode = daysUntilEvent > 0 && daysUntilEvent <= 31; // Show event mode for 1 month before
 
   // Handle window dimensions safely for SSR
   useEffect(() => {
@@ -309,60 +295,10 @@ export default function Home() {
     }
   }, []);
 
-  // Countdown timer effect
-  useEffect(() => {
-    if (!isEventMode) return;
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const eventTime = eventDate.getTime();
-      const timeLeft = eventTime - now;
-
-      if (timeLeft > 0) {
-        setCountdown({
-          days: Math.floor(timeLeft / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((timeLeft % (1000 * 60)) / 1000)
-        });
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [isEventMode, eventDate]);
-
-  // Handle "I'm Excited" button click
+  // Handle "I'm Excited" button click (keeping for future events)
   const handleExcitement = async () => {
-    if (isExcited) return;
-
-    // Trigger confetti animation - only on client side
-    if (typeof window !== 'undefined') {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#ff6b9d', '#c44569', '#f8b500', '#6c5ce7', '#a29bfe']
-      });
-    }
-
-    setIsExcited(true);
-
-    // Add user to excited list (you can implement this API call)
-    try {
-      // await fetch('/api/badge-day-excitement', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ member_id: member?.id, excited: true })
-      // });
-      console.log(`${member?.name} is excited for Badge Day!`);
-    } catch (error) {
-      console.error('Error updating excitement:', error);
-    }
-
-    // Reset after animation
-    setTimeout(() => setIsExcited(false), 3000);
+    // Future event functionality placeholder
+    console.log('Future event excitement handler');
   };
 
   // For users not logged in
@@ -501,58 +437,13 @@ export default function Home() {
       <ReactErrorBoundary>
         <div
           className={`min-h-screen pb-20 ${
-            isEventMode
-              ? 'bg-gradient-to-br from-purple-900 via-pink-900 to-indigo-900 relative overflow-hidden'
-              : isLegacyBasher
+            isLegacyBasher
               ? 'bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900'
               : 'bg-gradient-to-br from-gray-900 to-gray-800'
           } text-white`}
         >
-        {/* 🎉 EVENT MODE: Floating particles and celebration effects */}
-        {isEventMode && isClient && (
-          <>
-            {/* Animated background particles */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {Array.from({ length: 20 }).map((_, i) => {
-                // Generate consistent positions for each particle based on index
-                const xStart = (i * 137.5) % windowDimensions.width; // Golden ratio distribution
-                const yStart = (i * 73.6) % windowDimensions.height;
-                const xEnd = ((i + 10) * 137.5) % windowDimensions.width;
-                const yEnd = ((i + 10) * 73.6) % windowDimensions.height;
-                
-                return (
-                  <motion.div
-                    key={i}
-                    className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-pink-500 rounded-full"
-                    initial={{ opacity: 0, scale: 0, x: xStart, y: yStart }}
-                    animate={{
-                      opacity: [0, 1, 0],
-                      scale: [0, 1, 0],
-                      x: [xStart, xEnd, xStart],
-                      y: [yStart, yEnd, yStart],
-                    }}
-                    transition={{
-                      duration: 3 + (i % 3),
-                      repeat: Infinity,
-                      delay: i * 0.15,
-                    }}
-                  />
-                );
-              })}
-            </div>
-            
-            {/* Event countdown banner */}
-            <motion.div
-              initial={{ opacity: 0, y: -50 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white py-3 text-center font-bold text-lg shadow-lg"
-            >
-              🎉 3rd Badge Day - {daysUntilEvent} Days to Go! 🎉
-            </motion.div>
-          </>
-        )}
 
-        <header className={`backdrop-blur-lg ${isEventMode ? 'bg-purple-900/30 mt-16' : 'bg-black/20'}`}>
+        <header className={`backdrop-blur-lg bg-black/20`}>
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
@@ -561,12 +452,8 @@ export default function Home() {
                   alt="Byte Bash Logo"
                   className="h-10 w-10"
                 />
-                <h1 className={`text-2xl font-bold ${
-                  isEventMode 
-                    ? 'bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 text-transparent bg-clip-text animate-pulse'
-                    : 'bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text'
-                }`}>
-                  {isEventMode ? '🎉 Byte Bash Blitz - Badge Day Mode!' : 'Byte Bash Blitz'}
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+                  Byte Bash Blitz
                 </h1>
               </div>
               <MainNav
@@ -579,134 +466,12 @@ export default function Home() {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 py-8 space-y-8 fade-in">
-          {/* 🎉 EVENT MODE: Special Badge Day Announcement */}
-          {isEventMode && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 rounded-2xl p-8 text-center relative overflow-hidden"
-            >
-              {/* Sparkle effects */}
-              {isClient && (
-                <div className="absolute inset-0">
-                  {Array.from({ length: 10 }).map((_, i) => {
-                    // Use deterministic positions based on index
-                    const leftPos = (i * 23.7 + 15) % 100;
-                    const topPos = (i * 37.3 + 10) % 100;
-                    
-                    return (
-                      <motion.div
-                        key={i}
-                        className="absolute w-1 h-1 bg-yellow-300 rounded-full"
-                        style={{
-                          left: `${leftPos}%`,
-                          top: `${topPos}%`,
-                        }}
-                        animate={{
-                          opacity: [0, 1, 0],
-                          scale: [0, 1.5, 0],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          delay: i * 0.2,
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-              
-              <div className="relative z-10">
-                <motion.h2 
-                  className="text-4xl font-bold mb-4"
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  🏆 3rd Badge Day - August 1st, 2025 🏆
-                </motion.h2>
-                <p className="text-xl mb-6 text-purple-100">
-                  The greatest community event is coming! New members will earn the prestigious <strong>"Basher"</strong> title!
-                </p>
-                <div className="flex justify-center items-center gap-8 mb-6">
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <div className="text-4xl font-bold text-yellow-300">{countdown.days}</div>
-                    <div className="text-purple-200 text-sm">Days</div>
-                  </motion.div>
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                  >
-                    <div className="text-3xl font-bold text-yellow-300">{countdown.hours}</div>
-                    <div className="text-purple-200 text-sm">Hours</div>
-                  </motion.div>
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
-                  >
-                    <div className="text-3xl font-bold text-yellow-300">{countdown.minutes}</div>
-                    <div className="text-purple-200 text-sm">Minutes</div>
-                  </motion.div>
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.5, repeat: Infinity, delay: 0.6 }}
-                  >
-                    <div className="text-2xl font-bold text-yellow-300">{countdown.seconds}</div>
-                    <div className="text-purple-200 text-sm">Seconds</div>
-                  </motion.div>
-                </div>
-                <div className="flex justify-center gap-4">
-                  <motion.div
-                    animate={isExcited ? { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] } : {}}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <Button 
-                      onClick={handleExcitement}
-                      disabled={isExcited}
-                      className={`font-bold transition-all duration-300 ${
-                        isExcited 
-                          ? 'bg-green-500 hover:bg-green-600 text-white scale-110' 
-                          : 'bg-yellow-500 hover:bg-yellow-600 text-black hover:scale-105'
-                      }`}
-                    >
-                      {isExcited ? (
-                        <>
-                          <span className="mr-2">🎉</span>
-                          You're Excited!
-                          <span className="ml-2">🎉</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="mr-2">⚡</span>
-                          I'm Excited!
-                          <span className="ml-2">⚡</span>
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                    📅 Event Details
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
           {/* Welcome Section with Role-Based Greeting */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={`rounded-2xl p-6 ${
-              isEventMode
-                ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/50 shadow-lg shadow-purple-500/25'
-                : isLegacyBasher
+              isLegacyBasher
                 ? 'bg-yellow-500/10 border border-yellow-500/30'
                 : organiserStatus
                 ? 'bg-blue-500/10 border border-blue-500/30'
@@ -716,7 +481,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               <div>
                 <h2 className="text-2xl font-bold">
-                  {isEventMode ? '🎉 Ready for Badge Day, ' : 'Welcome back, '}
+                  Welcome back, 
                   {(() => {
                     const names = member?.name?.trim().split(' ') || [];
                     if (names.length >= 2) {
@@ -726,12 +491,10 @@ export default function Home() {
                     }
                     return 'Basher';
                   })()}
-                  {isEventMode ? '! 🎉' : '!'}
+                  !
                 </h2>
                 <p className="text-gray-400 mt-2">
-                  {isEventMode
-                    ? `Get ready for the biggest community event! ${daysUntilEvent} days until Badge Day 2025!`
-                    : organiserStatus
+                  {organiserStatus
                     ? 'Manage your community and track progress'
                     : isLegacyBasher
                     ? 'Your legendary journey continues'
@@ -742,37 +505,18 @@ export default function Home() {
               </div>
 
               <div className="flex gap-3">
-                {isEventMode ? (
-                  <>
-                    
-                    <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
-                      <Link to="/leaderboard">
-                        🎯 Leaderboard
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20">
-                      <Link to={`/profile/${member?.github_username}`}>
-                        <User className="w-4 h-4 mr-2" />
-                        Profile
-                      </Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                      <Link to="/leaderboard">
-                        <Trophy className="w-4 h-4 mr-2" />
-                        Leaderboard
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="border-white/20">
-                      <Link to={`/profile/${member?.github_username}`}>
-                        <User className="w-4 h-4 mr-2" />
-                        My Profile
-                      </Link>
-                    </Button>
-                  </>
-                )}
+                <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                  <Link to="/leaderboard">
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Leaderboard
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="border-white/20">
+                  <Link to={`/profile/${member?.github_username}`}>
+                    <User className="w-4 h-4 mr-2" />
+                    My Profile
+                  </Link>
+                </Button>
               </div>
             </div>
           </motion.div>
@@ -788,11 +532,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className={`backdrop-blur-lg rounded-xl p-5 ${
-                isEventMode 
-                  ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/50' 
-                  : 'bg-white/5'
-              }`}
+              className="backdrop-blur-lg rounded-xl p-5 bg-white/5"
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-gray-400">
@@ -802,7 +542,6 @@ export default function Home() {
               </div>
               <div className="text-2xl font-bold">
                 {member?.bash_points || 0}
-                {isEventMode && <span className="text-yellow-400 ml-1">🏆</span>}
               </div>
               <div className="mt-2">
                 <div className="text-xs text-gray-400 mb-1">
@@ -830,11 +569,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className={`backdrop-blur-lg rounded-xl p-5 ${
-                isEventMode 
-                  ? 'bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-400/50' 
-                  : 'bg-white/5'
-              }`}
+              className="backdrop-blur-lg rounded-xl p-5 bg-white/5"
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-gray-400">
@@ -1118,11 +853,22 @@ export default function Home() {
                     </Link>
 
                     <Link
-                      to="/members"
+                      to="/admin/members"
                       className="bg-white/10 rounded-lg p-3 flex flex-col items-center text-center hover:bg-white/20 transition-colors"
                     >
                       <Users className="w-8 h-8 text-green-400 mb-2" />
                       <span>Manage Members</span>
+                    </Link>
+
+                    <Link
+                      to="/admin/discord-roles"
+                      className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-3 flex flex-col items-center text-center hover:bg-purple-500/30 transition-colors relative"
+                    >
+                      <MessageSquare className="w-8 h-8 text-purple-400 mb-2" />
+                      <span className="text-sm">Discord Roles</span>
+                      <Badge className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs px-1">
+                        NEW
+                      </Badge>
                     </Link>
 
                     <Link
@@ -1212,62 +958,10 @@ export default function Home() {
 
 // Simple landing page for users who aren't logged in
 function LandingPage() {
-  // 🎉 EVENT MODE: 3rd Badge Day - August 1st, 2025
-  const eventDate = new Date('2025-08-01');
-  const currentDate = new Date();
-  const daysUntilEvent = Math.ceil((eventDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
-  const isEventMode = daysUntilEvent > 0 && daysUntilEvent <= 31; // Show event mode for 1 month before
-
-  const [countdown, setCountdown] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  // Countdown timer effect for landing page
-  useEffect(() => {
-    if (!isEventMode) return;
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const eventTime = eventDate.getTime();
-      const timeLeft = eventTime - now;
-
-      if (timeLeft > 0) {
-        setCountdown({
-          days: Math.floor(timeLeft / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((timeLeft % (1000 * 60)) / 1000)
-        });
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [isEventMode, eventDate]);
-
   return (
     <PageTransition>
       <ReactErrorBoundary>
-        <div className={`min-h-screen text-white fade-in ${
-          isEventMode 
-            ? 'bg-gradient-to-br from-purple-900 via-pink-900 to-indigo-900' 
-            : 'bg-gradient-to-br from-gray-900 to-black'
-        }`}>
-        {/* Event mode banner */}
-        {isEventMode && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white py-3 text-center font-bold text-lg"
-          >
-            🎉 3rd Badge Day - {daysUntilEvent} Days to Go! Join the Community! 🎉
-          </motion.div>
-        )}
+        <div className="min-h-screen text-white fade-in bg-gradient-to-br from-gray-900 to-black">
         
         <div className="max-w-6xl mx-auto px-4 py-20 text-center">
           <motion.div
@@ -1280,81 +974,28 @@ function LandingPage() {
               alt="Byte Bash Blitz Logo"
               className="w-24 h-24 mx-auto mb-6"
             />
-            <h1 className={`text-5xl font-bold text-transparent bg-clip-text ${
-              isEventMode
-                ? 'bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 animate-pulse'
-                : 'bg-gradient-to-r from-blue-400 to-purple-500'
-            }`}>
-              {isEventMode ? '🎉 Byte Bash Blitz - Badge Day 2025!' : 'Byte Bash Blitz'}
+            <h1 className={`text-5xl font-bold text-transparent bg-clip-text
+             bg-gradient-to-r from-blue-400 to-purple-500`
+            }>
+            Byte Bash Blitz
             </h1>
             <p className="mt-4 text-xl text-gray-300">
-              {isEventMode 
-                ? 'Join the greatest community event! New members get the "Basher" title on August 1st!'
-                : 'Track your coding journey, earn points, and climb the leaderboard'
-              }
+             Track your coding journey, earn points, and climb the leaderboard
             </p>
             
-            {/* Event countdown for landing page */}
-            {isEventMode && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-8 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-6 border border-purple-400/50"
-              >
-                <div className="text-2xl font-bold text-purple-200 mb-4">Badge Day Countdown</div>
-                <div className="flex justify-center items-center gap-6">
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <div className="text-3xl font-bold text-yellow-300">{countdown.days}</div>
-                    <div className="text-purple-200 text-sm">Days</div>
-                  </motion.div>
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                  >
-                    <div className="text-2xl font-bold text-yellow-300">{countdown.hours}</div>
-                    <div className="text-purple-200 text-sm">Hours</div>
-                  </motion.div>
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
-                  >
-                    <div className="text-2xl font-bold text-yellow-300">{countdown.minutes}</div>
-                    <div className="text-purple-200 text-sm">Minutes</div>
-                  </motion.div>
-                  <motion.div 
-                    className="text-center"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.5, repeat: Infinity, delay: 0.6 }}
-                  >
-                    <div className="text-xl font-bold text-yellow-300">{countdown.seconds}</div>
-                    <div className="text-purple-200 text-sm">Seconds</div>
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
           </motion.div>
 
           <div className="mt-12 flex flex-col sm:flex-row justify-center gap-4">
-            <Button asChild size="lg" className={isEventMode 
-              ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-bold" 
-              : "bg-blue-600 hover:bg-blue-700"
-            }>
-              <Link to="/login">
-                {isEventMode ? '🎉 Join Badge Day!' : 'Get Started'}
-              </Link>
+              <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+              <Link to="/login">Get Started</Link>
+
             </Button>
             <Button
               asChild
               size="lg"
               variant="outline"
-              className={isEventMode ? "border-purple-400/50 text-purple-200 hover:bg-purple-500/20" : "border-white/20"}
-            >
+              className="border-white/20"
+        >
               <Link to="/leaderboard">View Leaderboard</Link>
             </Button>
           </div>
