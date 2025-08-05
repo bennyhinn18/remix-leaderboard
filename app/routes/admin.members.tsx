@@ -28,7 +28,8 @@ import {
   UserCog,
   FileText,
   Activity,
-  BarChart2
+  BarChart2,
+  Award
 } from 'lucide-react';
 import { createServerSupabase } from '~/utils/supabase.server';
 import { isOrganiser, getCurrentUser } from '~/utils/currentUser';
@@ -561,6 +562,17 @@ export default function MemberManagement() {
                   <Link to="/admin/members/bulk-add">
                     <Upload className="w-4 h-4 mr-2" />
                     Bulk Import
+                  </Link>
+                </Button>
+
+                <Button 
+                  asChild
+                  variant="outline"
+                  className="border-gray-600"
+                >
+                  <Link to="/admin/achievements">
+                    <Award className="w-4 h-4 mr-2" />
+                    Achievements
                   </Link>
                 </Button>
 

@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { createServerSupabase } from '~/utils/supabase.server';
 import { ProfileInfo } from '~/components/profile-info';
+import { ProfileAchievements } from '~/components/achievements';
+import { AchievementService } from '~/services/achievements.server';
 import { MainNav } from '~/components/main-nav';
 import { motion } from 'framer-motion';
 import { Card } from '~/components/ui/card';
@@ -203,6 +205,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
   };
 
+  // Initialize achievement service and get user achievements
+  const achievementService = new AchievementService(supabase);
+  let userAchievements: any[] = [];
+  
+  if (member) {
+    // Get user's real achievements from database
+    userAchievements = await achievementService.getUserAchievements(member.id);
+    
+    // Check and auto-award milestone achievements
+    await achievementService.checkAndAwardMilestoneAchievements(member.id);
+  }
+
   return defer({
     member,
     user,
@@ -216,6 +230,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     isOwnProfile,
     notifications,
     unreadCount,
+    userAchievements,
   });
 };
 
@@ -296,6 +311,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 };
 
+import type { UserAchievement, Achievement } from '~/types/achievements';
+
 interface LoaderData {
   member: any;
   user: any;
@@ -309,6 +326,7 @@ interface LoaderData {
   isOwnProfile: boolean;
   notifications: any[];
   unreadCount: number;
+  userAchievements: (UserAchievement & { achievement: Achievement })[];
 }
 
 export default function Profile() {
@@ -323,6 +341,7 @@ export default function Profile() {
     githubData,
     notifications,
     unreadCount,
+    userAchievements,
   } = useLoaderData<LoaderData>();
   interface Profile {
     id: number;
@@ -591,7 +610,21 @@ export default function Profile() {
             <div className="text-sm text-gray-400">Courses</div>
           </div>
         </div>
-
+              
+          {/* Achievements Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-8"
+          >
+            <ProfileAchievements 
+              userAchievements={userAchievements} 
+              totalAchievements={10}
+              memberName={member.name}
+              compact={true}
+            />
+          </motion.div>
         {/* Two Column Layout */}
         <div className="grid md:grid-cols-2 gap-6 mt-8">
           <div className="space-y-6">
@@ -840,7 +873,7 @@ export default function Profile() {
             >
               {profile.testimonial}
             </motion.blockquote>
-          </Card>
+          </Card>        
           <SocialFooter socials={profile.socials} />
         </motion.div>
       </div>
