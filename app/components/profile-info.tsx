@@ -213,11 +213,12 @@ export function ProfileInfo({
           className="flex flex-col items-end gap-3"
         >
           <div className="flex items-center gap-2">
-            {/* Edit Button - Show if user can edit (organiser OR own profile) */}
+            {/* Edit Button - Show if user can edit (organiser can edit ANY profile, non-organiser can edit OWN profile only) */}
             {canEdit && member && (
               <EditProfileButton
                 member={member}
-                isOrganiser={isOrganiser} // Pass this prop to EditProfileButton
+                isOrganiser={isOrganiser}
+                canEdit={canEdit}
               />
             )}
 

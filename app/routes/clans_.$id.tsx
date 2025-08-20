@@ -23,27 +23,55 @@ import type { Clan } from '~/types/clans';
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
-  const { data: clan } = await supabase
-    .from('clans')
-    .select('*')
-    .eq('id', params.id)
-    .single();
-  if (clan) {
-    const { data: members } = await supabase
-      .from('members')
+  
+  try {
+    const { data: clan, error: clanError } = await supabase
+      .from('clans')
       .select('*')
-      .eq('clan_id', clan.id)
-      .or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash,title.eq.Mentor');
-    clan.members = members || [];
-  }
+      .eq('id', params.id)
+      .single();
 
-  if (!clan) {
-    throw new Response('Clan not found', {
-      status: 404,
-      statusText: 'Not Found',
+    if (clanError) {
+      console.error('Error fetching clan:', clanError);
+      throw new Response('Clan not found', {
+        status: 404,
+        statusText: 'Not Found',
+      });
+    }
+
+    if (clan) {
+      const { data: members, error: membersError } = await supabase
+        .from('members')
+        .select('*')
+        .eq('clan_id', clan.id)
+        .or('title.eq.Basher,title.eq.Organiser,title.eq.Captain Bash,title.eq.Mentor');
+      
+      if (membersError) {
+        console.error('Error fetching clan members:', membersError);
+        clan.members = []; // Safe fallback
+      } else {
+        clan.members = members || [];
+      }
+    }
+
+    if (!clan) {
+      throw new Response('Clan not found', {
+        status: 404,
+        statusText: 'Not Found',
+      });
+    }
+    
+    return json({ clan });
+  } catch (error) {
+    console.error('Unexpected error in clan loader:', error);
+    if (error instanceof Response) {
+      throw error; // Re-throw Response errors
+    }
+    throw new Response('Internal Server Error', {
+      status: 500,
+      statusText: 'Internal Server Error',
     });
   }
-  return json({ clan });
 };
 
 function ClanHeader({ clan }: { clan: Clan }) {
@@ -314,9 +342,9 @@ export default function ClanPage() {
             asChild
             className="text-gray-400 hover:text-white"
           >
-            <Link to="/clans" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Back to Clans
+              Back
             </Link>
           </Button>
         </motion.div>

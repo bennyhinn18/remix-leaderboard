@@ -365,7 +365,7 @@ export default function Support() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="space-y-6"
+          className="space-y-6 pb-12"
         >
           <h2 className="text-2xl font-bold">Contact Support</h2>
           <Card className="p-6 bg-white/5 border-white/10">

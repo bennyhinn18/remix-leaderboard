@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '~/components/ui/button';
-import { Edit } from 'lucide-react';
+import { Edit, User, Shield, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -60,14 +60,59 @@ interface Member {
   hobbies: string[] | null;
   clan_id: number;
   duolingo_username: string | null;
+  roll_number: string | null;
+  leetcode_username: string | null;
 }
 
 interface EditProfileButtonProps {
   member: Member;
+  isOrganiser?: boolean;
+  canEdit?: boolean;
 }
 
-export function EditProfileButton({ member }: EditProfileButtonProps) {
+// Helper component for field labels with edit indicators
+function FieldLabel({ 
+  children, 
+  htmlFor, 
+  canEditByNonOrganizer = true, 
+  isOrganiser = false,
+  tooltip = ''
+}: { 
+  children: React.ReactNode; 
+  htmlFor: string;
+  canEditByNonOrganizer?: boolean;
+  isOrganiser?: boolean;
+  tooltip?: string;
+}) {
+  return (
+    <Label htmlFor={htmlFor} className="flex items-center gap-2">
+      {children}
+      {/* Only show user icon on fields that non-organizers can edit */}
+      {!isOrganiser && canEditByNonOrganizer && (
+        <span title="You can edit this field">
+          <User className="h-3 w-3 text-blue-400" />
+        </span>
+      )}
+      {/* Organizers see a green shield on all fields to show their privileges */}
+      {isOrganiser && (
+        <span title="Organizer access - you can edit this field">
+          <Shield className="h-3 w-3 text-green-400" />
+        </span>
+      )}
+      {/* Info tooltip for additional context (optional) */}
+      {tooltip && (
+        <span title={tooltip}>
+          <Info className="h-3 w-3 text-gray-400" />
+        </span>
+      )}
+    </Label>
+  );
+}
+
+export function EditProfileButton({ member, isOrganiser = false, canEdit = false }: EditProfileButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // Helper to determine if field should be readonly for non-organizers
+  const isFieldRestricted = !isOrganiser;
 
   return (
     <>
@@ -92,7 +137,7 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
 
           <Form
             method="put"
-            action={`/profile/${member.github_username}`}
+            action={`/profile/${member.github_username}?bypass=true`}
             className="space-y-6 py-4"
           >
             <input type="hidden" name="id" value={member.id} />
@@ -104,17 +149,33 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 <h3 className="text-lg font-semibold">Personal Information</h3>
 
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <FieldLabel 
+                    htmlFor="name" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Full name as it should appear"
+                  >
+                    Name
+                  </FieldLabel>
                   <Input
                     id="name"
                     name="name"
                     defaultValue={member.name}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="personal_email">Personal Email</Label>
+                  <FieldLabel 
+                    htmlFor="personal_email" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your personal email address"
+                  >
+                    Personal Email
+                  </FieldLabel>
                   <Input
                     id="personal_email"
                     name="personal_email"
@@ -124,17 +185,33 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="academic_email">Academic Email</Label>
+                  <FieldLabel 
+                    htmlFor="academic_email" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your academic/university email"
+                  >
+                    Academic Email
+                  </FieldLabel>
                   <Input
                     id="academic_email"
                     name="academic_email"
                     defaultValue={member.academic_email || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="mobile_number">Mobile Number</Label>
+                  <FieldLabel 
+                    htmlFor="mobile_number" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your mobile phone number"
+                  >
+                    Mobile Number
+                  </FieldLabel>
                   <Input
                     id="mobile_number"
                     name="mobile_number"
@@ -144,7 +221,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
+                  <FieldLabel 
+                    htmlFor="whatsapp_number" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your WhatsApp number"
+                  >
+                    WhatsApp Number
+                  </FieldLabel>
                   <Input
                     id="whatsapp_number"
                     name="whatsapp_number"
@@ -154,28 +238,53 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="avatar_url">Avatar URL</Label>
+                  <FieldLabel 
+                    htmlFor="avatar_url" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="URL to your profile picture"
+                  >
+                    Avatar URL
+                  </FieldLabel>
                   <Input
                     id="avatar_url"
                     name="avatar_url"
                     defaultValue={member.avatar_url || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="joined_date">Joined Date</Label>
+                  <FieldLabel 
+                    htmlFor="joined_date" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Date when member joined - only organizers can modify"
+                  >
+                    Joined Date
+                  </FieldLabel>
                   <Input
                     id="joined_date"
                     name="joined_date"
                     type="date"
                     defaultValue={member.joined_date || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="testimony">Testimony</Label>
+                  <FieldLabel 
+                    htmlFor="testimony" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your personal testimony or bio"
+                  >
+                    Testimony
+                  </FieldLabel>
                   <Textarea
                     id="testimony"
                     name="testimony"
@@ -185,7 +294,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="hobbies">Hobbies (comma separated)</Label>
+                  <FieldLabel 
+                    htmlFor="hobbies" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="List your hobbies separated by commas"
+                  >
+                    Hobbies (comma separated)
+                  </FieldLabel>
                   <Input
                     id="hobbies"
                     name="hobbies"
@@ -202,8 +318,15 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </h3>
 
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Select name="title" defaultValue={member.title || 'Basher'}>
+                  <FieldLabel 
+                    htmlFor="title" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="User role/title - only organizers can change this"
+                  >
+                    Title
+                  </FieldLabel>
+                  <Select name="title" defaultValue={member.title || 'Basher'} disabled={isFieldRestricted}>
                     <SelectTrigger className="bg-gray-800 border-gray-700">
                       <SelectValue placeholder="Select title" />
                     </SelectTrigger>
@@ -213,55 +336,101 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                       <SelectItem value="Organiser">Organiser</SelectItem>
                       <SelectItem value="Mentor">Mentor</SelectItem>
                       <SelectItem value="Alumni">Alumni</SelectItem>
+                      <SelectItem value="Legacy Basher">Legacy Basher</SelectItem>
                     </SelectContent>
                   </Select>
+                  {/* Hidden input to ensure title is submitted even when Select is disabled */}
+                  {isFieldRestricted && (
+                    <input type="hidden" name="title" value={member.title || 'Basher'} />
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="basher_level">Basher Level</Label>
+                  <FieldLabel 
+                    htmlFor="basher_level" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Basher experience level - only organizers can change this"
+                  >
+                    Basher Level
+                  </FieldLabel>
                   <Input
                     id="basher_level"
                     name="basher_level"
                     defaultValue={member.basher_level || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bash_points">Bash Points</Label>
+                  <FieldLabel 
+                    htmlFor="bash_points" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Points earned in activities - automatically calculated, cannot be manually edited"
+                  >
+                    Bash Points
+                  </FieldLabel>
                   <Input
                     id="bash_points"
                     name="bash_points"
                     type="number"
                     defaultValue={member.bash_points?.toString() || '0'}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={true}
+                    disabled={true}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="clan_name">Clan Name</Label>
+                  <FieldLabel 
+                    htmlFor="clan_name" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Member's clan assignment - only organizers can change"
+                  >
+                    Clan Name
+                  </FieldLabel>
                   <Input
                     id="clan_name"
                     name="clan_name"
                     defaultValue={member.clan_name || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="basher_no">Basher No</Label>
+                  <FieldLabel 
+                    htmlFor="basher_no" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Official basher number - only organizers can assign"
+                  >
+                    Basher No
+                  </FieldLabel>
                   <Input
                     id="basher_no"
                     name="basher_no"
                     defaultValue={member.basher_no || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="primary_domain">
+                  <FieldLabel 
+                    htmlFor="primary_domain" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your main areas of expertise (comma separated)"
+                  >
                     Primary Domains (comma separated)
-                  </Label>
+                  </FieldLabel>
                   <Input
                     id="primary_domain"
                     name="primary_domain"
@@ -271,9 +440,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="secondary_domain">
+                  <FieldLabel 
+                    htmlFor="secondary_domain" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your secondary areas of interest (comma separated)"
+                  >
                     Secondary Domains (comma separated)
-                  </Label>
+                  </FieldLabel>
                   <Input
                     id="secondary_domain"
                     name="secondary_domain"
@@ -283,7 +457,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gpa">GPA</Label>
+                  <FieldLabel 
+                    htmlFor="gpa" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your current GPA"
+                  >
+                    GPA
+                  </FieldLabel>
                   <Input
                     id="gpa"
                     name="gpa"
@@ -293,6 +474,8 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                     max="10"
                     defaultValue={member.gpa?.toString() || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
@@ -310,6 +493,8 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                       member.weekly_bash_attendance?.toString() || ''
                     }
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
               </div>
@@ -321,17 +506,33 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="github_username">GitHub Username</Label>
+                  <FieldLabel 
+                    htmlFor="github_username" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your GitHub username"
+                  >
+                    GitHub Username
+                  </FieldLabel>
                   <Input
                     id="github_username"
                     name="github_username"
                     defaultValue={member.github_username || ''}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="discord_username">Discord Username</Label>
+                  <FieldLabel 
+                    htmlFor="discord_username" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your Discord username"
+                  >
+                    Discord Username
+                  </FieldLabel>
                   <Input
                     id="discord_username"
                     name="discord_username"
@@ -341,9 +542,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="hackerrank_username">
+                  <FieldLabel 
+                    htmlFor="hackerrank_username" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your HackerRank username"
+                  >
                     HackerRank Username
-                  </Label>
+                  </FieldLabel>
                   <Input
                     id="hackerrank_username"
                     name="hackerrank_username"
@@ -353,7 +559,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="instagram_username">Instagram Username</Label>
+                  <FieldLabel 
+                    htmlFor="instagram_username" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your Instagram username"
+                  >
+                    Instagram Username
+                  </FieldLabel>
                   <Input
                     id="instagram_username"
                     name="instagram_username"
@@ -363,7 +576,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                  <FieldLabel 
+                    htmlFor="linkedin_url" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your LinkedIn profile URL"
+                  >
+                    LinkedIn URL
+                  </FieldLabel>
                   <Input
                     id="linkedin_url"
                     name="linkedin_url"
@@ -373,7 +593,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="personal_website">Personal Website</Label>
+                  <FieldLabel 
+                    htmlFor="personal_website" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your personal website URL"
+                  >
+                    Personal Website
+                  </FieldLabel>
                   <Input
                     id="personal_website"
                     name="personal_website"
@@ -383,7 +610,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="portfolio_url">Portfolio URL</Label>
+                  <FieldLabel 
+                    htmlFor="portfolio_url" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your portfolio website URL"
+                  >
+                    Portfolio URL
+                  </FieldLabel>
                   <Input
                     id="portfolio_url"
                     name="portfolio_url"
@@ -393,7 +627,14 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="resume_url">Resume URL</Label>
+                  <FieldLabel 
+                    htmlFor="resume_url" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="URL to your resume/CV"
+                  >
+                    Resume URL
+                  </FieldLabel>
                   <Input
                     id="resume_url"
                     name="resume_url"
@@ -403,12 +644,55 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="duolingo_username">Duolingo Username</Label>
+                  <FieldLabel 
+                    htmlFor="duolingo_username" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your Duolingo username"
+                  >
+                    Duolingo Username
+                  </FieldLabel>
                   <Input
                     id="duolingo_username"
                     name="duolingo_username"
                     defaultValue={member.duolingo_username || ''}
                     className="bg-gray-800 border-gray-700"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <FieldLabel 
+                    htmlFor="leetcode_username" 
+                    canEditByNonOrganizer={true}
+                    isOrganiser={isOrganiser}
+                    tooltip="Your LeetCode username"
+                  >
+                    LeetCode Username
+                  </FieldLabel>
+                  <Input
+                    id="leetcode_username"
+                    name="leetcode_username"
+                    defaultValue={member.leetcode_username || ''}
+                    className="bg-gray-800 border-gray-700"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <FieldLabel 
+                    htmlFor="roll_number" 
+                    canEditByNonOrganizer={false}
+                    isOrganiser={isOrganiser}
+                    tooltip="Official roll number - only organizers can change"
+                  >
+                    Roll Number
+                  </FieldLabel>
+                  <Input
+                    id="roll_number"
+                    name="roll_number"
+                    defaultValue={member.roll_number || ''}
+                    className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
               </div>
@@ -426,6 +710,8 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                   type="number"
                   defaultValue={member.stats?.courses.toString() || '0'}
                   className="bg-gray-800 border-gray-700"
+                  readOnly={isFieldRestricted}
+                  disabled={false}
                 />
               </div>
 
@@ -438,6 +724,8 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                     type="number"
                     defaultValue={member.stats?.projects.toString() || '0'}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
@@ -449,6 +737,8 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                     type="number"
                     defaultValue={member.stats?.hackathons.toString() || '0'}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
@@ -460,6 +750,8 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                     type="number"
                     defaultValue={member.stats?.internships.toString() || '0'}
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
 
@@ -473,6 +765,8 @@ export function EditProfileButton({ member }: EditProfileButtonProps) {
                       member.stats?.certifications.toString() || '0'
                     }
                     className="bg-gray-800 border-gray-700"
+                    readOnly={isFieldRestricted}
+                    disabled={false}
                   />
                 </div>
               </div>

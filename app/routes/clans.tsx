@@ -8,7 +8,9 @@ import {
   ChevronRight,
   Activity,
   Sparkles,
+  ChevronLeftCircleIcon,
 } from 'lucide-react';
+import { Button } from '~/components/ui/button';
 import { createServerSupabase } from '~/utils/supabase.server';
 import { CreateClanForm } from '~/components/create-clan-form';
 
@@ -174,8 +176,15 @@ export default function Clans() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto space-y-8 pb-[78px]"
+        className="max-w-7xl mx-auto space-y-8 pb-[78px] pt-12"
       >
+        <Link
+          to="/"
+          className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+        >
+          <ChevronLeftCircleIcon className="w-5 h-5" />
+          Back
+        </Link>
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4">
           <div className="flex items-center gap-4">
