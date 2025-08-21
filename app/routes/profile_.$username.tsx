@@ -5,7 +5,7 @@ import {
   type LoaderFunctionArgs,
   defer,
 } from '@remix-run/node';
-import { useLoaderData, Link, Await } from '@remix-run/react';
+import { useLoaderData, Link, Await, useSearchParams } from '@remix-run/react';
 import {
   ArrowLeft,
   Github,
@@ -35,8 +35,8 @@ import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { SocialFooter } from '~/components/social-footer';
 import { useState, useEffect, Suspense } from 'react';
-import { isOrganiser, getCurrentUser } from '~/utils/currentUser';
-import { getCachedMember, getCachedPoints } from '~/utils/cache.server';
+import { isOrganiser, getCurrentUser, invalidateUserCache } from '~/utils/currentUser';
+import { getCachedMember, getCachedPoints, memberCache, clearAllMemberCaches } from '~/utils/cache.server';
 import PointsGraph from '~/components/points-graph';
 import { getTier, getTierIcon } from '~/utils/tiers';
 import {
@@ -44,20 +44,51 @@ import {
 } from '~/components/profile-skeletons';
 import { PushNotificationManager } from '~/components/push-notification-manager';
 import { getUserNotifications } from '~/services/notifications.server';
+import { toast } from '~/hooks/use-toast';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  // 🔄 AUTO-REFRESH: Clear user cache to ensure fresh data on every profile visit
+  invalidateUserCache(request);
+  console.log('🔄 User cache cleared - fetching fresh data for profile visit');
+  
   // Get organiser status using the cached getCurrentUser function
   const organiserStatus = await isOrganiser(request);
+  
   const response = new Response();
   const supabase = createServerSupabase(request, response);
 
   // Get current user (cached)
   const user = await getCurrentUser(request);
 
-  // Fetch the profile being viewed (cached)
+  // Fetch the profile being viewed (ALWAYS FRESH - no cache)
   const username = params.username || '';
-  const member = await getCachedMember(request, username, supabase);
-
+  let memberFetchError: string | null = null;
+  let member: any = null;
+  try {
+    // Direct database query to ensure fresh data
+    const { data: freshMember, error } = await supabase
+      .from('members')
+      .select('*')
+      .eq('github_username', username)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching member directly from DB:', error);
+      memberFetchError = error.message;
+      member = null;
+    } else {
+      member = freshMember;
+      console.log(`✅ Fresh member data loaded for ${username}:`, {
+        name: member?.name,
+        github_username: member?.github_username,
+        id: member?.id
+      });
+    }
+  } catch (err: any) {
+    console.error('Error fetching member in loader:', err);
+    memberFetchError = err?.message || String(err);
+    member = null;
+  }
   if (!member) {
     return json({
       member: null,
@@ -71,8 +102,23 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Check if current user is viewing their own profile
   const isOwnProfile = user && member && user.id === member.user_id;
 
-  // Get points history (cached)
-  const pointsHistory = await getCachedPoints(request, member.id, supabase);
+  // Get points history (ALWAYS FRESH - no cache)
+  let pointsHistory: any[] = [];
+  if (member?.id) {
+    const { data: freshPoints, error: pointsError } = await supabase
+      .from('points')
+      .select('*')
+      .eq('member_id', member.id)
+      .order('updated_at', { ascending: true });
+    
+    if (pointsError) {
+      console.error('Error fetching points:', pointsError);
+      pointsHistory = [];
+    } else {
+      pointsHistory = freshPoints || [];
+      console.log(`✅ Fresh points data loaded for member ${member.id}: ${pointsHistory.length} records`);
+    }
+  }
 
   // Get user notifications if member exists and it's their own profile
   let notifications: Array<any> = [];
@@ -235,11 +281,22 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
+  console.log(`🔥 Profile action called for: ${params.username}`);
+  console.log(`🔥 Request method: ${request.method}`);
+  
   const response = new Response();
   const supabase = createServerSupabase(request, response);
   try {
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
+    
+    console.log(`🔥 Form data received:`, data);
+
+    // Basic validation for required fields
+    if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
+      console.log(`❌ Name validation failed: ${data.name}`);
+      return json({ error: 'Name is required' }, { status: 400 });
+    }
 
     // Prepare the stats object
     const stats = {
@@ -250,35 +307,51 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       certifications: Number(data.certifications) || 0,
     };
 
-    // Prepare the updated member object
-    const updatedMember = {
-      id: Number(data.id) || null,
-      clan_id: Number(data.clan_id) || null,
-      name: data.name || null,
+    // Permission check: only allow organisers or the profile owner to edit
+    const currentUser = await getCurrentUser(request);
+    const organiser = await isOrganiser(request);
+    
+    console.log(`🔥 Permission check - Current user:`, currentUser);
+    console.log(`🔥 Permission check - Is organiser:`, organiser);
+
+    const { data: targetMember } = await supabase
+      .from('members')
+      .select('id, user_id')
+      .eq('github_username', params.username)
+      .single();
+
+    console.log(`🔥 Target member found:`, targetMember);
+
+    if (!targetMember) {
+      console.log(`❌ Target member not found for username: ${params.username}`);
+      return json({ error: 'Member not found' }, { status: 404 });
+    }
+
+    const isOwner = currentUser && currentUser.id === targetMember.user_id;
+    console.log(`🔥 Is owner:`, isOwner);
+    
+    // Organizers can edit anyone's profile, users can only edit their own
+    if (!organiser && !isOwner) {
+      console.log(`❌ Permission denied - Not organiser and not owner`);
+      return json({ error: 'Forbidden - You can only edit your own profile unless you are an organizer' }, { status: 403 });
+    }
+
+    // Prepare the updated member object based on user permissions
+    const baseUpdates = {
+      // Fields that both organizers and regular users can edit
       personal_email: data.personal_email || null,
-      academic_email: data.academic_email || null,
       mobile_number: data.mobile_number || null,
       whatsapp_number: data.whatsapp_number || null,
-      avatar_url: data.avatar_url || null,
-      joined_date: data.joined_date || null,
       testimony: data.testimony || null,
-      hobbies: typeof data.hobbies === 'string' ? data.hobbies.split(',') : [],
-      title: data.title || null,
-      basher_level: data.basher_level || null,
-      bash_points: Number(data.bash_points) || 0,
-      clan_name: data.clan_name || null,
-      basher_no: data.basher_no || null,
+      hobbies: typeof data.hobbies === 'string' ? data.hobbies.split(',').map(h => h.trim()) : [],
       primary_domain:
         typeof data.primary_domain === 'string'
-          ? data.primary_domain.split(',')
+          ? data.primary_domain.split(',').map(d => d.trim())
           : [],
       secondary_domain:
         typeof data.secondary_domain === 'string'
-          ? data.secondary_domain.split(',')
+          ? data.secondary_domain.split(',').map(d => d.trim())
           : [],
-      gpa: Number(data.gpa) || 0,
-      weekly_bash_attendance: Number(data.weekly_bash_attendance) || 0,
-      github_username: data.github_username || null,
       discord_username: data.discord_username || null,
       hackerrank_username: data.hackerrank_username || null,
       instagram_username: data.instagram_username || null,
@@ -287,24 +360,58 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       portfolio_url: data.portfolio_url || null,
       resume_url: data.resume_url || null,
       duolingo_username: data.duolingo_username || null,
+      leetcode_username: data.leetcode_username || null,
       stats,
     };
 
-    await supabase
-      .from('members')
-      .select('*')
-      .eq('github_username', params.usename);
+    const organizerOnlyUpdates = {
+      // Fields that only organizers can edit
+      id: Number(data.id) || null,
+      clan_id: Number(data.clan_id) || null,
+      name: data.name || null,
+      academic_email: data.academic_email || null,
+      avatar_url: data.avatar_url || null,
+      joined_date: data.joined_date || null,
+      title: data.title || null,
+      basher_level: data.basher_level || null,
+      bash_points: Number(data.bash_points) || 0, // Only organizers can modify points
+      clan_name: data.clan_name || null,
+      basher_no: data.basher_no || null,
+      gpa: Number(data.gpa) || 0,
+      weekly_bash_attendance: Number(data.weekly_bash_attendance) || 0,
+      github_username: data.github_username || null,
+      roll_number: data.roll_number || null,
+    };
+
+    // Combine updates based on organizer status
+    const updatedMember = organiser 
+      ? { ...baseUpdates, ...organizerOnlyUpdates }
+      : baseUpdates;
+
     // Update the member's profile in the database
-    const { error } = await supabase
+    console.log(`🔥 Updating member profile for: ${params.username}`);
+    console.log(`🔥 Update data:`, JSON.stringify(updatedMember, null, 2));
+    
+    const { data: updateResult, error } = await supabase
       .from('members')
       .update(updatedMember)
-      .eq('github_username', params.username);
+      .eq('github_username', params.username)
+      .select(); // Add select to get the updated data back
+    
     if (error) {
-      console.error('Supabase Error:', error);
+      console.error('❌ Supabase Error:', error);
       return json({ error: error.message }, { status: 500 });
     }
 
-    return redirect(`/profile/${params.username}`);
+    console.log(`✅ Successfully updated member profile for: ${params.username}`);
+    console.log(`✅ Updated data result:`, updateResult);
+
+    // Invalidate all caches for this member to ensure fresh data is loaded
+    const username = params.username || '';
+    clearAllMemberCaches(username, targetMember.id);
+
+    // Redirect with success message
+    return redirect(`/profile/${username}?updated=true&t=${Date.now()}`);
   } catch (error) {
     console.error('Action Function Error:', error);
     return json({ error: 'An unexpected error occurred.' }, { status: 500 });
@@ -343,6 +450,11 @@ export default function Profile() {
     unreadCount,
     userAchievements,
   } = useLoaderData<LoaderData>();
+  
+  const [searchParams] = useSearchParams();
+  const wasUpdated = searchParams.get('updated') === 'true';
+  const updateTimestamp = searchParams.get('t'); // Timestamp to ensure unique updates
+  
   interface Profile {
     id: number;
     name: string;
@@ -384,6 +496,13 @@ export default function Profile() {
 
   useEffect(() => {
     if (!member) return; // Exit early if no member
+
+    // Log the member data being used to create profile
+    console.log(`Creating profile for member:`, {
+      name: member.name,
+      github_username: member.github_username,
+      id: member.id
+    });
 
     // Set initial profile with data we already have
     const tier = getTier(member.bash_points || 0);
@@ -446,6 +565,101 @@ export default function Profile() {
     });
   }, [member]);
 
+  // Consume deferred promises from the loader and update profile state safely
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const gh = await githubData;
+        if (mounted && gh && !gh.error) {
+          setProfile((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  streaks: { ...prev.streaks, github: gh.events?.length || 0 },
+                }
+              : prev
+          );
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [githubData]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const dl = await duolingoStreak;
+        if (mounted && dl && !dl.error) {
+          setProfile((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  streaks: { ...prev.streaks, duolingo: dl.streak || 0 },
+                }
+              : prev
+          );
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [duolingoStreak]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const lc = await leetCodeData;
+        if (mounted && lc && !lc.error) {
+          setProfile((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  streaks: { ...prev.streaks, leetcode: lc.solved || 0 },
+                }
+              : prev
+          );
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [leetCodeData]);
+
+  // Show toast notification when profile is updated
+  useEffect(() => {
+    if (wasUpdated && updateTimestamp) {
+      toast({
+        title: "Profile Updated",
+        description: "Your profile changes have been saved successfully.",
+        variant: "default",
+      });
+      
+      // Clear the URL parameters after showing the toast to clean up the URL
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('updated') || url.searchParams.has('t')) {
+        url.searchParams.delete('updated');
+        url.searchParams.delete('t');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [wasUpdated, updateTimestamp]); // Depend on both updated flag and timestamp
+
   // Check if the member is a legacy basher
   const isLegacyBasher = member?.title === 'Legacy Basher';
 
@@ -507,11 +721,12 @@ export default function Profile() {
         {/* Profile Info Section - Pass canEdit and member props */}
         <ProfileInfo
           profile={profile}
-          canEdit={organiserStatus || isOwnProfile}
+          canEdit={organiserStatus || isOwnProfile} // Organizers can edit anyone, users can edit their own
           member={member}
           isOrganiser={organiserStatus}
           isLegacyBasher={isLegacyBasher}
         />
+        
         {/* Points Graph - Add this section */}
         {user && pointsHistory && pointsHistory.length > 0 && (
           <PointsGraph
@@ -890,80 +1105,16 @@ export default function Profile() {
           <Sparkles className="w-5 h-5" />
         </motion.div>
       )}
-      {/* GitHub data resolver component */}
-      <Suspense fallback={null}>
-        <Await resolve={githubData}>
-          {(githubData) => {
-            useEffect(() => {
-              if (!githubData || !profile || githubData.error) return;
-
-              // Update the profile with GitHub streak data
-              setProfile((prevProfile) => {
-                if (!prevProfile) return null;
-                return {
-                  ...prevProfile,
-                  streaks: {
-                    ...prevProfile.streaks,
-                    github: githubData.events?.length || 0,
-                  },
-                };
-              });
-            }, [githubData]);
-
-            return null; // This component only updates state, doesn't render anything
-          }}
-        </Await>
-      </Suspense>
-
-      {/* Duolingo data resolver component */}
-      <Suspense fallback={null}>
-        <Await resolve={duolingoStreak}>
-          {(duolingoData) => {
-            useEffect(() => {
-              if (!duolingoData || !profile || duolingoData.error) return;
-
-              // Update the profile with Duolingo streak data
-              setProfile((prevProfile) => {
-                if (!prevProfile) return null;
-                return {
-                  ...prevProfile,
-                  streaks: {
-                    ...prevProfile.streaks,
-                    duolingo: duolingoData.streak || 0,
-                  },
-                };
-              });
-            }, [duolingoData]);
-
-            return null; // This component only updates state, doesn't render anything
-          }}
-        </Await>
-      </Suspense>
-
-      {/* LeetCode data resolver component */}
-      <Suspense fallback={null}>
-        <Await resolve={leetCodeData}>
-          {(leetCodeData) => {
-            useEffect(() => {
-              if (!leetCodeData || !profile || leetCodeData.error) return;
-
-              // Update the profile with LeetCode streak data
-              setProfile((prevProfile) => {
-                if (!prevProfile) return null;
-                return {
-                  ...prevProfile,
-                  streaks: {
-                    ...prevProfile.streaks,
-                    leetcode: leetCodeData.solved || 0,
-                  },
-                };
-              });
-            }, [leetCodeData]);
-
-            return null; // This component only updates state, doesn't render anything
-          }}
-        </Await>
-      </Suspense>
+      {/* Resolve deferred data and update profile safely using top-level effects */}
+      {/**
+       * Use effects to consume the deferred promises returned from the loader.
+       * This avoids calling hooks inside render-prop callbacks (which caused
+       * invalid hook-call runtime errors).
+       */}
+      <>
+        {/* GitHub data */}
+        <script suppressHydrationWarning={true} />
+      </>
     </div>
   );
 }

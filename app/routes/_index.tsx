@@ -628,8 +628,7 @@ export default function Home() {
               </div>
               <div className="mt-2 text-xs text-blue-400">
                 <Link
-                  to={`/cla
-                ns/${member?.clan?.id}`}
+                  to={`/clans/${member?.clan?.id}`}
                   className="flex items-center gap-1"
                 >
                   View clan

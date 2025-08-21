@@ -51,9 +51,9 @@ export class Cache<T> {
 }
 
 // Create specific caches for different data types
-export const userCache = new Cache<{ id: string; title: string }>(120); // 2 minutes cache for user data
-export const memberCache = new Cache<any>(60); // 1 minute cache for member data
-export const pointsCache = new Cache<any[]>(30); // 30 seconds cache for points data
+export const userCache = new Cache<{ id: string; title: string }>(30); // 30 seconds cache for user data
+export const memberCache = new Cache<any>(15); // 15 seconds cache for member data  
+export const pointsCache = new Cache<any[]>(10); // 10 seconds cache for points data
 
 // Helper function to get cached user by request fingerprint
 export function getCacheKeyFromRequest(
@@ -78,8 +78,11 @@ export async function getCachedMember(
   const cachedMember = memberCache.get(cacheKey);
 
   if (cachedMember) {
+    console.log(`Cache HIT for member: ${username}`);
     return cachedMember;
   }
+
+  console.log(`Cache MISS for member: ${username} - fetching from database`);
 
   // If no supabase instance is provided, create one
   const supabaseClient =
@@ -93,11 +96,20 @@ export async function getCachedMember(
     .single();
 
   if (error || !member) {
+    console.log(`No member found for username: ${username}`, error);
     return null;
   }
 
+  // Log the fetched member data to debug name discrepancy
+  console.log(`Member data fetched from DB for ${username}:`, {
+    name: member.name,
+    github_username: member.github_username,
+    id: member.id
+  });
+
   // Cache the member data
   memberCache.set(cacheKey, member);
+  console.log(`Member data cached for: ${username}`);
 
   return member;
 }
@@ -134,4 +146,35 @@ export async function getCachedPoints(
   pointsCache.set(cacheKey, points || []);
 
   return points || [];
+}
+
+// Helper function to clear all caches - useful for development and debugging
+export function clearAllCaches() {
+  userCache.invalidateAll();
+  memberCache.invalidateAll();
+  pointsCache.invalidateAll();
+  console.log('All caches cleared');
+}
+
+// Helper function to clear cache for a specific member
+export function clearMemberCache(username: string) {
+  const cacheKey = `member:${username}`;
+  memberCache.invalidate(cacheKey);
+  console.log(`Cache cleared for member: ${username}`);
+}
+
+// Function to clear member points cache by member ID
+export function clearMemberPointsCache(memberId: number) {
+  const pointsCacheKey = `points:${memberId}`;
+  pointsCache.invalidate(pointsCacheKey);
+  console.log(`Cleared points cache for member ID: ${memberId}`);
+}
+
+// Function to clear all member-related caches (comprehensive cache clearing)
+export function clearAllMemberCaches(username: string, memberId?: number) {
+  clearMemberCache(username);
+  if (memberId) {
+    clearMemberPointsCache(memberId);
+  }
+  console.log(`Cleared all caches for member: ${username} (ID: ${memberId})`);
 }

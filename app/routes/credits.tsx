@@ -341,7 +341,7 @@ export default function Credits() {
         </div>
       </motion.div>
 
-      <div className="max-w-7xl mx-auto px-4 py-12 space-y-24">
+      <div className="max-w-7xl mx-auto px-4 py-12 pb-24 md:pb-12 space-y-24">
         <section className="space-y-12">
           <motion.div
             style={{ opacity, scale }}
