@@ -101,20 +101,18 @@ export async function fetchGitHubStats(username: string) {
   if (!username) return { streak: 0 };
   
   try {
-    console.log(`Fetching GitHub stats for ${username} using contributions API`);
-    
-    const response = await fetch(`https://github-contributions-api.deno.dev/${username}.json`);
+
+    const response = await fetch(`${process.env.PUBLIC_URL || "https://terminal.bytebashblitz.org"}/streak/json?user=${username}`);
     
     if (!response.ok) {
       console.warn(`Contributions API returned ${response.status}: ${response.statusText}`);
       return { streak: 0 };
     }
 
-    const data = await response.json();
+    const { currentStreak } = await response.json();
 
-    data.totalContributions = data.totalContributions || 0;
-    console.log(`Parsed ${data.totalContributions} contributions for ${username}`);
-    return { streak: data.totalContributions };
+    return { streak: currentStreak?.length ?? 0 };
+
       } catch (error) {
         console.error(`Error fetching GitHub stats for ${username}:`, error);
         return { streak: 0 };

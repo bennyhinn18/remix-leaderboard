@@ -49,7 +49,7 @@ import { toast } from '~/hooks/use-toast';
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // 🔄 AUTO-REFRESH: Clear user cache to ensure fresh data on every profile visit
   invalidateUserCache(request);
-  console.log('🔄 User cache cleared - fetching fresh data for profile visit');
+  
   
   // Get organiser status using the cached getCurrentUser function
   const organiserStatus = await isOrganiser(request);
@@ -60,35 +60,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Get current user (cached)
   const user = await getCurrentUser(request);
 
-  // Fetch the profile being viewed (ALWAYS FRESH - no cache)
+  // Fetch the profile being viewed (cached)
   const username = params.username || '';
-  let memberFetchError: string | null = null;
-  let member: any = null;
-  try {
-    // Direct database query to ensure fresh data
-    const { data: freshMember, error } = await supabase
-      .from('members')
-      .select('*')
-      .eq('github_username', username)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching member directly from DB:', error);
-      memberFetchError = error.message;
-      member = null;
-    } else {
-      member = freshMember;
-      console.log(`✅ Fresh member data loaded for ${username}:`, {
-        name: member?.name,
-        github_username: member?.github_username,
-        id: member?.id
-      });
-    }
-  } catch (err: any) {
-    console.error('Error fetching member in loader:', err);
-    memberFetchError = err?.message || String(err);
-    member = null;
-  }
+ const member = await getCachedMember(request, username, supabase);
   if (!member) {
     return json({
       member: null,
@@ -102,23 +76,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Check if current user is viewing their own profile
   const isOwnProfile = user && member && user.id === member.user_id;
 
-  // Get points history (ALWAYS FRESH - no cache)
-  let pointsHistory: any[] = [];
-  if (member?.id) {
-    const { data: freshPoints, error: pointsError } = await supabase
-      .from('points')
-      .select('*')
-      .eq('member_id', member.id)
-      .order('updated_at', { ascending: true });
-    
-    if (pointsError) {
-      console.error('Error fetching points:', pointsError);
-      pointsHistory = [];
-    } else {
-      pointsHistory = freshPoints || [];
-      console.log(`✅ Fresh points data loaded for member ${member.id}: ${pointsHistory.length} records`);
-    }
-  }
+  // Get points history (cached)
+  const pointsHistory = await getCachedPoints(request, member.id, supabase);
 
   // Get user notifications if member exists and it's their own profile
   let notifications: Array<any> = [];
@@ -496,13 +455,6 @@ export default function Profile() {
 
   useEffect(() => {
     if (!member) return; // Exit early if no member
-
-    // Log the member data being used to create profile
-    console.log(`Creating profile for member:`, {
-      name: member.name,
-      github_username: member.github_username,
-      id: member.id
-    });
 
     // Set initial profile with data we already have
     const tier = getTier(member.bash_points || 0);
