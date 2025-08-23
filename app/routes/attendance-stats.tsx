@@ -1,33 +1,55 @@
 import { LoaderFunctionArgs, json } from '@remix-run/node';
 import { useLoaderData, Link } from '@remix-run/react';
-import { ArrowLeft, Users, Trophy, TrendingUp, Calendar, Award, Crown } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, TrendingUp, Calendar, Award, Crown, ChevronDown, ChevronRight, UserCheck, UserX } from 'lucide-react';
 import { Card } from '~/components/ui/card';
 import { AttendanceService } from '~/services/attendance.server';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     // Get the latest attendance data
     const latestAttendance = await AttendanceService.getLatestAttendanceHallOfFame(request);
     
-    // Get detailed clan stats for debugging/admin view
-    const detailedStats = await AttendanceService.getDetailedClanStats(request);
+    // Get detailed attendance information if we have event data
+    let attendanceDetails = null;
+    if (latestAttendance) {
+      attendanceDetails = await AttendanceService.getAttendanceDetails(request, latestAttendance.event_id);
+    }
 
     return json({
       attendanceData: latestAttendance,
-      detailedStats: detailedStats
+      attendanceDetails: attendanceDetails
     });
   } catch (error) {
     console.error('Error loading attendance stats:', error);
     return json({
       attendanceData: null,
-      detailedStats: null
+      attendanceDetails: null
     });
   }
 };
 
 export default function AttendanceStats() {
-  const { attendanceData, detailedStats } = useLoaderData<typeof loader>();
+  const { attendanceData, attendanceDetails } = useLoaderData<typeof loader>();
+  const [expandedClans, setExpandedClans] = useState<Set<string>>(new Set());
+
+  const toggleClanDetails = (clanName: string) => {
+    setExpandedClans(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(clanName)) {
+        newSet.delete(clanName);
+      } else {
+        newSet.add(clanName);
+      }
+      return newSet;
+    });
+  };
+
+  // Helper function to get clan details by name
+  const getClanDetails = (clanName: string) => {
+    return attendanceDetails?.find((clan: any) => clan.clan_name === clanName);
+  };
 
   if (!attendanceData) {
     return (
@@ -175,7 +197,12 @@ export default function AttendanceStats() {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                            <h3 className="text-lg sm:text-xl font-bold text-white truncate">{clan.clan_name}</h3>
+                            <Link 
+                              to={`/clans/${clan.clan_id}`}
+                              className="text-lg sm:text-xl font-bold text-white hover:text-blue-400 transition-colors truncate"
+                            >
+                              {clan.clan_name}
+                            </Link>
                             <span className={`px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-r ${getTierColor(clan.attendance_percentage)} text-white self-start sm:self-auto`}>
                               {getTierLabel(index)}
                             </span>
@@ -206,59 +233,97 @@ export default function AttendanceStats() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Details Toggle Button */}
+                    <div className="mt-4 pt-4 border-t border-gray-700/50">
+                      <button
+                        onClick={() => toggleClanDetails(clan.clan_name)}
+                        className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+                      >
+                        {expandedClans.has(clan.clan_name) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                        View Attendance Details
+                      </button>
+                    </div>
+
+                    {/* Expandable Attendance Details */}
+                    {expandedClans.has(clan.clan_name) && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="mt-4 pt-4 border-t border-gray-700/50"
+                      >
+                        {(() => {
+                          const details = getClanDetails(clan.clan_name);
+                          if (!details) {
+                            return (
+                              <p className="text-gray-400 text-sm">No detailed attendance data available.</p>
+                            );
+                          }
+
+                          return (
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {/* Attended Members */}
+                              <div>
+                                <h4 className="text-green-400 font-medium mb-2 flex items-center gap-2">
+                                  <UserCheck className="h-4 w-4" />
+                                  Attended ({details.attended_count})
+                                </h4>
+                                <div className="space-y-2">
+                                  {details.attended_members?.length > 0 ? (
+                                    details.attended_members.map((member: any) => (
+                                      <div key={member.id} className="flex items-center gap-2 p-2 bg-green-900/20 rounded-lg">
+                                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                        <span className="text-white text-sm">{member.name}</span>
+                                        <span className="text-xs text-green-300 bg-green-900/30 px-2 py-1 rounded">
+                                          {member.title}
+                                        </span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-gray-500 text-sm">No members attended</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Absent Members */}
+                              <div>
+                                <h4 className="text-red-400 font-medium mb-2 flex items-center gap-2">
+                                  <UserX className="h-4 w-4" />
+                                  Absent ({details.absent_count})
+                                </h4>
+                                <div className="space-y-2">
+                                  {details.absent_members?.length > 0 ? (
+                                    details.absent_members.map((member: any) => (
+                                      <div key={member.id} className="flex items-center gap-2 p-2 bg-red-900/20 rounded-lg">
+                                        <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                                        <span className="text-white text-sm">{member.name}</span>
+                                        <span className="text-xs text-red-300 bg-red-900/30 px-2 py-1 rounded">
+                                          {member.title}
+                                        </span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-gray-500 text-sm">All members attended</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </motion.div>
+                    )}
                   </div>
                 </Card>
               </motion.div>
             ))}
           </div>
         </div>
-
-        {/* Debug Info for Admins */}
-        {detailedStats && (
-          <Card className="mt-8 bg-gray-800/50 border-gray-600/50">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Detailed Statistics
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-blue-900/30 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-400">{detailedStats.total_clans}</div>
-                  <div className="text-sm text-gray-400">Total Clans</div>
-                </div>
-                <div className="text-center p-4 bg-green-900/30 rounded-lg">
-                  <div className="text-2xl font-bold text-green-400">{detailedStats.total_members}</div>
-                  <div className="text-sm text-gray-400">Total Members</div>
-                </div>
-                <div className="text-center p-4 bg-purple-900/30 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-400">
-                    {clan_stats.reduce((sum, clan) => sum + clan.attended_members, 0)}
-                  </div>
-                  <div className="text-sm text-gray-400">Total Attendees</div>
-                </div>
-              </div>
-
-              <details className="text-sm">
-                <summary className="cursor-pointer text-gray-300 hover:text-white">
-                  View Clan Membership Details
-                </summary>
-                <div className="mt-4 space-y-2">
-                  {detailedStats.clan_details?.map((clan: any) => (
-                    <div key={clan.clan_id} className="p-3 bg-gray-700/30 rounded">
-                      <div className="font-medium text-white">
-                        {clan.clan_name} ({clan.member_count} members)
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        Members: {clan.members.map((m: any) => m.name).join(', ')}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </details>
-            </div>
-          </Card>
-        )}
 
         {/* Back to top */}
         <div className="mt-12 text-center">
