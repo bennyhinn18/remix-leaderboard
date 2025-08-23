@@ -1,0 +1,203 @@
+import { Trophy, Users, TrendingUp, Award, Crown, ExternalLink } from 'lucide-react';
+import { Card } from '~/components/ui/card';
+import { Link } from '@remix-run/react';
+import type { WeeklyBashAttendance } from '~/services/attendance.server';
+
+interface AttendanceHallOfFameProps {
+  attendanceData: WeeklyBashAttendance | null;
+  className?: string;
+}
+
+export function AttendanceHallOfFame({ attendanceData, className = '' }: AttendanceHallOfFameProps) {
+  if (!attendanceData || !attendanceData.top_clans || attendanceData.top_clans.length === 0) {
+    return null;
+  }
+
+  const { top_clans, event_title, event_date, has_tie } = attendanceData;
+  const topPercentage = top_clans[0].attendance_percentage;
+  const isFullAttendance = topPercentage === 100;
+
+  // Format date to be more readable
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Format clan names for display
+  const formatClanNames = (clans: typeof top_clans) => {
+    if (clans.length === 1) return clans[0].clan_name;
+    if (clans.length === 2) return `${clans[0].clan_name} & ${clans[1].clan_name}`;
+    if (clans.length <= 4) {
+      const lastClan = clans[clans.length - 1].clan_name;
+      const otherClans = clans.slice(0, -1).map(c => c.clan_name).join(', ');
+      return `${otherClans} & ${lastClan}`;
+    }
+    return `${clans.slice(0, 3).map(c => c.clan_name).join(', ')} & ${clans.length - 3} others`;
+  };
+
+  const totalAttended = top_clans.reduce((sum, clan) => sum + clan.attended_members, 0);
+  const totalMembers = top_clans.reduce((sum, clan) => sum + clan.total_members, 0);
+
+  return (
+    <Link to="/attendance-stats" className="block">
+      <Card className={`relative overflow-hidden bg-gradient-to-r from-yellow-900/30 via-yellow-800/20 to-orange-900/30 border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer ${className}`}>
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute -top-4 -right-4 text-yellow-400">
+            <Crown className="h-24 w-24 transform rotate-12" />
+          </div>
+          <div className="absolute -bottom-4 -left-4 text-yellow-400">
+            <Trophy className="h-20 w-20 transform -rotate-12" />
+          </div>
+        </div>
+
+        <div className="relative p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Left side - Main content */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown className="h-5 w-5 text-yellow-400" />
+                <span className="text-sm font-medium text-yellow-400 uppercase tracking-wide">
+                  Attendance Hall of Fame
+                </span>
+                <ExternalLink className="h-3 w-3 text-yellow-400 opacity-70" />
+              </div>
+            
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h3 className="text-lg sm:text-xl font-bold text-white">
+                🏆 {has_tie ? 'Tied Champions' : formatClanNames(top_clans)}
+              </h3>
+              {isFullAttendance && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-yellow-500/20 rounded-full">
+                  <Award className="h-3 w-3 text-yellow-400" />
+                  <span className="text-xs font-medium text-yellow-400">Perfect!</span>
+                </div>
+              )}
+            </div>
+
+            <p className="text-sm text-gray-300 mb-2">
+              Achieved <span className="font-bold text-yellow-400">{topPercentage}%</span> attendance
+              (<span className="text-yellow-300">{totalAttended} of {totalMembers} members</span>)
+              at the latest weekly bash
+            </p>
+
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                <span>{totalAttended}/{totalMembers} clan members attended</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                <span>{formatDate(event_date)}</span>
+              </div>
+              {has_tie && (
+                <div className="flex items-center gap-1 text-yellow-400">
+                  <span>🤝 Tied Result</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right side - Percentage display */}
+          <div className="flex-shrink-0">
+            <div className="relative">
+              {/* Circular progress indicator */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  {/* Background circle */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    fill="none"
+                    className="text-gray-700"
+                  />
+                  {/* Progress circle */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    fill="none"
+                    strokeDasharray={`${topPercentage * 2.83} 283`}
+                    className="text-yellow-400"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                
+                {/* Percentage text */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-lg sm:text-xl font-bold text-yellow-400">
+                      {topPercentage}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Event title footer */}
+        <div className="mt-3 pt-3 border-t border-gray-700/50">
+          <p className="text-xs text-gray-500 italic">
+            📅 {event_title}
+          </p>
+        </div>
+      </div>
+    </Card>
+    </Link>
+  );
+}
+
+// Simplified version for smaller spaces
+export function CompactAttendanceHallOfFame({ attendanceData, className = '' }: AttendanceHallOfFameProps) {
+  if (!attendanceData || !attendanceData.top_clans || attendanceData.top_clans.length === 0) {
+    return null;
+  }
+
+  const { top_clans, has_tie } = attendanceData;
+  const topClan = top_clans[0];
+  
+  // Format clan names for compact display
+  const getDisplayName = () => {
+    if (!has_tie) return topClan.clan_name;
+    if (top_clans.length === 2) return `${top_clans[0].clan_name} & ${top_clans[1].clan_name}`;
+    return `${top_clans.length} Clans Tied`;
+  };
+
+  return (
+    <Link to="/attendance-stats" className="block">
+      <div className={`flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 rounded-lg border border-yellow-500/20 hover:border-yellow-400/50 transition-all duration-300 hover:scale-[1.02] cursor-pointer ${className}`}>
+        <Crown className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-white truncate">
+            🏆 {getDisplayName()}
+          </p>
+          <p className="text-xs text-gray-400">
+            {topClan.attendance_percentage}% attendance {has_tie ? 'tie' : 'champion'}
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-sm font-bold text-yellow-400">
+            {topClan.attendance_percentage}%
+          </div>
+          <div className="text-xs text-gray-500">
+            {has_tie ? `${top_clans.length} clans` : `${topClan.attended_members}/${topClan.total_members}`}
+          </div>
+        </div>
+        <ExternalLink className="h-3 w-3 text-yellow-400 opacity-70 flex-shrink-0" />
+      </div>
+    </Link>
+  );
+}

@@ -2,6 +2,7 @@ import { json, type LoaderFunctionArgs, defer } from '@remix-run/node';
 import { Link, useLoaderData, Await } from '@remix-run/react';
 import { createServerSupabase } from '~/utils/supabase.server';
 import { isOrganiser } from '~/utils/currentUser';
+import { AttendanceService } from '~/services/attendance.server';
 import { motion } from 'framer-motion';
 import {
   Trophy,
@@ -41,6 +42,7 @@ import UpdateClanScore from '~/components/update-clan-score';
 import ProfileConnections from '~/components/profile-connections';
 import { useError } from '~/contexts/error-context';
 import { ReactErrorBoundary } from '~/components/react-error-boundary';
+import { AttendanceHallOfFame } from '~/components/attendance-hall-of-fame';
 import {
   Dialog,
   DialogContent,
@@ -107,6 +109,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .limit(3)
     .then((result) => result.data || []);
 
+  // Create promise for attendance hall of fame data
+  const getAttendanceHallOfFame = AttendanceService.getLatestAttendanceHallOfFame(request);
 
   // Get user notifications if member exists
   let notifications: Array<any> = [];
@@ -224,6 +228,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     recentActivities: getRecentActivities,
     announcements: getAnnouncements,
     upcomingEvents: getUpcomingEvents,
+    attendanceHallOfFame: getAttendanceHallOfFame,
     duolingo_streak: getDuolingoStreak(),
     leetcode_stats: getLeetCodeStats(),
     notifications,
@@ -264,6 +269,7 @@ export default function Home() {
   const leetcode_stats = 'leetcode_stats' in data ? data.leetcode_stats : { solved: 0 };
   const allMembers = 'allMembers' in data ? data.allMembers : [];
   const recentNotifications = 'recentNotifications' in data ? data.recentNotifications : [];
+  const attendanceHallOfFame = 'attendanceHallOfFame' in data ? data.attendanceHallOfFame : null;
   
   const { showError, showAPIError } = useError();
   const [streakData, setStreakData] = useState({
@@ -657,6 +663,20 @@ export default function Home() {
               </div>
             </motion.div>
           </div>
+
+          {/* Attendance Hall of Fame Banner */}
+          <Suspense fallback={
+            <div className="h-20 bg-gray-800/50 rounded-lg animate-pulse" />
+          }>
+            <Await resolve={data.attendanceHallOfFame}>
+              {(attendanceData) => (
+                <AttendanceHallOfFame 
+                  attendanceData={attendanceData} 
+                  className="mb-6"
+                />
+              )}
+            </Await>
+          </Suspense>
 
           {/* Main Content Layout - Role-Based Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
