@@ -14,7 +14,7 @@ export function AttendanceHallOfFame({ attendanceData, className = '' }: Attenda
   }
 
   const { top_clans, event_title, event_date, has_tie } = attendanceData;
-  const topPercentage = top_clans[0].attendance_percentage;
+  const topPercentage = top_clans[0]?.attendance_percentage || 0;
   const isFullAttendance = topPercentage === 100;
 
   // Format date to be more readable
@@ -42,8 +42,8 @@ export function AttendanceHallOfFame({ attendanceData, className = '' }: Attenda
     return `${clans.slice(0, 3).map(c => c.clan_name).join(', ')} & ${clans.length - 3} others`;
   };
 
-  const totalAttended = top_clans.reduce((sum, clan) => sum + clan.attended_members, 0);
-  const totalMembers = top_clans.reduce((sum, clan) => sum + clan.total_members, 0);
+  const totalAttended = top_clans.reduce((sum, clan) => sum + (clan?.attended_members || 0), 0);
+  const totalMembers = top_clans.reduce((sum, clan) => sum + (clan?.total_members || 0), 0);
 
   return (
     <Link to="/attendance-stats" className="block">
@@ -169,10 +169,15 @@ export function CompactAttendanceHallOfFame({ attendanceData, className = '' }: 
   const { top_clans, has_tie } = attendanceData;
   const topClan = top_clans[0];
   
+  // Safety check for topClan
+  if (!topClan) {
+    return null;
+  }
+  
   // Format clan names for compact display
   const getDisplayName = () => {
-    if (!has_tie) return topClan.clan_name;
-    if (top_clans.length === 2) return `${top_clans[0].clan_name} & ${top_clans[1].clan_name}`;
+    if (!has_tie) return topClan?.clan_name || 'Unknown Clan';
+    if (top_clans.length === 2) return `${top_clans[0]?.clan_name || ''} & ${top_clans[1]?.clan_name || ''}`;
     return `${top_clans.length} Clans Tied`;
   };
 
@@ -185,15 +190,15 @@ export function CompactAttendanceHallOfFame({ attendanceData, className = '' }: 
             🏆 {getDisplayName()}
           </p>
           <p className="text-xs text-gray-400">
-            {topClan.attendance_percentage}% attendance {has_tie ? 'tie' : 'champion'}
+            {topClan?.attendance_percentage || 0}% attendance {has_tie ? 'tie' : 'champion'}
           </p>
         </div>
         <div className="text-right">
           <div className="text-sm font-bold text-yellow-400">
-            {topClan.attendance_percentage}%
+            {topClan?.attendance_percentage || 0}%
           </div>
           <div className="text-xs text-gray-500">
-            {has_tie ? `${top_clans.length} clans` : `${topClan.attended_members}/${topClan.total_members}`}
+            {has_tie ? `${top_clans.length} clans` : `${topClan?.attended_members || 0}/${topClan?.total_members || 0}`}
           </div>
         </div>
         <ExternalLink className="h-3 w-3 text-yellow-400 opacity-70 flex-shrink-0" />

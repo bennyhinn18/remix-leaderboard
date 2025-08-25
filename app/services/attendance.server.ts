@@ -1,6 +1,7 @@
 import { createServerSupabase } from '~/utils/supabase.server';
 
 export interface ClanAttendanceStats {
+  clan_id?: number;
   clan_name: string;
   total_members: number;
   attended_members: number;
@@ -76,17 +77,22 @@ export class AttendanceService {
         return null;
       }
 
-      // Get all members with their clan information - use clan_id for better accuracy
+      // Get all clans from the clans table as the primary source
+      const { data: allClans, error: clansError } = await supabase
+        .from('clans')
+        .select('id, clan_name');
+
+      if (clansError) {
+        console.error('Error fetching clans:', clansError);
+        return null;
+      }
+
+      // Get all members with their clan information - only count active members with specific titles
       const { data: allMembers, error: membersError } = await supabase
         .from('members')
-        .select(`
-          id, 
-          clan_name, 
-          clan_id
-        `)
+        .select('id, clan_id, clan_name, title')
         .not('clan_id', 'is', null)
-        .not('clan_name', 'is', null)
-        .neq('clan_name', '');
+        .in('title', ['Basher', 'Organiser', 'Captain Bash']);
 
       if (membersError) {
         console.error('Error fetching members:', membersError);
@@ -107,52 +113,56 @@ export class AttendanceService {
       // Create a set of attended member IDs for quick lookup
       const attendedMemberIds = new Set(attendance?.map(a => a.member_id) || []);
 
-      // Group members by clan using both clan_id and clan_name for accuracy
+      // Initialize clan stats using clans table as the primary source
       const clanStats = new Map<string, ClanAttendanceStats>();
 
-      // Initialize clan stats - ensure we only count active members
+      // Initialize all clans from clans table
+      allClans?.forEach(clan => {
+        clanStats.set(clan.clan_name, {
+          clan_id: clan.id,
+          clan_name: clan.clan_name,
+          total_members: 0,
+          attended_members: 0,
+          attendance_percentage: 0
+        });
+      });
+
+      // Count members and attendance for each clan
       allMembers?.forEach(member => {
-        if (member.clan_name && member.clan_id) {
-          if (!clanStats.has(member.clan_name)) {
-            clanStats.set(member.clan_name, {
-              clan_name: member.clan_name,
-              total_members: 0,
-              attended_members: 0,
-              attendance_percentage: 0
-            });
-          }
-          
-          const stats = clanStats.get(member.clan_name)!;
-          stats.total_members++;
-          
-          if (attendedMemberIds.has(member.id)) {
-            stats.attended_members++;
+        if (member.clan_id) {
+          // Find the clan by clan_id to ensure accuracy
+          const clan = allClans?.find(c => c.id === member.clan_id);
+          if (clan && clanStats.has(clan.clan_name)) {
+            const stats = clanStats.get(clan.clan_name)!;
+            stats.total_members++;
+            
+            if (attendedMemberIds.has(member.id)) {
+              stats.attended_members++;
+            }
           }
         }
       });
 
+      // Remove clans with no members
+      for (const [clanName, stats] of clanStats.entries()) {
+        if (stats.total_members === 0) {
+          clanStats.delete(clanName);
+        }
+      }
+
       // Debug logging
       console.log('Clan Stats Debug:', {
-        totalMembers: allMembers?.length,
+        totalClans: allClans?.length,
+        totalActiveMembers: allMembers?.length,
         totalAttendance: attendance?.length,
+        memberTitleBreakdown: allMembers?.reduce((acc: any, member) => {
+          acc[member.title] = (acc[member.title] || 0) + 1;
+          return acc;
+        }, {}),
         clanStatsMap: Object.fromEntries(clanStats),
         eventId,
         eventTitle: event.title
       });
-
-      // Validate clan member counts against actual database
-      for (const [clanName, stats] of clanStats.entries()) {
-        const actualMemberCount = allMembers?.filter(m => m.clan_name === clanName).length || 0;
-        if (stats.total_members !== actualMemberCount) {
-          console.warn(`Clan member count mismatch for ${clanName}: calculated ${stats.total_members}, actual ${actualMemberCount}`);
-          stats.total_members = actualMemberCount; // Fix the count
-          
-          // Recalculate attendance percentage with correct count
-          stats.attendance_percentage = stats.total_members > 0 
-            ? Math.round((stats.attended_members / stats.total_members) * 100)
-            : 0;
-        }
-      }
 
       // Calculate percentages and sort by attendance
       const clanStatsArray: ClanAttendanceStats[] = Array.from(clanStats.values())
@@ -226,6 +236,87 @@ export class AttendanceService {
   }
 
   /**
+   * Get attendance details including which members attended for a specific event
+   */
+  static async getAttendanceDetails(
+    request: Request, 
+    eventId: string
+  ): Promise<any> {
+    const response = new Response();
+    const supabase = createServerSupabase(request, response);
+
+    try {
+      // Get all clans
+      const { data: allClans, error: clansError } = await supabase
+        .from('clans')
+        .select('id, clan_name');
+
+      if (clansError) {
+        console.error('Error fetching clans:', clansError);
+        return null;
+      }
+
+      // Get all active members with their clan information
+      const { data: allMembers, error: membersError } = await supabase
+        .from('members')
+        .select('id, name, clan_id, clan_name, title')
+        .not('clan_id', 'is', null)
+        .in('title', ['Basher', 'Organiser', 'Captain Bash']);
+
+      if (membersError) {
+        console.error('Error fetching members:', membersError);
+        return null;
+      }
+
+      // Get attendance records for this event
+      const { data: attendance, error: attendanceError } = await supabase
+        .from('attendance')
+        .select('member_id')
+        .eq('event_id', eventId);
+
+      if (attendanceError) {
+        console.error('Error fetching attendance:', attendanceError);
+        return null;
+      }
+
+      const attendedMemberIds = new Set(attendance?.map(a => a.member_id) || []);
+
+      // Group members by clan with attendance details
+      const clanDetails = allClans?.map(clan => {
+        const clanMembers = allMembers?.filter(m => m.clan_id === clan.id) || [];
+        const attendedMembers = clanMembers.filter(m => attendedMemberIds.has(m.id));
+        const absentMembers = clanMembers.filter(m => !attendedMemberIds.has(m.id));
+
+        return {
+          clan_id: clan.id,
+          clan_name: clan.clan_name,
+          total_members: clanMembers.length,
+          attended_count: attendedMembers.length,
+          absent_count: absentMembers.length,
+          attendance_percentage: clanMembers.length > 0 
+            ? Math.round((attendedMembers.length / clanMembers.length) * 100)
+            : 0,
+          attended_members: attendedMembers.map(m => ({
+            id: m.id,
+            name: m.name,
+            title: m.title
+          })),
+          absent_members: absentMembers.map(m => ({
+            id: m.id,
+            name: m.name,
+            title: m.title
+          }))
+        };
+      }).filter(clan => clan.total_members > 0);
+
+      return clanDetails;
+    } catch (error) {
+      console.error('Error in getAttendanceDetails:', error);
+      return null;
+    }
+  }
+
+  /**
    * Debug function to get detailed clan membership information
    */
   static async getDetailedClanStats(request: Request): Promise<any> {
@@ -233,7 +324,7 @@ export class AttendanceService {
     const supabase = createServerSupabase(request, response);
 
     try {
-      // Get all clans
+      // Get all clans from clans table
       const { data: clans, error: clansError } = await supabase
         .from('clans')
         .select('id, clan_name');
@@ -243,18 +334,19 @@ export class AttendanceService {
         return null;
       }
 
-      // Get all members with clan info
+      // Get all members with clan info - only count active members with specific titles
       const { data: members, error: membersError } = await supabase
         .from('members')
-        .select('id, name, clan_id, clan_name')
-        .not('clan_id', 'is', null);
+        .select('id, name, clan_id, clan_name, title')
+        .not('clan_id', 'is', null)
+        .in('title', ['Basher', 'Organiser', 'Captain Bash']);
 
       if (membersError) {
         console.error('Error fetching members:', membersError);
         return null;
       }
 
-      // Group members by clan for detailed view
+      // Group members by clan using clan_id as the primary key
       const clanDetails = clans?.map(clan => {
         const clanMembers = members?.filter(m => m.clan_id === clan.id) || [];
         return {
