@@ -891,6 +891,17 @@ export default function Home() {
                     </Link>
 
                     <Link
+                      to="/admin/attendance"
+                      className="bg-cyan-500/20 border border-cyan-500/30 rounded-lg p-3 flex flex-col items-center text-center hover:bg-cyan-500/30 transition-colors relative"
+                    >
+                      <Activity className="w-8 h-8 text-cyan-400 mb-2" />
+                      <span className="text-sm">Attendance Dashboard</span>
+                      <Badge className="absolute -top-1 -right-1 bg-cyan-500 text-white text-xs px-1">
+                        NEW
+                      </Badge>
+                    </Link>
+
+                    <Link
                       to="/analytics"
                       className="bg-white/10 rounded-lg p-3 flex flex-col items-center text-center hover:bg-white/20 transition-colors"
                     >
