@@ -29,7 +29,7 @@ export function ProfileAchievements({
   const completionRate = totalAchievements > 0 ? (unlockedCount / totalAchievements) * 100 : 0;
 
   const recentAchievements = userAchievements
-    .sort((a, b) => new Date(b.unlockedAt).getTime() - new Date(a.unlockedAt).getTime())
+    .sort((a, b) => new Date(b.unlocked_at).getTime() - new Date(a.unlocked_at).getTime())
     .slice(0, compact ? 3 : 6);
 
   const legendaryAchievements = userAchievements.filter(
@@ -81,7 +81,7 @@ export function ProfileAchievements({
               <AchievementBadge
                 key={userAchievement.id}
                 achievement={userAchievement.achievement}
-                unlockedAt={userAchievement.unlockedAt}
+                unlockedAt={userAchievement.unlocked_at}
                 size="sm"
               />
             ))}
@@ -146,7 +146,7 @@ export function ProfileAchievements({
               <AchievementBadge
                 key={userAchievement.id}
                 achievement={userAchievement.achievement}
-                unlockedAt={userAchievement.unlockedAt}
+                unlockedAt={userAchievement.unlocked_at}
                 size="md"
               />
             ))}

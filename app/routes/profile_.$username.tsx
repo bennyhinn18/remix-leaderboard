@@ -28,6 +28,7 @@ import {
 import { createServerSupabase } from '~/utils/supabase.server';
 import { ProfileInfo } from '~/components/profile-info';
 import { ProfileAchievements } from '~/components/achievements';
+import ProfileConnections from '~/components/profile-connections';
 import { AchievementService } from '~/services/achievements.server';
 import { MainNav } from '~/components/main-nav';
 import { motion } from 'framer-motion';
@@ -251,20 +252,26 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     
     console.log(`🔥 Form data received:`, data);
 
-    // Basic validation for required fields
-    if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
+    // Check if this is a partial update (e.g., platform connection only)
+    const isPartialUpdate = Object.keys(data).length === 1 && 
+      ['github_username', 'leetcode_username', 'duolingo_username', 'discord_username', 
+       'hackerrank_username', 'instagram_username', 'linkedin_url', 'personal_website',
+       'portfolio_url', 'resume_url'].includes(Object.keys(data)[0]);
+
+    // Basic validation for required fields (only for full profile updates)
+    if (!isPartialUpdate && (!data.name || typeof data.name !== 'string' || data.name.trim() === '')) {
       console.log(`❌ Name validation failed: ${data.name}`);
       return json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // Prepare the stats object
-    const stats = {
+    // Prepare the stats object (only for full updates)
+    const stats = !isPartialUpdate ? {
       courses: Number(data.courses) || 0,
       projects: Number(data.projects) || 0,
       hackathons: Number(data.hackathons) || 0,
       internships: Number(data.internships) || 0,
       certifications: Number(data.certifications) || 0,
-    };
+    } : undefined;
 
     // Permission check: only allow organisers or the profile owner to edit
     const currentUser = await getCurrentUser(request);
@@ -296,56 +303,83 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     // Prepare the updated member object based on user permissions
-    const baseUpdates = {
-      // Fields that both organizers and regular users can edit
-      personal_email: data.personal_email || null,
-      mobile_number: data.mobile_number || null,
-      whatsapp_number: data.whatsapp_number || null,
-      testimony: data.testimony || null,
-      hobbies: typeof data.hobbies === 'string' ? data.hobbies.split(',').map(h => h.trim()) : [],
-      primary_domain:
-        typeof data.primary_domain === 'string'
-          ? data.primary_domain.split(',').map(d => d.trim())
-          : [],
-      secondary_domain:
-        typeof data.secondary_domain === 'string'
-          ? data.secondary_domain.split(',').map(d => d.trim())
-          : [],
-      discord_username: data.discord_username || null,
-      hackerrank_username: data.hackerrank_username || null,
-      instagram_username: data.instagram_username || null,
-      linkedin_url: data.linkedin_url || null,
-      personal_website: data.personal_website || null,
-      portfolio_url: data.portfolio_url || null,
-      resume_url: data.resume_url || null,
-      duolingo_username: data.duolingo_username || null,
-      leetcode_username: data.leetcode_username || null,
-      stats,
-    };
+    let updatedMember = {};
 
-    const organizerOnlyUpdates = {
-      // Fields that only organizers can edit
-      id: Number(data.id) || null,
-      clan_id: Number(data.clan_id) || null,
-      name: data.name || null,
-      academic_email: data.academic_email || null,
-      avatar_url: data.avatar_url || null,
-      joined_date: data.joined_date || null,
-      title: data.title || null,
-      basher_level: data.basher_level || null,
-      bash_points: Number(data.bash_points) || 0, // Only organizers can modify points
-      clan_name: data.clan_name || null,
-      basher_no: data.basher_no || null,
-      gpa: Number(data.gpa) || 0,
-      weekly_bash_attendance: Number(data.weekly_bash_attendance) || 0,
-      github_username: data.github_username || null,
-      roll_number: data.roll_number || null,
-    };
+    if (isPartialUpdate) {
+      // For partial updates (like platform connections), only update the specific field
+      const fieldName = Object.keys(data)[0];
+      const fieldValue = data[fieldName];
+      
+      // Platform connection fields that regular users can edit
+      const userEditableFields = [
+        'discord_username', 'hackerrank_username', 'instagram_username', 
+        'linkedin_url', 'personal_website', 'duolingo_username', 'leetcode_username',
+        'portfolio_url', 'resume_url'
+      ];
+      
+      // Platform connection fields that only organizers can edit
+      const organizerOnlyFields = ['github_username'];
+      
+      if (userEditableFields.includes(fieldName)) {
+        updatedMember = { [fieldName]: fieldValue || null };
+      } else if (organizerOnlyFields.includes(fieldName) && organiser) {
+        updatedMember = { [fieldName]: fieldValue || null };
+      } else if (!organiser) {
+        return json({ error: 'Forbidden - You cannot edit this field' }, { status: 403 });
+      }
+    } else {
+      // Full profile update
+      const baseUpdates = {
+        // Fields that both organizers and regular users can edit
+        personal_email: data.personal_email || null,
+        mobile_number: data.mobile_number || null,
+        whatsapp_number: data.whatsapp_number || null,
+        testimony: data.testimony || null,
+        hobbies: typeof data.hobbies === 'string' ? data.hobbies.split(',').map(h => h.trim()) : [],
+        primary_domain:
+          typeof data.primary_domain === 'string'
+            ? data.primary_domain.split(',').map(d => d.trim())
+            : [],
+        secondary_domain:
+          typeof data.secondary_domain === 'string'
+            ? data.secondary_domain.split(',').map(d => d.trim())
+            : [],
+        discord_username: data.discord_username || null,
+        hackerrank_username: data.hackerrank_username || null,
+        instagram_username: data.instagram_username || null,
+        linkedin_url: data.linkedin_url || null,
+        personal_website: data.personal_website || null,
+        portfolio_url: data.portfolio_url || null,
+        resume_url: data.resume_url || null,
+        duolingo_username: data.duolingo_username || null,
+        leetcode_username: data.leetcode_username || null,
+        stats,
+      };
 
-    // Combine updates based on organizer status
-    const updatedMember = organiser 
-      ? { ...baseUpdates, ...organizerOnlyUpdates }
-      : baseUpdates;
+      const organizerOnlyUpdates = {
+        // Fields that only organizers can edit
+        id: Number(data.id) || null,
+        clan_id: Number(data.clan_id) || null,
+        name: data.name || null,
+        academic_email: data.academic_email || null,
+        avatar_url: data.avatar_url || null,
+        joined_date: data.joined_date || null,
+        title: data.title || null,
+        basher_level: data.basher_level || null,
+        bash_points: Number(data.bash_points) || 0, // Only organizers can modify points
+        clan_name: data.clan_name || null,
+        basher_no: data.basher_no || null,
+        gpa: Number(data.gpa) || 0,
+        weekly_bash_attendance: Number(data.weekly_bash_attendance) || 0,
+        github_username: data.github_username || null,
+        roll_number: data.roll_number || null,
+      };
+
+      // Combine updates based on organizer status
+      updatedMember = organiser 
+        ? { ...baseUpdates, ...organizerOnlyUpdates }
+        : baseUpdates;
+    }
 
     // Update the member's profile in the database
     console.log(`🔥 Updating member profile for: ${params.username}`);
@@ -791,10 +825,18 @@ export default function Profile() {
               memberName={member.name}
               compact={true}
             />
+             {/* Platform Connections - Always show for own profile/organiser, show read-only for others if they have connections */}
+            {/* <ProfileConnections 
+              member={member} 
+              canEdit={organiserStatus || isOwnProfile}
+              isOwnProfile={isOwnProfile}
+            /> */}
           </motion.div>
         {/* Two Column Layout */}
         <div className="grid md:grid-cols-2 gap-6 mt-8">
           <div className="space-y-6">
+           
+
             {/* Push Notifications - Only display on own profile */}
             {isOwnProfile && member && (
               <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
