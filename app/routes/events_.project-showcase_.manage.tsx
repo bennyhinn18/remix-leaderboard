@@ -29,6 +29,17 @@ import { isOrganiser } from '~/utils/currentUser';
 import { redirect } from '@remix-run/node';
 
 interface ManagementData {
+  currentEvent: {
+    id: number;
+    event_id: string;
+    event_name: string;
+    description: string;
+    event_date: string;
+    venue: string;
+    max_slots: number;
+    hosting_clan_id: number;
+    status: string;
+  };
   allocatedSlots: any[];
   eligibleMembers: any[];
   stats: {
@@ -48,29 +59,80 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const response = new Response();
   const supabase = createServerSupabase(request, response);
+  
+    // Get event ID from URL params (default to current open event)
+  const url = new URL(request.url);
+  let eventId = url.searchParams.get('event');
+  
+  // If no event specified in URL, get the currently open event
+  if (!eventId) {
+    const { data: openEvent } = await supabase
+      .from('project_showcase_events')
+      .select('event_id')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (openEvent) {
+      eventId = openEvent.event_id;
+    } else {
+      return json({ error: 'No open event available' }, { status: 400 });
+    }
+  }
+  
+  // If no event specified in URL, get the currently open event
+  if (!eventId) {
+    const { data: openEvent } = await supabase
+      .from('project_showcase_events')
+      .select('event_id')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (openEvent) {
+      eventId = openEvent.event_id;
+    } else {
+      // No open event found, redirect to events management
+      return redirect('/events/project-showcase/events');
+    }
+  }
 
-  // Get allocated slots with member details
+  // Get event details
+  const { data: eventData } = await supabase
+    .from('project_showcase_events')
+    .select('*')
+    .eq('event_id', eventId)
+    .single();
+
+  if (!eventData) {
+    return redirect('/events/project-showcase/events');
+  }
+
+  // Get allocated slots with member details for this event
   const { data: allocatedSlots } = await supabase
     .from('project_showcase_slots_with_members')
     .select('*')
-    .eq('event_id', 'project-showcase-2025')
+    .eq('event_id', eventId)
     .order('slot_number');
 
   // Get all eligible members
   const { data: eligibleMembers } = await supabase
     .from('members')
     .select('id, name, github_username, title, avatar_url, bash_points, clan_name, basher_no')
-    .ilike('title', '%basher%')
+    .in('title', ['Basher', 'Captain Bash', 'Legacy Basher', 'Organiser'])
     .order('name');
 
   const stats = {
-    totalSlots: 25,
+    totalSlots: eventData.max_slots,
     allocatedSlots: allocatedSlots?.length || 0,
-    availableSlots: 25 - (allocatedSlots?.length || 0),
+    availableSlots: eventData.max_slots - (allocatedSlots?.length || 0),
     eligibleMembers: eligibleMembers?.length || 0,
   };
 
   return json({
+    currentEvent: eventData,
     allocatedSlots: allocatedSlots || [],
     eligibleMembers: eligibleMembers || [],
     stats,
@@ -88,6 +150,10 @@ export async function action({ request }: ActionFunctionArgs) {
   const supabase = createServerSupabase(request, response);
   const formData = await request.formData();
   const intent = formData.get('intent');
+  
+  // Get event ID from URL params
+  const url = new URL(request.url);
+  const eventId = url.searchParams.get('event') || 'project-showcase-2025';
 
   if (intent === 'manual_allocate') {
     const memberId = Number(formData.get('memberId'));
@@ -109,7 +175,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .from('project_showcase_slots')
       .select('*')
       .eq('slot_number', slotNumber)
-      .eq('event_id', 'project-showcase-2025')
+      .eq('event_id', eventId)
       .single();
 
     if (existingSlot) {
@@ -121,7 +187,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .from('project_showcase_slots')
       .select('*')
       .eq('member_id', memberId)
-      .eq('event_id', 'project-showcase-2025')
+      .eq('event_id', eventId)
       .single();
 
     if (memberSlot) {
@@ -137,8 +203,8 @@ export async function action({ request }: ActionFunctionArgs) {
         member_github_username: member.github_username,
         member_title: member.title,
         slot_number: slotNumber,
-        event_id: 'project-showcase-2025',
-        event_name: 'Project Showcase Event 2025',
+        event_id: eventId,
+        event_name: 'Project Showcase Event',
         status: 'allocated'
       });
 
@@ -153,7 +219,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const { error } = await supabase
       .from('project_showcase_slots')
       .delete()
-      .eq('event_id', 'project-showcase-2025');
+      .eq('event_id', eventId);
 
     if (error) {
       return json({ error: 'Failed to clear slots' }, { status: 500 });
@@ -166,7 +232,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const { data: slots } = await supabase
       .from('project_showcase_slots_with_members')
       .select('*')
-      .eq('event_id', 'project-showcase-2025')
+      .eq('event_id', eventId)
       .order('slot_number');
 
     return json({ success: true, data: slots, message: 'Slots exported successfully' });
@@ -192,7 +258,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function ProjectShowcaseManagement() {
-  const { allocatedSlots, eligibleMembers, stats } = useLoaderData<typeof loader>() as ManagementData;
+  const { currentEvent, allocatedSlots, eligibleMembers, stats } = useLoaderData<typeof loader>() as ManagementData;
   const fetcher = useFetcher();
   const { toast } = useToast();
 
@@ -203,7 +269,7 @@ export default function ProjectShowcaseManagement() {
 
   // Generate available slot numbers
   const allocatedNumbers = allocatedSlots.map(slot => slot.slot_number);
-  const availableSlotNumbers = Array.from({ length: 25 }, (_, i) => i + 1)
+  const availableSlotNumbers = Array.from({ length: currentEvent.max_slots }, (_, i) => i + 1)
     .filter(num => !allocatedNumbers.includes(num));
 
   // Get members without slots
@@ -212,16 +278,17 @@ export default function ProjectShowcaseManagement() {
 
   useEffect(() => {
     if (fetcher.data) {
-      if (fetcher.data.success) {
+      const data = fetcher.data as any;
+      if (data.success) {
         toast({
           title: 'Success!',
-          description: fetcher.data.message,
+          description: data.message,
           duration: 3000,
         });
 
-        if (fetcher.data.data) {
+        if (data.data) {
           // Handle export data
-          const blob = new Blob([JSON.stringify(fetcher.data.data, null, 2)], {
+          const blob = new Blob([JSON.stringify(data.data, null, 2)], {
             type: 'application/json'
           });
           const url = URL.createObjectURL(blob);
@@ -236,10 +303,10 @@ export default function ProjectShowcaseManagement() {
         setShowClearConfirm(false);
         setSelectedMember('');
         setSelectedSlot('');
-      } else if (fetcher.data.error) {
+      } else if (data.error) {
         toast({
           title: 'Error',
-          description: fetcher.data.error,
+          description: data.error,
           variant: 'destructive',
         });
       }
@@ -300,16 +367,45 @@ export default function ProjectShowcaseManagement() {
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
                 <Settings className="w-8 h-8 text-purple-400" />
-                Project Showcase Management
+                {currentEvent.event_name} - Management
               </h1>
-              <p className="text-gray-300 mt-2">Organiser control panel for slot allocation</p>
+              <p className="text-gray-300 mt-2">Organiser control panel for slot allocation and event management</p>
+              <div className="mt-3 flex gap-2">
+                <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                  Event ID: {currentEvent.event_id}
+                </Badge>
+                <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                  Status: {currentEvent.status}
+                </Badge>
+                <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                  {new Date(currentEvent.event_date).toLocaleDateString()} at {currentEvent.venue}
+                </Badge>
+              </div>
             </div>
-            <Button
-              onClick={() => window.location.href = '/events/project-showcase'}
-              variant="outline"
-            >
-              Back to Showcase
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => window.location.href = '/events/project-showcase/events'}
+                variant="outline"
+                className="border-purple-500/50 text-purple-300 hover:bg-purple-500/20"
+              >
+                All Events
+              </Button>
+              <Button
+                onClick={() => window.location.href = `/events/project-showcase?event=${currentEvent.event_id}`}
+                variant="outline"
+                className="border-blue-500/50 text-blue-300 hover:bg-blue-500/20"
+              >
+                View Public Page
+              </Button>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="border-green-500/50 text-green-300 hover:bg-green-500/20"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh Data
+              </Button>
+            </div>
           </div>
         </motion.div>
 

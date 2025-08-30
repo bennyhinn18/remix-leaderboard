@@ -65,6 +65,21 @@ export interface WeeklyBashAttendance {
   memberIds: number[];
 }
 
+// Hall of Fame data structure
+export interface AttendanceHallOfFameData {
+  clanStats: ClanAttendanceStats[];
+  weeklyAttendances: WeeklyBashAttendance[];
+  globalTopAttenders: Array<{
+    memberId: number;
+    memberName: string;
+    attendanceCount: number;
+    clanId: number;
+    clanName: string;
+  }>;
+  totalClans: number;
+  totalWeeks: number;
+}
+
 // Comprehensive analytics interfaces (stage 3)
 export interface AttendanceStats {
   totalEvents: number;
@@ -129,11 +144,17 @@ export interface AttendanceFilters {
 }
 
 export class AttendanceService {
+  private supabase: SupabaseClient;
+
+  constructor(supabase: SupabaseClient) {
+    this.supabase = supabase;
+  }
+
   // ===== COMPREHENSIVE ANALYTICS METHODS (from stage 3) =====
   
   // Get all attendance records with optional filtering
-  static async getAttendanceRecords(supabase: SupabaseClient, filters: AttendanceFilters = {}) {
-    let query = supabase
+  async getAttendanceRecords(filters: AttendanceFilters = {}) {
+    let query = this.supabase
       .from('attendance')
       .select(`
         *,
@@ -194,8 +215,8 @@ export class AttendanceService {
   }
 
   // Get all events
-  static async getEvents(supabase: SupabaseClient) {
-    const { data, error } = await supabase
+  async getEvents() {
+    const { data, error } = await this.supabase
       .from('events')
       .select('*')
       .order('date', { ascending: false });
@@ -205,8 +226,8 @@ export class AttendanceService {
   }
 
   // Get all members
-  static async getMembers(supabase: SupabaseClient) {
-    const { data, error } = await supabase
+  async getMembers() {
+    const { data, error } = await this.supabase
       .from('members')
       .select('*')
       .order('name');
@@ -216,8 +237,8 @@ export class AttendanceService {
   }
 
   // Get all clans
-  static async getClans(supabase: SupabaseClient) {
-    const { data, error } = await supabase
+  async getClans() {
+    const { data, error } = await this.supabase
       .from('clans')
       .select('*')
       .order('clan_name');
@@ -227,12 +248,12 @@ export class AttendanceService {
   }
 
   // Calculate comprehensive attendance statistics
-  static async getAttendanceStats(supabase: SupabaseClient, filters: AttendanceFilters = {}): Promise<AttendanceStats> {
+  async getAttendanceStats(filters: AttendanceFilters = {}): Promise<AttendanceStats> {
     const [attendanceRecords, events, members, clans] = await Promise.all([
-      this.getAttendanceRecords(supabase, filters),
-      this.getEvents(supabase),
-      this.getMembers(supabase),
-      this.getClans(supabase)
+      this.getAttendanceRecords(filters),
+      this.getEvents(),
+      this.getMembers(),
+      this.getClans()
     ]);
 
     // Filter events based on filters
@@ -436,8 +457,8 @@ export class AttendanceService {
   }
 
   // Get unique event types
-  static async getEventTypes(supabase: SupabaseClient) {
-    const { data, error } = await supabase
+  async getEventTypes() {
+    const { data, error } = await this.supabase
       .from('events')
       .select('type')
       .order('type');
@@ -449,8 +470,8 @@ export class AttendanceService {
   }
 
   // Get unique member titles
-  static async getMemberTitles(supabase: SupabaseClient) {
-    const { data, error } = await supabase
+  async getMemberTitles() {
+    const { data, error } = await this.supabase
       .from('members')
       .select('title')
       .order('title');
@@ -462,8 +483,8 @@ export class AttendanceService {
   }
 
   // Export attendance data
-  static async exportAttendanceData(supabase: SupabaseClient, filters: AttendanceFilters = {}, format: 'csv' | 'json' = 'csv') {
-    const records = await this.getAttendanceRecords(supabase, filters);
+  async exportAttendanceData(filters: AttendanceFilters = {}, format: 'csv' | 'json' = 'csv') {
+    const records = await this.getAttendanceRecords(filters);
     
     if (format === 'json') {
       return records;
@@ -504,7 +525,7 @@ export class AttendanceService {
   // ===== CLAN ATTENDANCE METHODS (from stage 2) =====
 
   // Get weekly bash attendance for clans (Hall of Fame functionality)
-  static async getWeeklyBashAttendance(supabase: SupabaseClient): Promise<WeeklyBashAttendance[]> {
+  async getWeeklyBashAttendance(): Promise<WeeklyBashAttendance[]> {
     // Get bash events from the last 12 weeks
     const weeklyAttendances: WeeklyBashAttendance[] = [];
     
@@ -515,7 +536,7 @@ export class AttendanceService {
       startDate.setDate(startDate.getDate() - 6);
 
       // Get bash events for this week
-      const { data: weekEvents, error: eventsError } = await supabase
+      const { data: weekEvents, error: eventsError } = await this.supabase
         .from('events')
         .select('id')
         .eq('type', 'Weekly Bash')
@@ -526,7 +547,7 @@ export class AttendanceService {
 
       if (weekEvents && weekEvents.length > 0) {
         // Get attendance for these events
-        const { data: weekAttendance, error: attendanceError } = await supabase
+        const { data: weekAttendance, error: attendanceError } = await this.supabase
           .from('attendance')
           .select('member_id')
           .in('event_id', weekEvents.map(e => e.id));
@@ -546,10 +567,10 @@ export class AttendanceService {
   }
 
   // Get clan attendance statistics (Hall of Fame functionality)
-  static async getClanAttendanceStats(supabase: SupabaseClient, clanId?: number): Promise<ClanAttendanceStats[]> {
+  async getClanAttendanceStats(clanId?: number): Promise<ClanAttendanceStats[]> {
     const clans = clanId 
-      ? await supabase.from('clans').select('*').eq('id', clanId)
-      : await supabase.from('clans').select('*').order('clan_name');
+      ? await this.supabase.from('clans').select('*').eq('id', clanId)
+      : await this.supabase.from('clans').select('*').order('clan_name');
 
     if (clans.error || !clans.data) return [];
 
@@ -557,7 +578,7 @@ export class AttendanceService {
 
     for (const clan of clans.data) {
       // Get clan members
-      const { data: clanMembers, error: membersError } = await supabase
+      const { data: clanMembers, error: membersError } = await this.supabase
         .from('members')
         .select('id, name')
         .eq('clan_id', clan.id);
@@ -565,7 +586,7 @@ export class AttendanceService {
       if (membersError || !clanMembers) continue;
 
       // Get weekly bash events
-      const { data: bashEvents, error: eventsError } = await supabase
+      const { data: bashEvents, error: eventsError } = await this.supabase
         .from('events')
         .select('id, date')
         .eq('type', 'Weekly Bash')
@@ -578,7 +599,7 @@ export class AttendanceService {
       const memberIds = clanMembers.map(m => m.id);
       const eventIds = bashEvents.map(e => e.id);
 
-      const { data: attendance, error: attendanceError } = await supabase
+      const { data: attendance, error: attendanceError } = await this.supabase
         .from('attendance')
         .select('member_id, event_id, created_at')
         .in('member_id', memberIds)
@@ -593,7 +614,7 @@ export class AttendanceService {
       const attendanceRate = totalPossibleAttendances > 0 ? (totalAttendances / totalPossibleAttendances) * 100 : 0;
 
       // Get weekly attendance breakdown
-      const weeklyAttendances = await this.getWeeklyBashAttendance(supabase);
+      const weeklyAttendances = await this.getWeeklyBashAttendance();
 
       // Calculate top attenders for this clan
       const memberAttendanceCounts = attendance.reduce((acc, record) => {
@@ -629,33 +650,161 @@ export class AttendanceService {
     return clanStats.sort((a, b) => b.attendanceRate - a.attendanceRate);
   }
 
-  // Get attendance hall of fame (top performers across all clans)
-  static async getAttendanceHallOfFame(supabase: SupabaseClient) {
-    // Get all clan stats
-    const clanStats = await this.getClanAttendanceStats(supabase);
-    
-    // Get weekly attendance data
-    const weeklyAttendances = await this.getWeeklyBashAttendance(supabase);
+  // Get attendance hall of fame (top performers across all clans) - Optimized version
+  async getAttendanceHallOfFame() {
+    try {
+      // Use a simplified, faster query approach for the hall of fame
+      // Instead of detailed clan stats, get basic attendance counts
+      
+      // Get recent Weekly Bash events (last 8 weeks for performance)
+      const { data: bashEvents, error: eventsError } = await this.supabase
+        .from('events')
+        .select('id, date, title')
+        .eq('type', 'Weekly Bash')
+        .gte('date', new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+        .order('date', { ascending: false });
 
-    // Calculate overall top performers
-    const allTopAttenders = clanStats.flatMap(clan => 
-      clan.topAttenders.map(attender => ({
-        ...attender,
-        clanId: clan.clanId,
-        clanName: clan.clanName
-      }))
-    );
+      if (eventsError || !bashEvents || bashEvents.length === 0) {
+        // Return empty data if no events found
+        return {
+          clanStats: [],
+          weeklyAttendances: [],
+          globalTopAttenders: [],
+          totalClans: 0,
+          totalWeeks: 0
+        };
+      }
 
-    const globalTopAttenders = allTopAttenders
-      .sort((a, b) => b.attendanceCount - a.attendanceCount)
-      .slice(0, 20);
+      const eventIds = bashEvents.map(e => e.id);
 
-    return {
-      clanStats,
-      weeklyAttendances,
-      globalTopAttenders,
-      totalClans: clanStats.length,
-      totalWeeks: weeklyAttendances.length
-    };
+      // Get all attendance for these events
+      const { data: attendanceData, error: attendanceError } = await this.supabase
+        .from('attendance')
+        .select('member_id, event_id, created_at')
+        .in('event_id', eventIds);
+
+      if (attendanceError || !attendanceData) {
+        return {
+          clanStats: [],
+          weeklyAttendances: [],
+          globalTopAttenders: [],
+          totalClans: 0,
+          totalWeeks: 0
+        };
+      }
+
+      // Get all members with clan info
+      const memberIds = [...new Set(attendanceData.map(a => a.member_id))];
+      const { data: membersData, error: membersError } = await this.supabase
+        .from('members')
+        .select('id, name, clan_id, clans(id, clan_name)')
+        .in('id', memberIds);
+
+      if (membersError || !membersData) {
+        return {
+          clanStats: [],
+          weeklyAttendances: [],
+          globalTopAttenders: [],
+          totalClans: 0,
+          totalWeeks: 0
+        };
+      }
+
+      // Create member lookup map
+      const memberMap = new Map(membersData.map((m: any) => [m.id, m]));
+
+      // Process data efficiently
+      const memberAttendanceMap = new Map<number, number>();
+      const clanAttendanceMap = new Map<number, { name: string; count: number; memberIds: Set<number> }>();
+      const weeklyMap = new Map<string, Set<number>>();
+
+      attendanceData.forEach(record => {
+        const member = memberMap.get(record.member_id);
+        if (!member || !member.clans) return;
+
+        const memberId = member.id;
+        const clanId = member.clan_id;
+        const clanName = member.clans.clan_name;
+
+        // Count member attendance
+        memberAttendanceMap.set(memberId, (memberAttendanceMap.get(memberId) || 0) + 1);
+
+        // Count clan attendance
+        if (!clanAttendanceMap.has(clanId)) {
+          clanAttendanceMap.set(clanId, { name: clanName, count: 0, memberIds: new Set() });
+        }
+        const clanData = clanAttendanceMap.get(clanId)!;
+        clanData.count++;
+        clanData.memberIds.add(memberId);
+
+        // Weekly attendance
+        const eventDate = bashEvents.find(e => e.id === record.event_id)?.date;
+        if (eventDate) {
+          const weekKey = eventDate; // Simplified week grouping
+          if (!weeklyMap.has(weekKey)) {
+            weeklyMap.set(weekKey, new Set());
+          }
+          weeklyMap.get(weekKey)!.add(memberId);
+        }
+      });
+
+      // Build simplified clan stats
+      const clanStats = Array.from(clanAttendanceMap.entries()).map(([clanId, data]) => ({
+        clanId,
+        clanName: data.name,
+        totalAttendances: data.count,
+        uniqueAttendees: data.memberIds.size,
+        attendanceRate: bashEvents.length > 0 ? (data.count / (data.memberIds.size * bashEvents.length)) * 100 : 0,
+        weeklyAttendances: [], // Simplified for performance
+        topAttenders: [] // Will be populated below
+      })).sort((a, b) => b.attendanceRate - a.attendanceRate);
+
+      // Build global top attenders
+      const globalTopAttenders = Array.from(memberAttendanceMap.entries())
+        .map(([memberId, count]) => {
+          const member = memberMap.get(memberId);
+          if (!member || !member.clans) return null;
+          
+          return {
+            memberId,
+            memberName: member.name,
+            attendanceCount: count,
+            clanId: member.clan_id,
+            clanName: member.clans.clan_name
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b!.attendanceCount - a!.attendanceCount)
+        .slice(0, 10) as any[];
+
+      // Build weekly attendances
+      const weeklyAttendances = Array.from(weeklyMap.entries())
+        .map(([week, memberIds]) => ({
+          week: new Date(week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          attendanceCount: memberIds.size,
+          memberIds: Array.from(memberIds)
+        }))
+        .sort((a, b) => new Date(b.week).getTime() - new Date(a.week).getTime())
+        .slice(0, 8);
+
+      return {
+        clanStats: clanStats.slice(0, 10), // Limit for performance
+        weeklyAttendances,
+        globalTopAttenders,
+        totalClans: clanStats.length,
+        totalWeeks: weeklyAttendances.length
+      };
+
+    } catch (error) {
+      console.error('Error in getAttendanceHallOfFame:', error);
+      // Return empty data on error to prevent crashes
+      return {
+        clanStats: [],
+        weeklyAttendances: [],
+        globalTopAttenders: [],
+        totalClans: 0,
+        totalWeeks: 0
+      };
+    }
   }
 }

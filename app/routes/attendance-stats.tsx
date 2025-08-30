@@ -3,23 +3,46 @@ import { useLoaderData, Link } from '@remix-run/react';
 import { ArrowLeft, Users, Trophy, TrendingUp, Calendar, Award, Crown, ChevronDown, ChevronRight, UserCheck, UserX } from 'lucide-react';
 import { Card } from '~/components/ui/card';
 import { AttendanceService } from '~/services/attendance.server';
+import { createServerSupabase } from '~/utils/supabase.server';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
-    // Get the latest attendance data
-    const latestAttendance = await AttendanceService.getLatestAttendanceHallOfFame(request);
-    
-    // Get detailed attendance information if we have event data
-    let attendanceDetails = null;
-    if (latestAttendance) {
-      attendanceDetails = await AttendanceService.getAttendanceDetails(request, latestAttendance.event_id);
-    }
+    const response = new Response();
+    const supabase = createServerSupabase(request, response);
+    const attendanceService = new AttendanceService(supabase);
+
+    // Get the attendance hall of fame data
+    const attendanceHallOfFame = await attendanceService.getAttendanceHallOfFame();
+
+    // Transform the data to match the expected structure
+    const transformedData = {
+      clan_stats: attendanceHallOfFame.clanStats.map(clan => ({
+        ...clan,
+        clan_name: clan.clanName,
+        clan_id: clan.clanId,
+        attendance_percentage: Math.round(clan.attendanceRate),
+        attended_members: clan.uniqueAttendees,
+        total_members: clan.topAttenders.length // Use top attenders length as approximation
+      })),
+      event_title: 'Weekly Bash Attendance',
+      event_date: new Date().toISOString().split('T')[0],
+      top_clans: attendanceHallOfFame.clanStats.slice(0, 1).map(clan => ({
+        clan_name: clan.clanName,
+        clan_id: clan.clanId,
+        attendance_percentage: Math.round(clan.attendanceRate),
+        attended_members: clan.uniqueAttendees,
+        total_members: clan.topAttenders.length // Use top attenders length as approximation
+      })),
+      has_tie: false,
+      weekly_attendances: attendanceHallOfFame.weeklyAttendances,
+      global_top_attenders: attendanceHallOfFame.globalTopAttenders
+    };
 
     return json({
-      attendanceData: latestAttendance,
-      attendanceDetails: attendanceDetails
+      attendanceData: transformedData,
+      attendanceDetails: null
     });
   } catch (error) {
     console.error('Error loading attendance stats:', error);
@@ -46,9 +69,15 @@ export default function AttendanceStats() {
     });
   };
 
-  // Helper function to get clan details by name
+  // Helper function to get clan details by name (simplified since attendanceDetails is null)
   const getClanDetails = (clanName: string) => {
-    return attendanceDetails?.find((clan: any) => clan.clan_name === clanName);
+    // Return empty details structure since attendanceDetails is null
+    return {
+      attended_count: 0,
+      absent_count: 0,
+      attended_members: [],
+      absent_members: []
+    };
   };
 
   if (!attendanceData) {

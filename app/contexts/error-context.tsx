@@ -119,11 +119,15 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   // Listen to online/offline status
   useEffect(() => {
     const handleOnline = () => {
-      showError("Connection Restored", "You're back online!", 'success');
+      setTimeout(() => {
+        showError("Connection Restored", "You're back online!", 'success');
+      }, 0);
     };
 
     const handleOffline = () => {
-      showNetworkError("You're currently offline");
+      setTimeout(() => {
+        showNetworkError("You're currently offline");
+      }, 0);
     };
 
     window.addEventListener('online', handleOnline);

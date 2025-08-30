@@ -55,15 +55,19 @@ export class GlobalErrorHandler {
 
       // Catch network errors
       window.addEventListener('offline', () => {
-        this.handleNetworkError('Connection lost');
+        setTimeout(() => {
+          this.handleNetworkError('Connection lost');
+        }, 0);
       });
 
       window.addEventListener('online', () => {
-        toast({
-          title: "Connection restored",
-          description: "You're back online!",
-          variant: "default",
-        });
+        setTimeout(() => {
+          toast({
+            title: "Connection restored",
+            description: "You're back online!",
+            variant: "default",
+          });
+        }, 0);
       });
     }
   }
@@ -107,12 +111,14 @@ export class GlobalErrorHandler {
       route: typeof window !== 'undefined' ? window.location.pathname : '',
     });
 
-    // Show contextual error message
-    toast({
-      title: "Something went wrong",
-      description: context ? `Failed to ${context}. Please try again.` : "An error occurred. Please try again.",
-      variant: "destructive",
-    });
+    // Show contextual error message - defer to avoid setState during render
+    setTimeout(() => {
+      toast({
+        title: "Something went wrong",
+        description: context ? `Failed to ${context}. Please try again.` : "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }, 0);
   }
 
   public handleAPIError(error: any, endpoint?: string) {
@@ -131,7 +137,7 @@ export class GlobalErrorHandler {
       route: endpoint,
     });
 
-    // Show appropriate error message based on status
+    // Show appropriate error message based on status - defer to avoid setState during render
     const statusCode = error?.status;
     let message = "Something went wrong. Please try again.";
     
@@ -145,19 +151,23 @@ export class GlobalErrorHandler {
       message = "Server error. Our team has been notified.";
     }
 
-    toast({
-      title: "Request failed",
-      description: message,
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Request failed",
+        description: message,
+        variant: "destructive",
+      });
+    }, 0);
   }
 
   public handleNetworkError(context?: string) {
-    toast({
-      title: "No internet connection",
-      description: context ? `${context}. Please check your connection.` : "Please check your internet connection and try again.",
-      variant: "destructive",
-    });
+    setTimeout(() => {
+      toast({
+        title: "No internet connection",
+        description: context ? `${context}. Please check your connection.` : "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }, 0);
 
     this.logError({
       message: 'Network error',
@@ -173,11 +183,14 @@ export class GlobalErrorHandler {
   }
 
   private showUserNotification(errorInfo: ErrorInfo) {
-    toast({
-      title: "Unexpected error",
-      description: "Something went wrong. The issue has been reported to our team.",
-      variant: "destructive",
-    });
+    // Use setTimeout to defer the toast call to avoid setState during render
+    setTimeout(() => {
+      toast({
+        title: "Unexpected error",
+        description: "Something went wrong. The issue has been reported to our team.",
+        variant: "destructive",
+      });
+    }, 0);
   }
 
   private async sendToErrorService(errorInfo: ErrorInfo) {

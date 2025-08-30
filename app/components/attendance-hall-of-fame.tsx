@@ -1,19 +1,32 @@
 import { Trophy, Users, TrendingUp, Award, Crown, ExternalLink } from 'lucide-react';
 import { Card } from '~/components/ui/card';
 import { Link } from '@remix-run/react';
-import type { WeeklyBashAttendance } from '~/services/attendance.server';
+import type { AttendanceHallOfFameData } from '~/services/attendance.server';
 
 interface AttendanceHallOfFameProps {
-  attendanceData: WeeklyBashAttendance | null;
+  attendanceData: AttendanceHallOfFameData | null;
   className?: string;
 }
 
 export function AttendanceHallOfFame({ attendanceData, className = '' }: AttendanceHallOfFameProps) {
-  if (!attendanceData || !attendanceData.top_clans || attendanceData.top_clans.length === 0) {
+  if (!attendanceData || !attendanceData.clanStats || attendanceData.clanStats.length === 0) {
     return null;
   }
+  console.log(attendanceData);
+  // Transform the data to match the expected structure
+  const top_clans = attendanceData.clanStats.slice(0, 3).map(clan => ({
+    clan_name: clan.clanName,
+    clan_id: clan.clanId,
+    attendance_percentage: Math.round(clan.attendanceRate),
+    attended_members: clan.uniqueAttendees,
+    total_members: Math.max(clan.topAttenders.length, clan.uniqueAttendees) // Best approximation
+  }));
 
-  const { top_clans, event_title, event_date, has_tie } = attendanceData;
+  const event_title = 'Weekly Bash Attendance';
+  const event_date = new Date().toISOString().split('T')[0];
+  const has_tie = attendanceData.clanStats.length > 1 && 
+    attendanceData.clanStats[0].attendanceRate === attendanceData.clanStats[1].attendanceRate;
+
   const topPercentage = top_clans[0]?.attendance_percentage || 0;
   const isFullAttendance = topPercentage === 100;
 
@@ -162,11 +175,22 @@ export function AttendanceHallOfFame({ attendanceData, className = '' }: Attenda
 
 // Simplified version for smaller spaces
 export function CompactAttendanceHallOfFame({ attendanceData, className = '' }: AttendanceHallOfFameProps) {
-  if (!attendanceData || !attendanceData.top_clans || attendanceData.top_clans.length === 0) {
+  if (!attendanceData || !attendanceData.clanStats || attendanceData.clanStats.length === 0) {
     return null;
   }
 
-  const { top_clans, has_tie } = attendanceData;
+  // Transform the data to match the expected structure
+  const top_clans = attendanceData.clanStats.slice(0, 3).map(clan => ({
+    clan_name: clan.clanName,
+    clan_id: clan.clanId,
+    attendance_percentage: Math.round(clan.attendanceRate),
+    attended_members: clan.uniqueAttendees,
+    total_members: Math.max(clan.topAttenders.length, clan.uniqueAttendees)
+  }));
+
+  const has_tie = attendanceData.clanStats.length > 1 && 
+    attendanceData.clanStats[0].attendanceRate === attendanceData.clanStats[1].attendanceRate;
+
   const topClan = top_clans[0];
   
   // Safety check for topClan

@@ -6,7 +6,33 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const supabase = createServerSupabase(request, response);
   
   const url = new URL(request.url);
-  const eventId = url.searchParams.get('eventId') || 'project-showcase-2025';
+  let eventId = url.searchParams.get('eventId');
+  
+  // If no eventId provided, get the currently open event
+  if (!eventId) {
+    const { data: openEvent } = await supabase
+      .from('project_showcase_events')
+      .select('event_id, max_slots')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (!openEvent) {
+      return json({ error: 'No open event available' }, { status: 404 });
+    }
+    
+    eventId = openEvent.event_id;
+  }
+
+  // Get event details to get max_slots
+  const { data: eventData } = await supabase
+    .from('project_showcase_events')
+    .select('max_slots')
+    .eq('event_id', eventId)
+    .single();
+
+  const maxSlots = eventData?.max_slots || 25;
 
   try {
     // Get allocated slots with member details
@@ -33,9 +59,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     // Get event stats
     const stats = {
-      totalSlots: 25,
+      totalSlots: maxSlots,
       allocatedSlots: slots?.length || 0,
-      availableSlots: 25 - (slots?.length || 0),
+      availableSlots: maxSlots - (slots?.length || 0),
       eligibleMembers: eligibleCount || 0,
       lastUpdated: new Date().toISOString(),
     };

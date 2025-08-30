@@ -3,20 +3,16 @@ import { AttendanceService, type AttendanceFilters } from '~/services/attendance
 import { isOrganiser } from '~/utils/currentUser';
 import { createServerSupabase } from '~/utils/supabase.server';
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const organiserStatus = await isOrganiser(request);
-  
-  if (!organiserStatus) {
-    throw new Response('Unauthorized', { status: 403 });
-  }
-
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
-  
+
+  // Create attendance service instance
+  const attendanceService = new AttendanceService(supabase);
+
+  // Parse search parameters for filtering
   const url = new URL(request.url);
   const searchParams = url.searchParams;
-  
-  const format = searchParams.get('format') as 'csv' | 'json' || 'csv';
   
   const filters: AttendanceFilters = {
     startDate: searchParams.get('startDate') || undefined,
@@ -29,22 +25,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
     memberTitles: searchParams.getAll('memberTitles').filter(Boolean),
   };
 
+  const format = (searchParams.get('format') as 'csv' | 'json') || 'csv';
+
   try {
-    const data = await AttendanceService.exportAttendanceData(supabase, filters, format);
-    
-    const headers = new Headers();
-    
-    if (format === 'csv') {
-      headers.set('Content-Type', 'text/csv');
-      headers.set('Content-Disposition', `attachment; filename="attendance-data-${new Date().toISOString().split('T')[0]}.csv"`);
-      return new Response(data as string, { headers });
+    const exportData = await attendanceService.exportAttendanceData(filters, format);
+
+    if (format === 'json') {
+      return new Response(JSON.stringify(exportData, null, 2), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Disposition': `attachment; filename="attendance-data-${new Date().toISOString().split('T')[0]}.json"`
+        }
+      });
     } else {
-      headers.set('Content-Type', 'application/json');
-      headers.set('Content-Disposition', `attachment; filename="attendance-data-${new Date().toISOString().split('T')[0]}.json"`);
-      return new Response(JSON.stringify(data, null, 2), { headers });
+      return new Response(exportData as string, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="attendance-data-${new Date().toISOString().split('T')[0]}.csv"`
+        }
+      });
     }
   } catch (error) {
-    console.error('Export error:', error);
-    return new Response('Export failed', { status: 500 });
+    console.error('Export failed:', error);
+    throw new Response('Export failed', { status: 500 });
   }
-}
+};

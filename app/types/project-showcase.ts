@@ -43,10 +43,8 @@ export interface ProjectShowcaseEvent {
 }
 
 export const PROJECT_SHOWCASE_CONFIG = {
-  EVENT_ID: 'project-showcase-2025',
-  EVENT_NAME: 'Project Showcase Event 2025',
-  MAX_SLOTS: 25,
+  DEFAULT_MAX_SLOTS: 25,
   ELIGIBILITY_KEYWORD: 'basher',
-  PRESENTATION_DURATION: 10, // minutes
-  QA_DURATION: 5, // minutes
+  DEFAULT_PRESENTATION_DURATION: 10, // minutes
+  DEFAULT_QA_DURATION: 5, // minutes
 } as const;

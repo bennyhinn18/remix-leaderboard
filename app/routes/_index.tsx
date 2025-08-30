@@ -23,6 +23,7 @@ import {
   Code,
   Star,
   MessageSquare,
+  Presentation,
 } from 'lucide-react';
 import {
   RecentActivitiesData,
@@ -34,6 +35,7 @@ import { PageTransition } from '~/components/page-transition';
 import iconImage from '~/assets/bashers.png';
 import { Button } from '~/components/ui/button';
 import { Badge } from '~/components/ui/badge';
+import { Card } from '~/components/ui/card';
 import { MainNav } from '~/components/main-nav';
 import { useState, useEffect, Suspense } from 'react';
 import WhatsNewPanel from '~/components/WhatsNewPanel';
@@ -52,6 +54,7 @@ import {
 } from '~/components/ui/dialog';
 
 import { getUserNotifications } from '~/services/notifications.server';
+import { ProjectShowcaseBanner } from '~/components/project-showcase-banner';
 
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -88,6 +91,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const getRecentActivities = supabase
     .from('points')
     .select('*, member:members!points_member_id_fkey(name, avatar_url)')
+    .eq('member_id', member?.id)
     .order('updated_at', { ascending: false })
     .limit(5)
     .then((result) => result.data || []);
@@ -109,8 +113,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .limit(3)
     .then((result) => result.data || []);
 
-  // Create promise for attendance hall of fame data
-  const getAttendanceHallOfFame = AttendanceService.getLatestAttendanceHallOfFame(request);
+  // Create attendance service instance and get hall of fame data (with timeout)
+  const attendanceService = new AttendanceService(supabase);
+  const getAttendanceHallOfFame = Promise.race([
+    attendanceService.getAttendanceHallOfFame(),
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Attendance query timeout')), 10000)
+    )
+  ]).catch(error => {
+    console.error('Attendance hall of fame error:', error);
+    // Return fallback data on error
+    return {
+      clanStats: [],
+      weeklyAttendances: [],
+      globalTopAttenders: [],
+      totalClans: 0,
+      totalWeeks: 0
+    };
+  });
 
   // Get user notifications if member exists
   let notifications: Array<any> = [];
@@ -145,20 +165,27 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   }
 
-  // Create promise for duolingo streak
+  // Create promise for duolingo streak with comprehensive error handling
   const getDuolingoStreak = async () => {
     if (!member?.duolingo_username) return 0;
 
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       const duolingoResponse = await fetch(
         `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
           },
+          signal: controller.signal,
         }
       );
       
+      clearTimeout(timeoutId);
+
       if (!duolingoResponse.ok) {
         console.warn(`Duolingo API returned ${duolingoResponse.status} for ${member.duolingo_username}`);
         return 0;
@@ -179,23 +206,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       );
     } catch (error) {
       console.error('Error fetching Duolingo data:', error);
-      return 0;
+      return 0; // Always return a fallback value, never throw
     }
   };
 
-  // Create promise for LeetCode stats
+  // Create promise for LeetCode stats with comprehensive error handling
   const getLeetCodeStats = async () => {
     if (!member?.leetcode_username) return { solved: 0 };
 
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       const response = await fetch(
         `https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
           },
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.warn(`LeetCode API returned ${response.status} for ${member.leetcode_username}`);
@@ -217,9 +251,87 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     } catch (error) {
       console.error(`Error fetching LeetCode stats:`, error);
-      return { solved: 0 };
+      return { solved: 0 }; // Always return a fallback value, never throw
     }
   };
+
+  // Wrap external API calls to ensure they never reject
+  const safeDuolingoStreak = getDuolingoStreak().catch((error) => {
+    console.error('Error in Duolingo streak promise:', error);
+    return 0;
+  });
+
+  const safeLeetCodeStats = getLeetCodeStats().catch((error) => {
+    console.error('Error in LeetCode stats promise:', error);
+    return { solved: 0 };
+  });
+
+  // Check for today's Project Showcase 2 event
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Get the currently open project showcase event
+  const { data: openEvent } = await supabase
+    .from('project_showcase_events')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  let projectShowcaseData = {
+    isActive: false,
+    clanId: null,
+    clanName: '',
+    isLive: false,
+    eventDate: '',
+    venue: '',
+    totalSlots: 0,
+    filledSlots: 0,
+    eventName: '',
+    description: ''
+  };
+
+  if (openEvent) {
+    // Get allocated slots count for this event
+    const { data: allocatedSlots } = await supabase
+      .from('project_showcase_slots')
+      .select('id')
+      .eq('event_id', openEvent.event_id);
+
+    const currentFilledSlots = allocatedSlots?.length || 0;
+
+    // Check if the event is happening today
+    const eventDate = new Date(openEvent.event_date);
+    const isEventToday = eventDate.toDateString() === new Date().toDateString();
+    
+    projectShowcaseData = {
+      isActive: true,
+      clanId: openEvent.hosting_clan_id,
+      clanName: '', // Will be filled below
+      isLive: isEventToday, // Consider it live if it's happening today
+      eventDate: openEvent.event_date,
+      venue: openEvent.venue,
+      totalSlots: openEvent.max_slots,
+      filledSlots: currentFilledSlots,
+      eventName: openEvent.event_name,
+      description: openEvent.description
+    };
+  }
+
+  // Get clan information if available
+  let hostingClan = null;
+  if (projectShowcaseData.isActive && projectShowcaseData.clanId) {
+    const { data: clanData } = await supabase
+      .from('clans')
+      .select('id, clan_name')
+      .eq('id', projectShowcaseData.clanId)
+      .single();
+    
+    if (clanData) {
+      hostingClan = clanData;
+      projectShowcaseData.clanName = clanData.clan_name;
+    }
+  }
 
   return defer({
     user,
@@ -229,12 +341,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     announcements: getAnnouncements,
     upcomingEvents: getUpcomingEvents,
     attendanceHallOfFame: getAttendanceHallOfFame,
-    duolingo_streak: getDuolingoStreak(),
-    leetcode_stats: getLeetCodeStats(),
+    duolingo_streak: safeDuolingoStreak,
+    leetcode_stats: safeLeetCodeStats,
     notifications,
     unreadCount,
     allMembers,
     recentNotifications,
+    projectShowcase: projectShowcaseData,
+    hostingClan,
   });
 };
 
@@ -269,6 +383,9 @@ export default function Home() {
   const leetcode_stats = 'leetcode_stats' in data ? data.leetcode_stats : { solved: 0 };
   const allMembers = 'allMembers' in data ? data.allMembers : [];
   const recentNotifications = 'recentNotifications' in data ? data.recentNotifications : [];
+  const projectShowcase = 'projectShowcase' in data ? data.projectShowcase : null;
+  const hostingClan = 'hostingClan' in data ? data.hostingClan : null;
+  // attendanceHallOfFame is a Promise that will be resolved by the <Await> component
   const attendanceHallOfFame = 'attendanceHallOfFame' in data ? data.attendanceHallOfFame : null;
   
   const { showError, showAPIError } = useError();
@@ -352,17 +469,30 @@ export default function Home() {
 
     const fetchGitHubStreak = async () => {
       try {
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
         const githubResponse = await fetch(
           `https://api.github.com/users/${member.github_username}/events/public`,
           {
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
             },
+            signal: controller.signal,
           }
         );
 
+        clearTimeout(timeoutId);
+
         if (!githubResponse.ok) {
           console.warn(`GitHub API returned ${githubResponse.status} for ${member.github_username}`);
+          // Show toast only for significant errors, not just API unavailable
+          if (githubResponse.status !== 503 && githubResponse.status !== 502) {
+            setTimeout(() => {
+              showError('GitHub data temporarily unavailable', 'We\'ll try again shortly.');
+            }, 100);
+          }
           return;
         }
 
@@ -390,7 +520,13 @@ export default function Home() {
         setStreakData((prev) => ({ ...prev, github: contributions.length }));
       } catch (error) {
         console.error('Error fetching GitHub data:', error);
-        showAPIError(error, 'fetch GitHub streak data');
+        // Don't show toast for timeout/network errors during initial load
+        if (error instanceof Error && error.name !== 'AbortError') {
+          setTimeout(() => {
+            showError('GitHub data temporarily unavailable', 'We\'ll try again shortly.');
+          }, 100);
+        }
+        setStreakData((prev) => ({ ...prev, github: 0 }));
       }
     };
 
@@ -403,14 +539,26 @@ export default function Home() {
             setStreakData((prev) => ({ ...prev, duolingo: streak }));
           }).catch((error) => {
             console.error('Error loading Duolingo streak:', error);
-            showAPIError(error, 'load Duolingo streak');
+            // Show toast only if the error is significant (not just API unavailable)
+            if (member?.duolingo_username) {
+              setTimeout(() => {
+                showError('Duolingo data temporarily unavailable', 'We\'ll try again shortly.');
+              }, 100);
+            }
+            setStreakData((prev) => ({ ...prev, duolingo: 0 }));
           });
         } else if (typeof duolingo_streak === 'number') {
           setStreakData((prev) => ({ ...prev, duolingo: duolingo_streak }));
         }
       } catch (error) {
         console.error('Error handling Duolingo streak:', error);
-        showError('Failed to load Duolingo data', 'Please check your Duolingo username in your profile.');
+        // Don't show error for missing username
+        if (member?.duolingo_username) {
+          setTimeout(() => {
+            showError('Failed to load Duolingo data', 'Please check your Duolingo username in your profile.');
+          }, 100);
+        }
+        setStreakData((prev) => ({ ...prev, duolingo: 0 }));
       }
     };
 
@@ -422,14 +570,26 @@ export default function Home() {
             setStreakData((prev) => ({ ...prev, leetcode: stats?.solved || 0 }));
           }).catch((error) => {
             console.error('Error loading LeetCode stats:', error);
-            showAPIError(error, 'load LeetCode stats');
+            // Show toast only if the error is significant (not just API unavailable)
+            if (member?.leetcode_username) {
+              setTimeout(() => {
+                showError('LeetCode data temporarily unavailable', 'We\'ll try again shortly.');
+              }, 100);
+            }
+            setStreakData((prev) => ({ ...prev, leetcode: 0 }));
           });
         } else if (leetcode_stats && typeof leetcode_stats === 'object' && 'solved' in leetcode_stats) {
           setStreakData((prev) => ({ ...prev, leetcode: leetcode_stats.solved || 0 }));
         }
       } catch (error) {
         console.error('Error handling LeetCode stats:', error);
-        showError('Failed to load LeetCode data', 'Please check your LeetCode username in your profile.');
+        // Don't show error for missing username
+        if (member?.leetcode_username) {
+          setTimeout(() => {
+            showError('Failed to load LeetCode data', 'Please check your LeetCode username in your profile.');
+          }, 100);
+        }
+        setStreakData((prev) => ({ ...prev, leetcode: 0 }));
       }
     };
 
@@ -532,7 +692,62 @@ export default function Home() {
           {/* What's New Section */}
           <WhatsNewPanel />
 
-          {/* Stats Overview Grid */}
+        {/* Project Showcase Banner */}
+        {projectShowcase?.isActive && (
+          <ProjectShowcaseBanner {...projectShowcase} />
+        )}
+
+        {/* Quick Access Links */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/30 p-4 hover:scale-105 transition-all duration-300">
+              <a href="/events/project-showcase" className="block">
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-500/20 p-2 rounded-lg">
+                    <Presentation className="w-6 h-6 text-purple-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Project Showcase</h3>
+                    <p className="text-sm text-gray-300">Present your projects</p>
+                  </div>
+                </div>
+              </a>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-blue-500/30 p-4 hover:scale-105 transition-all duration-300">
+              <a href="/events" className="block">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-500/20 p-2 rounded-lg">
+                    <Calendar className="w-6 h-6 text-blue-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">All Events</h3>
+                    <p className="text-sm text-gray-300">View upcoming events</p>
+                  </div>
+                </div>
+              </a>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/30 p-4 hover:scale-105 transition-all duration-300">
+              <a href="/leaderboard" className="block">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-500/20 p-2 rounded-lg">
+                    <Trophy className="w-6 h-6 text-green-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Leaderboard</h3>
+                    <p className="text-sm text-gray-300">Check your ranking</p>
+                  </div>
+                </div>
+              </a>
+            </Card>
+          </div>
+        </motion.div>          {/* Stats Overview Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -668,10 +883,10 @@ export default function Home() {
           <Suspense fallback={
             <div className="h-20 bg-gray-800/50 rounded-lg animate-pulse" />
           }>
-            <Await resolve={data.attendanceHallOfFame}>
+            <Await resolve={attendanceHallOfFame}>
               {(attendanceData) => (
                 <AttendanceHallOfFame 
-                  attendanceData={attendanceData} 
+                  attendanceData={attendanceData || null} 
                   className="mb-6"
                 />
               )}

@@ -64,6 +64,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
 
+  // Create attendance service instance
+  const attendanceService = new AttendanceService(supabase);
+
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -92,13 +95,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
       memberTitles,
       attendanceRecords
     ] = await Promise.all([
-      AttendanceService.getAttendanceStats(supabase, filters),
-      AttendanceService.getEvents(supabase),
-      AttendanceService.getMembers(supabase),
-      AttendanceService.getClans(supabase),
-      AttendanceService.getEventTypes(supabase),
-      AttendanceService.getMemberTitles(supabase),
-      AttendanceService.getAttendanceRecords(supabase, filters)
+      attendanceService.getAttendanceStats(filters),
+      attendanceService.getEvents(),
+      attendanceService.getMembers(),
+      attendanceService.getClans(),
+      attendanceService.getEventTypes(),
+      attendanceService.getMemberTitles(),
+      attendanceService.getAttendanceRecords(filters)
     ]);
 
     return json({

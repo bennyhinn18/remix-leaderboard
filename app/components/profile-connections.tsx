@@ -16,7 +16,9 @@ import {
   AlertCircle,
   Link as LinkIcon,
   Briefcase,
-  FileText
+  FileText,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -144,6 +146,7 @@ interface ProfileConnectionsProps {
 export default function ProfileConnections({ member, canEdit = false, isOwnProfile = false }: ProfileConnectionsProps) {
   const [editingPlatform, setEditingPlatform] = useState<string | null>(null);
   const [tempValues, setTempValues] = useState<Record<string, string>>({});
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const fetcher = useFetcher();
 
   const handleEdit = (platformId: string, currentValue: string) => {
@@ -188,12 +191,15 @@ export default function ProfileConnections({ member, canEdit = false, isOwnProfi
     if (connectedPlatforms.length === 0) {
       return (
         <Card className="bg-white/5 border-gray-700">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LinkIcon className="w-5 h-5 text-blue-400" />
-              Platform Connections
+          <CardHeader className="cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LinkIcon className="w-5 h-5 text-blue-400" />
+                Platform Connections
+              </div>
+              {isCollapsed ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
             </CardTitle>
-            <CardDescription>No platforms connected yet</CardDescription>
+            {!isCollapsed && <CardDescription>No platforms connected yet</CardDescription>}
           </CardHeader>
         </Card>
       );
@@ -201,46 +207,58 @@ export default function ProfileConnections({ member, canEdit = false, isOwnProfi
 
     return (
       <Card className="bg-white/5 border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LinkIcon className="w-5 h-5 text-blue-400" />
-            Platform Connections
+        <CardHeader className="cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LinkIcon className="w-5 h-5 text-blue-400" />
+              Platform Connections
+            </div>
+            {isCollapsed ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
           </CardTitle>
-          <CardDescription>Connected platforms and profiles</CardDescription>
+          {!isCollapsed && <CardDescription>Connected platforms and profiles</CardDescription>}
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {connectedPlatforms.map((platform) => {
-              const value = getPlatformValue(platform.id);
-              const Icon = platform.icon;
-              const url = platform.formatUrl ? platform.formatUrl(value) : value;
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {connectedPlatforms.map((platform) => {
+                  const value = getPlatformValue(platform.id);
+                  const Icon = platform.icon;
+                  const url = platform.formatUrl ? platform.formatUrl(value) : value;
 
-              return (
-                <div key={platform.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${platform.color}`} />
-                    <div>
-                      <div className="font-medium">{platform.name}</div>
-                      <div className="text-sm text-gray-400">{value}</div>
+                  return (
+                    <div key={platform.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Icon className={`w-5 h-5 ${platform.color}`} />
+                        <div>
+                          <div className="font-medium">{platform.name}</div>
+                          <div className="text-sm text-gray-400">{value}</div>
+                        </div>
+                      </div>
+                      {url && url.startsWith('http') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <a href={url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                  {url && url.startsWith('http') && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <a href={url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </motion.div>
+        )}
       </Card>
     );
   }
@@ -252,112 +270,126 @@ export default function ProfileConnections({ member, canEdit = false, isOwnProfi
       className="space-y-6"
     >
       <Card className="bg-white/5 border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LinkIcon className="w-5 h-5 text-blue-400" />
-            Platform Connections
+        <CardHeader className="cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LinkIcon className="w-5 h-5 text-blue-400" />
+              Platform Connections
+            </div>
+            {isCollapsed ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
           </CardTitle>
-          <CardDescription>
-            Connect your accounts to showcase your skills and achievements. 
-            Your GitHub and LeetCode will show live data on your profile!
-          </CardDescription>
+          {!isCollapsed && (
+            <CardDescription>
+              Connect your accounts to showcase your skills and achievements. 
+              Your GitHub and LeetCode will show live data on your profile!
+            </CardDescription>
+          )}
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-4">
-            {platforms.map((platform) => {
-              const value = getPlatformValue(platform.id);
-              const Icon = platform.icon;
-              const isEditing = editingPlatform === platform.id;
-              const currentValue = isEditing ? tempValues[platform.id] : value;
-              const isValid = isValidValue(platform, currentValue);
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CardContent>
+              <div className="grid grid-cols-1 gap-4">
+                {platforms.map((platform) => {
+                  const value = getPlatformValue(platform.id);
+                  const Icon = platform.icon;
+                  const isEditing = editingPlatform === platform.id;
+                  const currentValue = isEditing ? tempValues[platform.id] : value;
+                  const isValid = isValidValue(platform, currentValue);
 
-              return (
-                <div key={platform.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-gray-700/50">
-                  <div className="flex items-center gap-3 flex-1">
-                    <Icon className={`w-5 h-5 ${platform.color}`} />
-                    <div className="flex-1">
-                      <div className="font-medium mb-1">{platform.name}</div>
-                      {isEditing ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={currentValue}
-                            onChange={(e) => setTempValues({ ...tempValues, [platform.id]: e.target.value })}
-                            placeholder={platform.placeholder}
-                            className={`flex-1 bg-gray-800 border-gray-600 ${!isValid ? 'border-red-500' : ''}`}
-                            autoFocus
-                          />
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSave(platform.id)}
-                              disabled={!isValid}
-                              className="text-green-400 hover:text-green-300"
-                            >
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleCancel}
-                              className="text-gray-400 hover:text-gray-300"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          {value ? (
-                            <>
-                              <div className="text-sm text-gray-300">{value}</div>
-                              <Badge variant="outline" className="text-xs text-green-400 border-green-500/30">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Connected
-                              </Badge>
-                            </>
+                  return (
+                    <div key={platform.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-gray-700/50">
+                      <div className="flex items-center gap-3 flex-1">
+                        <Icon className={`w-5 h-5 ${platform.color}`} />
+                        <div className="flex-1">
+                          <div className="font-medium mb-1">{platform.name}</div>
+                          {isEditing ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={currentValue}
+                                onChange={(e) => setTempValues({ ...tempValues, [platform.id]: e.target.value })}
+                                placeholder={platform.placeholder}
+                                className={`flex-1 bg-gray-800 border-gray-600 ${!isValid ? 'border-red-500' : ''}`}
+                                autoFocus
+                              />
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSave(platform.id)}
+                                  disabled={!isValid}
+                                  className="text-green-400 hover:text-green-300"
+                                >
+                                  <Save className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleCancel}
+                                  className="text-gray-400 hover:text-gray-300"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
                           ) : (
-                            <>
-                              <div className="text-sm text-gray-500">Not connected</div>
-                              <Badge variant="outline" className="text-xs text-gray-400 border-gray-500/30">
-                                <AlertCircle className="w-3 h-3 mr-1" />
-                                Not set
-                              </Badge>
-                            </>
+                            <div className="flex items-center gap-2">
+                              {value ? (
+                                <>
+                                  <div className="text-sm text-gray-300">{value}</div>
+                                  <Badge variant="outline" className="text-xs text-green-400 border-green-500/30">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Connected
+                                  </Badge>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="text-sm text-gray-500">Not connected</div>
+                                  <Badge variant="outline" className="text-xs text-gray-400 border-gray-500/30">
+                                    <AlertCircle className="w-3 h-3 mr-1" />
+                                    Not set
+                                  </Badge>
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {value && platform.formatUrl && !isEditing && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="text-gray-400 hover:text-white"
+                          >
+                            <a href={platform.formatUrl(value)} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {!isEditing && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(platform.id, value)}
+                            className="text-blue-400 hover:text-blue-300"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {value && platform.formatUrl && !isEditing && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        className="text-gray-400 hover:text-white"
-                      >
-                        <a href={platform.formatUrl(value)} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {!isEditing && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(platform.id, value)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </motion.div>
+        )}
       </Card>
     </motion.div>
   );

@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Star,
   Zap,
-  Presentation
+  Presentation,
+  Settings
 } from 'lucide-react';
 
 import { SlotPicker } from '~/components/project-showcase/slot-picker';
@@ -64,6 +65,7 @@ interface ProjectShowcaseData {
   isEligible: boolean;
   hasSlot: boolean;
   availableSlots: number;
+  currentEvent: any;
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
 }
@@ -77,6 +79,31 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   const organiserStatus = await isOrganiser(request);
   
+  // First, get the currently open event
+  const { data: openEvent } = await supabase
+    .from('project_showcase_events')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  // If no open event, return empty state
+  if (!openEvent) {
+    return json({
+      isOrganiser: organiserStatus,
+      currentMember: null,
+      allocatedSlots: [],
+      eligibleMembers: [],
+      isEligible: false,
+      hasSlot: false,
+      availableSlots: 0,
+      currentEvent: null,
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    }, { headers: response.headers });
+  }
+
   let currentMember: EligibleMember | null = null;
   let isEligible = false;
   let hasSlot = false;
@@ -105,18 +132,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
           basher_no: memberData.basher_no,
         };
 
-        // Check if member is eligible (specific titles: basher, captain bash, legacy basher, organiser)
-        const eligibleTitles = ['basher', 'captain bash', 'legacy basher', 'organiser'];
-        isEligible = eligibleTitles.some(title => 
-          memberData.title?.toLowerCase().includes(title.toLowerCase())
-        ) || false;
+        // Check if member is eligible (specific titles: Basher, Captain Bash, Legacy Basher, Organiser)
+        const eligibleTitles = ['Basher', 'Captain Bash', 'Legacy Basher', 'Organiser'];
+        isEligible = eligibleTitles.includes(memberData.title) || false;
 
-        // Check if member already has a slot
+        // Check if member already has a slot for the current open event
         const { data: existingSlot } = await supabase
           .from('project_showcase_slots')
           .select('*')
           .eq('member_id', memberData.id)
-          .eq('event_id', 'project-showcase-2025')
+          .eq('event_id', openEvent.event_id)
           .single();
 
         hasSlot = !!existingSlot;
@@ -124,21 +149,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   }
 
-  // Get all eligible members (those with eligible titles: basher, captain bash, legacy basher, organiser)
+  // Get all eligible members (those with eligible titles)
   const { data: eligibleMembers } = await supabase
     .from('members')
     .select('id, name, github_username, title, avatar_url, bash_points, clan_name, basher_no')
-    .or('title.ilike.%basher%,title.ilike.%captain bash%,title.ilike.%legacy basher%,title.ilike.%organiser%')
+    .in('title', ['Basher', 'Captain Bash', 'Legacy Basher', 'Organiser'])
     .order('name');
 
-  // Get allocated slots
+  // Get allocated slots for the current open event
   const { data: allocatedSlots } = await supabase
     .from('project_showcase_slots_with_members')
     .select('*')
-    .eq('event_id', 'project-showcase-2025')
+    .eq('event_id', openEvent.event_id)
     .order('slot_number');
 
-  const availableSlots = 25 - (allocatedSlots?.length || 0);
+  const availableSlots = openEvent.max_slots - (allocatedSlots?.length || 0);
 
   return json({
     isOrganiser: organiserStatus,
@@ -148,6 +173,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     isEligible,
     hasSlot,
     availableSlots,
+    currentEvent: openEvent,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   }, { headers: response.headers });
@@ -158,6 +184,19 @@ export async function action({ request }: ActionFunctionArgs) {
   const supabase = createServerSupabase(request, response);
   const formData = await request.formData();
   const intent = formData.get('intent');
+
+  // Get the currently open event
+  const { data: openEvent } = await supabase
+    .from('project_showcase_events')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!openEvent) {
+    return json({ error: 'No open event available for slot allocation' }, { status: 400 });
+  }
 
   if (intent === 'allocate_slot') {
     const memberId = Number(formData.get('memberId'));
@@ -174,35 +213,33 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Check if member is eligible
-    const eligibleTitles = ['basher', 'captain bash', 'legacy basher', 'organiser'];
-    const isEligibleMember = eligibleTitles.some(title => 
-      member.title?.toLowerCase().includes(title.toLowerCase())
-    );
+    const eligibleTitles = ['Basher', 'Captain Bash', 'Legacy Basher', 'Organiser'];
+    const isEligibleMember = eligibleTitles.includes(member.title);
     
     if (!isEligibleMember) {
       return json({ error: 'Member is not eligible for lot allocation' }, { status: 400 });
     }
 
-    // Check if member already has a slot
+    // Check if member already has a slot for the current event
     const { data: existingSlot } = await supabase
       .from('project_showcase_slots')
       .select('*')
       .eq('member_id', memberId)
-      .eq('event_id', 'project-showcase-2025')
+      .eq('event_id', openEvent.event_id)
       .single();
 
     if (existingSlot) {
       return json({ error: 'Member already has a slot allocated' }, { status: 400 });
     }
 
-    // Get available slot numbers
+    // Get available slot numbers for the current event
     const { data: allocatedSlots } = await supabase
       .from('project_showcase_slots')
       .select('slot_number')
-      .eq('event_id', 'project-showcase-2025');
+      .eq('event_id', openEvent.event_id);
 
     const allocatedNumbers = allocatedSlots?.map(slot => slot.slot_number) || [];
-    const availableNumbers = Array.from({ length: 25 }, (_, i) => i + 1)
+    const availableNumbers = Array.from({ length: openEvent.max_slots }, (_, i) => i + 1)
       .filter(num => !allocatedNumbers.includes(num));
 
     if (availableNumbers.length === 0) {
@@ -221,8 +258,8 @@ export async function action({ request }: ActionFunctionArgs) {
         member_github_username: member.github_username,
         member_title: member.title,
         slot_number: randomSlotNumber,
-        event_id: 'project-showcase-2025',
-        event_name: 'Project Showcase Event 2025',
+        event_id: openEvent.event_id,
+        event_name: openEvent.event_name,
         status: 'allocated'
       });
 
@@ -265,6 +302,7 @@ export default function ProjectShowcase() {
     isEligible, 
     hasSlot, 
     availableSlots,
+    currentEvent,
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   } = useLoaderData<typeof loader>() as ProjectShowcaseData;
@@ -386,88 +424,130 @@ export default function ProjectShowcase() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-full">
-              <Presentation className="w-12 h-12 text-white" />
+          {!currentEvent ? (
+            <div className="text-center py-12">
+              <div className="flex justify-center mb-4">
+                <div className="bg-gradient-to-r from-gray-400 to-gray-500 p-4 rounded-full">
+                  <Presentation className="w-12 h-12 text-white" />
+                </div>
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold text-gray-400 mb-4">
+                No Active Event
+              </h1>
+              <p className="text-xl text-gray-500 max-w-3xl mx-auto mb-6">
+                There are currently no open Project Showcase events. Check back later or contact an organiser.
+              </p>
+              {isOrganiser && (
+                <Button
+                  onClick={() => window.location.href = '/events/project-showcase/events'}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Manage Events
+                </Button>
+              )}
             </div>
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-500 mb-4">
-            Project Showcase 1
-          </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
-            An exclusive opportunity for Bashers to present their innovative projects and showcase their skills to the community. 
-            Limited to 25 slots - allocated randomly to ensure fairness.
-          </p>
-          
-          {/* Event Details */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20 p-4">
-              <div className="flex items-center justify-center gap-2 text-blue-300">
-                <Clock className="w-5 h-5" />
-                <span className="font-medium">July 19, 2025</span>
+          ) : (
+            <>
+              <div className="flex justify-center mb-4">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-full">
+                  <Presentation className="w-12 h-12 text-white" />
+                </div>
               </div>
-            </Card>
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20 p-4">
-              <div className="flex items-center justify-center gap-2 text-green-300">
-                <MapPin className="w-5 h-5" />
-                <span className="font-medium">Innovation Center</span>
+              <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-500 mb-4">
+                {currentEvent.event_name}
+              </h1>
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
+                {currentEvent.description || "An exclusive opportunity for Bashers to present their innovative projects and showcase their skills to the community."}
+              </p>
+              
+              <div className="text-center mb-4">
+                <Badge className="bg-green-500/20 text-green-300 border-green-500/30 text-lg px-4 py-2">
+                  🔴 Event Active - Slots Available!
+                </Badge>
               </div>
-            </Card>
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20 p-4">
-              <div className="flex items-center justify-center gap-2 text-purple-300">
-                <Users className="w-5 h-5" />
-                <span className="font-medium">25 Slots Available</span>
+              
+              {/* Event Details */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <Card className="bg-white/10 backdrop-blur-lg border-white/20 p-4">
+                  <div className="flex items-center justify-center gap-2 text-blue-300">
+                    <Clock className="w-5 h-5" />
+                    <span className="font-medium">
+                      {new Date(currentEvent.event_date).toLocaleDateString()}
+                      {currentEvent.event_time && ` at ${currentEvent.event_time}`}
+                    </span>
+                  </div>
+                </Card>
+                <Card className="bg-white/10 backdrop-blur-lg border-white/20 p-4">
+                  <div className="flex items-center justify-center gap-2 text-green-300">
+                    <MapPin className="w-5 h-5" />
+                    <span className="font-medium">{currentEvent.venue}</span>
+                  </div>
+                </Card>
+                <Card className="bg-white/10 backdrop-blur-lg border-white/20 p-4">
+                  <div className="flex items-center justify-center gap-2 text-purple-300">
+                    <Users className="w-5 h-5" />
+                    <span className="font-medium">{availableSlots}/{currentEvent.max_slots} Slots Available</span>
+                  </div>
+                </Card>
               </div>
-            </Card>
-          </div>
+            </>
+          )}
         </motion.div>
 
-        {/* Event Instructions */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mb-12"
-        >
-          <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/30 p-6">
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <Star className="w-6 h-6 text-yellow-400" />
-              Event Guidelines
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold text-blue-300 mb-2">Eligibility</h3>
-                <ul className="text-gray-300 space-y-1">
-                  <li>• Must have "Basher" title</li>
-                  <li>• Active community member</li>
-                  <li>• Project ready for presentation</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold text-purple-300 mb-2">Presentation Format</h3>
-                <ul className="text-gray-300 space-y-1">
-                  <li>• 10 minutes presentation</li>
-                  <li>• 5 minutes Q&A</li>
-                  <li>• Live demo encouraged</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-4 space-y-3">
-              <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                <p className="text-yellow-200 flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
-                  <strong>Important:</strong> Lots are allocated randomly to ensure fairness. Once allocated, prepare your best presentation!
-                </p>
-              </div>
-              <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                <p className="text-blue-200 flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  <strong>Final Lot List:</strong> Will be published on July 19, 2025 at 15:00 hours (3:00 PM)
-                </p>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
+        {/* Only show event content if there's an active event */}
+        {currentEvent && (
+          <>
+            {/* Event Instructions */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mb-12"
+            >
+              <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/30 p-6">
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <Star className="w-6 h-6 text-yellow-400" />
+                  Event Guidelines
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-blue-300 mb-2">Eligibility</h3>
+                    <ul className="text-gray-300 space-y-1">
+                      <li>• Must have "Basher" title</li>
+                      <li>• Active community member</li>
+                      <li>• Project ready for presentation</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-purple-300 mb-2">Presentation Format</h3>
+                    <ul className="text-gray-300 space-y-1">
+                      <li>• {currentEvent.presentation_duration || 10} minutes presentation</li>
+                      <li>• {currentEvent.qa_duration || 5} minutes Q&A</li>
+                      <li>• Live demo encouraged</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-3">
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                    <p className="text-yellow-200 flex items-center gap-2">
+                      <Zap className="w-5 h-5" />
+                      <strong>Important:</strong> Lots are allocated randomly to ensure fairness. Once allocated, prepare your best presentation!
+                    </p>
+                  </div>
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <p className="text-blue-200 flex items-center gap-2">
+                      <Clock className="w-5 h-5" />
+                      <strong>Event Date:</strong> {new Date(currentEvent.event_date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })} {currentEvent.event_time && `at ${currentEvent.event_time}`}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
 
         {/* Slot Allocation Section */}
         {currentMember && (
@@ -586,13 +666,37 @@ export default function ProjectShowcase() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Trophy className="w-6 h-6 text-yellow-400" />
-                Allocated Slots ({slots.length}/25)
+                Allocated Slots ({slots.length}/{currentEvent?.max_slots || 25})
               </h2>
-              {isOrganiser && (
-                <Badge variant="secondary" className="bg-purple-500/20 text-purple-300">
-                  Organiser View
+              <div className="flex items-center gap-2">
+                {isOrganiser && (
+                  <>
+                    <Button
+                      onClick={() => window.location.href = '/events/project-showcase/manage'}
+                      variant="outline"
+                      className="border-purple-500/50 text-purple-300 hover:bg-purple-500/20"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Manage Event
+                    </Button>
+                    <Button
+                      onClick={() => window.location.href = '/events/project-showcase/events'}
+                      variant="outline"
+                      className="border-green-500/50 text-green-300 hover:bg-green-500/20"
+                    >
+                      <Trophy className="w-4 h-4 mr-2" />
+                      All Events
+                    </Button>
+                  </>
+                )}
+                <Badge variant="secondary" className={
+                  isOrganiser 
+                    ? "bg-purple-500/20 text-purple-300" 
+                    : "bg-blue-500/20 text-blue-300"
+                }>
+                  {isOrganiser ? "Organiser View" : "Participant View"}
                 </Badge>
-              )}
+              </div>
             </div>
 
             {slots.length === 0 ? (
@@ -618,22 +722,27 @@ export default function ProjectShowcase() {
         </motion.div>
 
         {/* Event Information Link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="mt-12 text-center"
-        >
-          <a
-            href="https://bytebashblitz.org/events/project-showcase"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-blue-300 hover:text-blue-200 transition-colors"
+        {currentEvent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="mt-12 text-center"
           >
-            <ExternalLink className="w-5 h-5" />
-            View Full Event Details
-          </a>
-        </motion.div>
+            <a
+              href="https://bytebashblitz.org/events/project-showcase"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-blue-300 hover:text-blue-200 transition-colors"
+            >
+              <ExternalLink className="w-5 h-5" />
+              View Full Event Details
+            </a>
+          </motion.div>
+        )}
+        
+            </>
+        )}
       </div>
     </div>
   );
