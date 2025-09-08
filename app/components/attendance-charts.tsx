@@ -41,7 +41,18 @@ interface MonthlyTrendChartProps {
 }
 
 function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
-  const chartData = data.map(item => ({
+  // Validate data to prevent undefined values
+  const validData = data?.filter(item => 
+    item && 
+    typeof item.totalEvents === 'number' && 
+    typeof item.totalAttendances === 'number' &&
+    typeof item.uniqueAttendees === 'number' &&
+    typeof item.averageAttendance === 'number' &&
+    item.month && 
+    typeof item.year === 'number'
+  ) || [];
+
+  const chartData = validData.map(item => ({
     name: `${item.month} ${item.year}`,
     events: item.totalEvents,
     attendances: item.totalAttendances,
@@ -58,8 +69,9 @@ function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
         <CardDescription>Event and attendance patterns over the last 12 months</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
-          <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        {chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={400}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis 
               dataKey="name" 
@@ -96,6 +108,11 @@ function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
             />
           </ComposedChart>
         </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[400px] text-gray-400">
+            No attendance data available
+          </div>
+        )}
       </CardContent>
     </Card>
   );

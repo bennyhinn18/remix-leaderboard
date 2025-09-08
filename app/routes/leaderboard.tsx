@@ -407,7 +407,7 @@ export default function Leaderboard() {
         </div>
       </motion.div>
 
-      {currentUser && showScrollButton && (
+      {currentUser && showScrollButton && activeTab !== 'bashclan' && (
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -428,11 +428,11 @@ export default function Leaderboard() {
         </motion.button>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 pb-8 sm:py-8">
         <AnimatePresence mode="popLayout">
           <motion.div layout className="space-y-6">
             {activeTab === 'bashclan' ? (
-              <div className="space-y-4">
+              <div className="space-y-4 mt-8">
                 {clans
                   .sort((a, b) => {
                     const averagePointsA =

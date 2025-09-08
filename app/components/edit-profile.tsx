@@ -708,7 +708,7 @@ export function EditProfileButton({ member, isOrganiser = false, canEdit = false
                   id="courses"
                   name="courses"
                   type="number"
-                  defaultValue={member.stats?.courses.toString() || '0'}
+                  defaultValue={member.stats?.courses?.toString() || '0'}
                   className="bg-gray-800 border-gray-700"
                   readOnly={isFieldRestricted}
                   disabled={false}
@@ -722,7 +722,7 @@ export function EditProfileButton({ member, isOrganiser = false, canEdit = false
                     id="projects"
                     name="projects"
                     type="number"
-                    defaultValue={member.stats?.projects.toString() || '0'}
+                    defaultValue={member.stats?.projects?.toString() || '0'}
                     className="bg-gray-800 border-gray-700"
                     readOnly={isFieldRestricted}
                     disabled={false}
@@ -735,7 +735,7 @@ export function EditProfileButton({ member, isOrganiser = false, canEdit = false
                     id="hackathons"
                     name="hackathons"
                     type="number"
-                    defaultValue={member.stats?.hackathons.toString() || '0'}
+                    defaultValue={member.stats?.hackathons?.toString() || '0'}
                     className="bg-gray-800 border-gray-700"
                     readOnly={isFieldRestricted}
                     disabled={false}
@@ -748,7 +748,7 @@ export function EditProfileButton({ member, isOrganiser = false, canEdit = false
                     id="internships"
                     name="internships"
                     type="number"
-                    defaultValue={member.stats?.internships.toString() || '0'}
+                    defaultValue={member.stats?.internships?.toString() || '0'}
                     className="bg-gray-800 border-gray-700"
                     readOnly={isFieldRestricted}
                     disabled={false}
@@ -762,7 +762,7 @@ export function EditProfileButton({ member, isOrganiser = false, canEdit = false
                     name="certifications"
                     type="number"
                     defaultValue={
-                      member.stats?.certifications.toString() || '0'
+                      member.stats?.certifications?.toString() || '0'
                     }
                     className="bg-gray-800 border-gray-700"
                     readOnly={isFieldRestricted}

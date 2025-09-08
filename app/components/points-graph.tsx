@@ -23,26 +23,38 @@ function PointsGraph({
 }) {
   const [showDetails, setShowDetails] = useState(false);
 
+  // Validate and filter the pointsHistory data
+  const validPointsHistory = pointsHistory?.filter(entry => 
+    entry && 
+    typeof entry.points === 'number' && 
+    entry.updated_at &&
+    entry.description
+  ) || [];
+
   // Calculate total points (sum of all point transactions)
-  const totalPoints = pointsHistory.reduce(
+  const totalPoints = validPointsHistory.reduce(
     (sum, entry) => sum + entry.points,
     0
   );
 
   // Process the data to create a cumulative points graph
-  const processedData = pointsHistory.reduce(
+  const processedData = validPointsHistory.reduce(
     (acc: any[], entry: any, index: number) => {
-      const date = format(parseISO(entry.updated_at.split('T')[0]), 'MMM dd');
-      const lastTotal = index > 0 ? acc[acc.length - 1].totalPoints : 0;
-      const totalPoints = lastTotal + entry.points;
+      try {
+        const date = format(parseISO(entry.updated_at.split('T')[0]), 'MMM dd');
+        const lastTotal = index > 0 ? acc[acc.length - 1].totalPoints : 0;
+        const totalPoints = lastTotal + entry.points;
 
-      acc.push({
-        date,
-        rawDate: entry.updated_at,
-        points: entry.points,
-        totalPoints,
-        description: entry.description,
-      });
+        acc.push({
+          date,
+          rawDate: entry.updated_at,
+          points: entry.points,
+          totalPoints,
+          description: entry.description,
+        });
+      } catch (error) {
+        console.warn('Error processing points history entry:', entry, error);
+      }
 
       return acc;
     },
@@ -100,7 +112,7 @@ function PointsGraph({
           >
             {/* Points Graph */}
             <div className="h-64 sm:h-80 mt-6">
-              {pointsHistory.length > 0 ? (
+              {processedData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
                     data={processedData}
@@ -152,8 +164,9 @@ function PointsGraph({
                           return [`${value} points`, name];
                         } else {
                           const point = props.payload;
+                          const numValue = Number(value);
                           return [
-                            `${value > 0 ? '+' + value : value} points (${
+                            `${numValue > 0 ? '+' + numValue : numValue} points (${
                               point.description
                             })`,
                             name,
@@ -184,11 +197,11 @@ function PointsGraph({
             </div>
 
             {/* Recent Points Transactions */}
-            {pointsHistory.length > 0 && (
+            {validPointsHistory.length > 0 && (
               <div className="mt-6">
                 {/* <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Transactions</h3>
                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                  {[...pointsHistory]
+                  {[...validPointsHistory]
                     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
                     .slice(0, 5)
                     .map((entry) => (
