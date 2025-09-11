@@ -65,9 +65,9 @@ import { PageTransition } from '~/components/page-transition';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
-    const organiserStatus = await isOrganiser(request);
+    const organiserData = await isOrganiser(request);
     
-    if (!organiserStatus) {
+    if (!organiserData.isOrganiser) {
       throw new Response('Unauthorized', { status: 403 });
     }
 
@@ -151,7 +151,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       members: members || [],
       clans: clans || [],
       user: userData,
-      organiserStatus,
+      organiserStatus: organiserData.isOrganiser,
       discordSyncStatus
     });
   } catch (error) {
@@ -172,9 +172,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const organiserStatus = await isOrganiser(request);
+  const organiserData = await isOrganiser(request);
   
-  if (!organiserStatus) {
+  if (!organiserData.isOrganiser) {
     return json({ error: 'Unauthorized' }, { status: 403 });
   }
 

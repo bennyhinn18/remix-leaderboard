@@ -46,11 +46,11 @@ async function getCurrentUser(request: Request): Promise<User | null> {
   return userData;
 }
 
-async function isOrganiser(request: Request): Promise<boolean> {
+async function isOrganiser(request: Request): Promise<{ isOrganiser: boolean; organiserId?: number }> {
   const user = await getCurrentUser(request);
   
   if (!user || !user.title) {
-    return false;
+    return { isOrganiser: false };
   }
   
   // Only users with "Organiser" title (and spelling variations) have organizer privileges
@@ -58,8 +58,13 @@ async function isOrganiser(request: Request): Promise<boolean> {
     'Organiser', 'organiser', 'ORGANISER', 
     'Organizer', 'organizer', 'ORGANIZER'
   ];
+
+  const isOrganiserStatus = organiserTitles.includes(user.title);
   
-  return organiserTitles.includes(user.title);
+  return { 
+    isOrganiser: isOrganiserStatus, 
+    organiserId: isOrganiserStatus ? user.member_id : undefined 
+  };
 }
 
 async function isMentor(request: Request): Promise<boolean> {

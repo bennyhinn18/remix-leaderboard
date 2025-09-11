@@ -32,9 +32,9 @@ import { parseISO, format } from 'date-fns';
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
-  const organiserStatus = await isOrganiser(request);
+  const organiserData = await isOrganiser(request);
 
-  if (!organiserStatus) {
+  if (!organiserData.isOrganiser) {
     return redirect('/events');
   }
 
@@ -55,9 +55,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
   const formData = await request.formData();
-  const organiserStatus = await isOrganiser(request);
-  console.log('Organiser status:', organiserStatus);
-  if (!organiserStatus) {
+  const organiserData = await isOrganiser(request);
+  console.log('Organiser status:', organiserData.isOrganiser);
+  if (!organiserData.isOrganiser) {
     return redirect('/events');
   }
 

@@ -77,7 +77,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
   
-  const organiserStatus = await isOrganiser(request);
+  const organiserData = await isOrganiser(request);
   
   // First, get the currently open event
   const { data: openEvent } = await supabase
@@ -91,7 +91,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // If no open event, return empty state
   if (!openEvent) {
     return json({
-      isOrganiser: organiserStatus,
+      isOrganiser: organiserData.isOrganiser,
       currentMember: null,
       allocatedSlots: [],
       eligibleMembers: [],
@@ -166,7 +166,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const availableSlots = openEvent.max_slots - (allocatedSlots?.length || 0);
 
   return json({
-    isOrganiser: organiserStatus,
+    isOrganiser: organiserData.isOrganiser,
     currentMember,
     allocatedSlots: allocatedSlots || [],
     eligibleMembers: eligibleMembers || [],
@@ -275,7 +275,12 @@ export async function action({ request }: ActionFunctionArgs) {
     });
   }
 
-  if (intent === 'remove_slot' && await isOrganiser(request)) {
+  if (intent === 'remove_slot') {
+    const organiserData = await isOrganiser(request);
+    if (!organiserData.isOrganiser) {
+      return json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    
     const slotId = Number(formData.get('slotId'));
     
     const { error } = await supabase

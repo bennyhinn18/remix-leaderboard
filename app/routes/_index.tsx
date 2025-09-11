@@ -647,15 +647,15 @@ export default function Home() {
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               <div>
                 <h2 className="text-2xl font-bold">
-                  Welcome back, 
+                  Welcome back,  
                   {(() => {
                     const names = member?.name?.trim().split(' ') || [];
                     if (names.length >= 2) {
-                      return `Basher ${names[1]}`;
+                      return ` Basher ${names[1]}`;
                     } else if (names.length === 1) {
-                      return `Basher ${names[0]}`;
+                      return ` Basher ${names[0]}`;
                     }
-                    return 'Basher';
+                    return ' Basher';
                   })()}
                   !
                 </h2>

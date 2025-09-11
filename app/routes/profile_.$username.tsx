@@ -53,7 +53,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   
   
   // Get organiser status using the cached getCurrentUser function
-  const organiserStatus = await isOrganiser(request);
+  const organiserData = await isOrganiser(request);
   
   const response = new Response();
   const supabase = createServerSupabase(request, response);
@@ -97,14 +97,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     if (!member.duolingo_username) return { streak: 0, error: null };
     
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const duolingoResponse = await fetch(
         `https://www.duolingo.com/2017-06-30/users?username=${member.duolingo_username}&fields=streak,streakData%7BcurrentStreak,previousStreak%7D%7D`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
           },
+          signal: controller.signal,
         }
       );
+      
+      clearTimeout(timeoutId);
       
       if (!duolingoResponse.ok) {
         console.warn(`Duolingo API returned ${duolingoResponse.status} for ${member.duolingo_username}`);
@@ -126,34 +133,45 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       );
       return { streak, error: null };
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`Duolingo API timeout for ${member.duolingo_username}`);
+        return { streak: 0, error: 'API timeout' };
+      }
       console.error('Error fetching Duolingo data:', error);
       return { streak: 0, error: 'Failed to fetch data' };
     }
   };
 
-  // Function to fetch GitHub contributions - defer this
+  // Function to fetch GitHub contributions count - defer this
   const fetchGithubData = async () => {
-    if (!member.github_username) return { events: [], error: null };
+    if (!member.github_username) return { eventsCount: 0, error: null };
     
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const githubResponse = await fetch(
         `https://api.github.com/users/${member.github_username}/events/public`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
           },
+          signal: controller.signal,
         }
       );
 
+      clearTimeout(timeoutId);
+
       if (!githubResponse.ok) {
         console.warn(`GitHub API returned ${githubResponse.status} for ${member.github_username}`);
-        return { events: [], error: `API returned ${githubResponse.status}` };
+        return { eventsCount: 0, error: `API returned ${githubResponse.status}` };
       }
 
       const responseText = await githubResponse.text();
       if (!responseText.trim()) {
         console.warn(`Empty response from GitHub API for ${member.github_username}`);
-        return { events: [], error: 'Empty response' };
+        return { eventsCount: 0, error: 'Empty response' };
       }
 
       const githubEvents = JSON.parse(responseText);
@@ -161,36 +179,47 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const events = Array.isArray(githubEvents)
+      const eventsCount = Array.isArray(githubEvents)
         ? githubEvents.filter(
             (event: any) =>
               new Date(event.created_at) > thirtyDaysAgo &&
               ['PushEvent', 'CreateEvent', 'PullRequestEvent'].includes(
                 event.type
               )
-          )
-        : [];
+          ).length
+        : 0;
       
-      return { events, error: null };
+      return { eventsCount, error: null };
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`GitHub API timeout for ${member.github_username}`);
+        return { eventsCount: 0, error: 'API timeout' };
+      }
       console.error('Error fetching GitHub data:', error);
-      return { events: [], error: 'Failed to fetch data' };
+      return { eventsCount: 0, error: 'Failed to fetch data' };
     }
   };
 
-  //Fetch LeetCode data
+  //Fetch LeetCode data with timeout
   const fetchLeetCodeData = async () => {
     if (!member.leetcode_username) return { solved: 0, error: null };
     
     try {
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const leetCodeResponse = await fetch(
         `https://leetcode-stats-api.herokuapp.com/${member.leetcode_username}/`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; LeaderboardApp/1.0)',
           },
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!leetCodeResponse.ok) {
         console.warn(`LeetCode API returned ${leetCodeResponse.status} for ${member.leetcode_username}`);
@@ -206,6 +235,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       const leetCodeData = JSON.parse(responseText);
       return { solved: leetCodeData?.totalSolved || 0, error: null };
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.warn(`LeetCode API timeout for ${member.leetcode_username}`);
+          return { solved: 0, error: 'API timeout' };
+        }
+      }
       console.error('Error fetching LeetCode data:', error);
       return { solved: 0, error: 'Failed to fetch data' };
     }
@@ -223,15 +258,32 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     await achievementService.checkAndAwardMilestoneAchievements(member.id);
   }
 
+  // Create safe promises that won't cause server timeouts
+  const safeDuolingoStreak = fetchDuolingoStreak().catch((error) => {
+    console.error('Duolingo data fetch failed:', error);
+    return { streak: 0, error: 'Failed to load' };
+  });
+
+  const safeGithubData = fetchGithubData().catch((error) => {
+    console.error('GitHub data fetch failed:', error);
+    return { eventsCount: 0, error: 'Failed to load' };
+  });
+
+  // Create a safe LeetCode promise that won't cause server timeouts
+  const safeLeetCodeData = fetchLeetCodeData().catch((error) => {
+    console.error('LeetCode data fetch failed:', error);
+    return { solved: 0, error: 'Failed to load' };
+  });
+
   return defer({
     member,
     user,
-    duolingoStreak: fetchDuolingoStreak(),
-    githubData: fetchGithubData(),
-    leetCodeData: fetchLeetCodeData(),
+    duolingoStreak: safeDuolingoStreak,
+    githubData: safeGithubData,
+    leetCodeData: safeLeetCodeData,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-    organiserStatus,
+    organiserStatus: organiserData.isOrganiser,
     pointsHistory: pointsHistory || [],
     isOwnProfile,
     notifications,
@@ -275,10 +327,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     // Permission check: only allow organisers or the profile owner to edit
     const currentUser = await getCurrentUser(request);
-    const organiser = await isOrganiser(request);
+    const organiserData = await isOrganiser(request);
     
     console.log(`🔥 Permission check - Current user:`, currentUser);
-    console.log(`🔥 Permission check - Is organiser:`, organiser);
+    console.log(`🔥 Permission check - Is organiser:`, organiserData.isOrganiser);
 
     const { data: targetMember } = await supabase
       .from('members')
@@ -297,7 +349,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     console.log(`🔥 Is owner:`, isOwner);
     
     // Organizers can edit anyone's profile, users can only edit their own
-    if (!organiser && !isOwner) {
+    if (!organiserData.isOrganiser && !isOwner) {
       console.log(`❌ Permission denied - Not organiser and not owner`);
       return json({ error: 'Forbidden - You can only edit your own profile unless you are an organizer' }, { status: 403 });
     }
@@ -322,9 +374,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       
       if (userEditableFields.includes(fieldName)) {
         updatedMember = { [fieldName]: fieldValue || null };
-      } else if (organizerOnlyFields.includes(fieldName) && organiser) {
+      } else if (organizerOnlyFields.includes(fieldName) && organiserData.isOrganiser) {
         updatedMember = { [fieldName]: fieldValue || null };
-      } else if (!organiser) {
+      } else if (!organiserData.isOrganiser) {
         return json({ error: 'Forbidden - You cannot edit this field' }, { status: 403 });
       }
     } else {
@@ -376,7 +428,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       };
 
       // Combine updates based on organizer status
-      updatedMember = organiser 
+      updatedMember = organiserData.isOrganiser 
         ? { ...baseUpdates, ...organizerOnlyUpdates }
         : baseUpdates;
     }
@@ -417,7 +469,7 @@ interface LoaderData {
   member: any;
   user: any;
   duolingoStreak: Promise<{ streak: number; error: string | null }>;
-  githubData: Promise<{ events: any[]; error: string | null }>;
+  githubData: Promise<{ eventsCount: number; error: string | null }>;
   leetCodeData: Promise<{ solved: number; error: string | null }>;
   SUPABASE_URL: string | undefined;
   SUPABASE_ANON_KEY: string | undefined;
@@ -562,7 +614,7 @@ export default function Profile() {
             prev
               ? {
                   ...prev,
-                  streaks: { ...prev.streaks, github: gh.events?.length || 0 },
+                  streaks: { ...prev.streaks, github: gh.eventsCount || 0 },
                 }
               : prev
           );
@@ -972,7 +1024,7 @@ export default function Profile() {
                     <Await resolve={githubData}>
                       {(data) => (
                         <div className="text-2xl font-bold text-purple-400">
-                          {data?.error ? '0' : (data?.events?.length || profile.streaks.github)}
+                          {data?.error ? '0' : (data?.eventsCount || profile.streaks.github)}
                         </div>
                       )}
                     </Await>
@@ -988,10 +1040,17 @@ export default function Profile() {
                       </div>
                     }
                   >
-                    <Await resolve={leetCodeData}>
+                    <Await 
+                      resolve={leetCodeData}
+                      errorElement={
+                        <div className="text-2xl font-bold text-gray-500">
+                          {profile.streaks.leetcode || 0}
+                        </div>
+                      }
+                    >
                       {(data) => (
                         <div className="text-2xl font-bold text-orange-400">
-                          {data?.error ? '0' : (data?.solved || profile.streaks.leetcode)}
+                          {data?.error ? (profile.streaks.leetcode || 0) : (data?.solved || profile.streaks.leetcode || 0)}
                         </div>
                       )}
                     </Await>

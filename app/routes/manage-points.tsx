@@ -28,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const roleData = await isOrganiser(request);
   // console.log("Role Data", roleData);
 
-  if (!roleData) {
+  if (!roleData.isOrganiser) {
     console.log('Not an organiser or mentor');
     return redirect('/not-authorised');
   }
@@ -52,6 +52,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
 
+  // Get organiser info
+  const organiserData = await isOrganiser(request);
+  if (!organiserData.isOrganiser || !organiserData.organiserId) {
+    return json({ error: 'Unauthorized: Not an organiser' });
+  }
+
   if (!memberId || !points || !action) {
     return json({ error: 'Missing required fields' });
   }
@@ -60,45 +66,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     member_id: memberId,
     points: action === 'add' ? Number(points) : -Number(points),
     description: description || '',
+    organiser_id: organiserData.organiserId,
   });
   if (InsertionError) {
     console.error('Error inserting points:', InsertionError);
     return json({ error: 'Failed to insert points' });
   }
-
-  // const { data: currentPoints, error: pointsError } = await supabase
-  //     .from("members")
-  //     .select("bash_points, description")
-  //     .eq("id", memberId)
-  //     .single();
-
-  // if (pointsError || !currentPoints) {
-  //     return json({ error: "Failed to fetch current points" });
-  // }
-
-  // // Format the new description to include points and action
-  // const formattedDescription = `${action === "add" ? "+" : "-"}${points} points: ${description}`;
-
-  // // Append the new description to the existing array
-  // const descriptionArray = currentPoints.description || []; // Use existing array or initialize as empty
-  // descriptionArray.push(formattedDescription); // Append the new formatted description
-
-  // const newPoints =
-  //     action === "add"
-  //         ? (currentPoints.bash_points || 0) + Number(points)
-  //         : (currentPoints.bash_points || 0) - Number(points);
-
-  // const { error } = await supabase
-  //     .from("members")
-  //     .update({
-  //         bash_points: newPoints,
-  //         description: descriptionArray // Use the updated array
-  //     })
-  //     .eq("id", memberId);
-
-  // if (error) {
-  //     return json({ error: error.message });
-  // }
 
   return json({ success: true });
 };
