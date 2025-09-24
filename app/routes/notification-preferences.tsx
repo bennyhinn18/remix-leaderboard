@@ -239,7 +239,7 @@ export default function NotificationPreferences() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white pb-12">
         <header className="bg-black/20 backdrop-blur-lg">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
@@ -262,7 +262,7 @@ export default function NotificationPreferences() {
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        <main className="max-w-3xl mx-auto px-4 py-8 space-y-6 ">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="icon" asChild>

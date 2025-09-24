@@ -55,7 +55,7 @@ export function BottomNav() {
         animate={{ y: 0 }}
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-b from-gray-900/95 to-gray-900/98 backdrop-blur-xl rounded-t-2xl border-t border-white/10"
       >
-        <div className="flex justify-around items-center gap-4 p-4">
+        <div className="flex justify-around items-center gap-4 p-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;

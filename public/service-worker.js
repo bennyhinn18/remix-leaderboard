@@ -1,5 +1,5 @@
 // Version should be updated with each deployment to force cache refresh
-const CACHE_VERSION = "Basher Terminal v2.1.0";
+const CACHE_VERSION = "Basher Terminal v2.1.1";
 const CACHE_NAME = `${CACHE_VERSION}`;
 
 const urlsToCache = [
