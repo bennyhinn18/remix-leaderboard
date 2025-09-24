@@ -1,13 +1,13 @@
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { LoaderFunctionArgs, redirect } from '@remix-run/node';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.client.auth.getUser();
 
   if (!user) {
     return redirect('/login');

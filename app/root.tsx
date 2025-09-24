@@ -21,6 +21,7 @@ import './styles/transitions.css';
 import './styles/loading-effects.css';
 import TechLoader from './components/main-loader';
 import { Toaster } from '~/components/ui/toaster';
+import { ServiceWorkerUpdater } from '~/components/service-worker-updater';
 
 // Export the ErrorBoundary for Remix to use
 export { ErrorBoundary } from '~/components/error-boundary';
@@ -135,6 +136,7 @@ export default function App() {
             <Outlet />
           </Suspense>
           <Toaster />
+          <ServiceWorkerUpdater />
         </AuthProvider>
       </ErrorProvider>
     </ReactErrorBoundary>

@@ -15,7 +15,7 @@ import {
   XCircle
 } from 'lucide-react';
 
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient} from '~/utils/supabase.server';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
@@ -58,7 +58,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   
     // Get event ID from URL params (default to current open event)
   const url = new URL(request.url);
@@ -66,7 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   // If no event specified in URL, get the currently open event
   if (!eventId) {
-    const { data: openEvent } = await supabase
+    const { data: openEvent } = await supabase.client
       .from('project_showcase_events')
       .select('event_id')
       .eq('status', 'open')
@@ -83,7 +83,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   // If no event specified in URL, get the currently open event
   if (!eventId) {
-    const { data: openEvent } = await supabase
+    const { data: openEvent } = await supabase.client
       .from('project_showcase_events')
       .select('event_id')
       .eq('status', 'open')
@@ -100,7 +100,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // Get event details
-  const { data: eventData } = await supabase
+  const { data: eventData } = await supabase.client
     .from('project_showcase_events')
     .select('*')
     .eq('event_id', eventId)
@@ -111,14 +111,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // Get allocated slots with member details for this event
-  const { data: allocatedSlots } = await supabase
+  const { data: allocatedSlots } = await supabase.client
     .from('project_showcase_slots_with_members')
     .select('*')
     .eq('event_id', eventId)
     .order('slot_number');
 
   // Get all eligible members
-  const { data: eligibleMembers } = await supabase
+  const { data: eligibleMembers } = await supabase.client
     .from('members')
     .select('id, name, github_username, title, avatar_url, bash_points, clan_name, basher_no')
     .in('title', ['Basher', 'Captain Bash', 'Legacy Basher', 'Organiser'])
@@ -147,7 +147,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const formData = await request.formData();
   const intent = formData.get('intent');
   
@@ -160,7 +160,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const slotNumber = Number(formData.get('slotNumber'));
 
     // Get member details
-    const { data: member } = await supabase
+    const { data: member } = await supabase.client
       .from('members')
       .select('*')
       .eq('id', memberId)
@@ -171,7 +171,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Check if slot number is available
-    const { data: existingSlot } = await supabase
+    const { data: existingSlot } = await supabase.client
       .from('project_showcase_slots')
       .select('*')
       .eq('slot_number', slotNumber)
@@ -183,7 +183,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Check if member already has a slot
-    const { data: memberSlot } = await supabase
+    const { data: memberSlot } = await supabase.client
       .from('project_showcase_slots')
       .select('*')
       .eq('member_id', memberId)
@@ -195,7 +195,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Allocate the slot
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('project_showcase_slots')
       .insert({
         member_id: memberId,
@@ -216,7 +216,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (intent === 'clear_all_slots') {
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('project_showcase_slots')
       .delete()
       .eq('event_id', eventId);
@@ -229,7 +229,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (intent === 'export_slots') {
-    const { data: slots } = await supabase
+    const { data: slots } = await supabase.client
       .from('project_showcase_slots_with_members')
       .select('*')
       .eq('event_id', eventId)
@@ -242,7 +242,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const slotId = Number(formData.get('slotId'));
     const status = formData.get('status') as string;
 
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('project_showcase_slots')
       .update({ status })
       .eq('id', slotId);

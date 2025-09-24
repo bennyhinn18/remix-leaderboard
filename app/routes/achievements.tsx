@@ -12,7 +12,7 @@ import {
   Lock,
   Calendar
 } from 'lucide-react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient} from '~/utils/supabase.server';
 import { getCurrentUser } from '~/utils/currentUser';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -39,7 +39,7 @@ import {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     const response = new Response();
-    const supabase = createServerSupabase(request, response);
+    const supabase = createSupabaseServerClient(request);
     const currentUser = await getCurrentUser(request);
     
     if (!currentUser) {
@@ -47,7 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     // Get user's member record
-    const { data: member } = await supabase
+    const { data: member } = await supabase.client
       .from('members')
       .select('*')
       .eq('id', currentUser?.member_id)
@@ -58,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     // Initialize achievement service
-    const achievementService = new AchievementService(supabase);
+    const achievementService = new AchievementService(supabase.client);
 
     // Get all achievements from database
     const allAchievements = await achievementService.getAllAchievements();

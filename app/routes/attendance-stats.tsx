@@ -3,15 +3,15 @@ import { useLoaderData, Link } from '@remix-run/react';
 import { ArrowLeft, Users, Trophy, TrendingUp, Calendar, Award, Crown, ChevronDown, ChevronRight, UserCheck, UserX } from 'lucide-react';
 import { Card } from '~/components/ui/card';
 import { AttendanceService } from '~/services/attendance.server';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     const response = new Response();
-    const supabase = createServerSupabase(request, response);
-    const attendanceService = new AttendanceService(supabase);
+    const supabase = createSupabaseServerClient(request);
+    const attendanceService = new AttendanceService(supabase.client);
 
     // Get the attendance hall of fame data
     const attendanceHallOfFame = await attendanceService.getAttendanceHallOfFame();

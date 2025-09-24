@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from '@remix-run/react';
+import { format, parseISO, isSameDay } from 'date-fns';
 import { 
   Trophy, 
   Sparkles, 
@@ -45,24 +46,16 @@ export function ProjectShowcaseBanner({
   description
 }: ProjectShowcaseBannerProps) {
   if (!isActive) return null;
-  const isToday = eventDate ? new Date(eventDate).toDateString() === new Date().toDateString() : false;
+  const isToday = eventDate ? isSameDay(parseISO(eventDate), new Date()) : false;
   const isUserClan = userClanId === clanId;
   
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return 'TBD';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    return format(parseISO(dateStr), 'EEEE, MMMM dd, yyyy');
   };
 
   const formatTime = () => {
-    return new Date().toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return format(new Date(), 'h:mm a');
   };
 
   return (

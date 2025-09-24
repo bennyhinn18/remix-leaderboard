@@ -1,9 +1,8 @@
 import { json, type ActionFunctionArgs } from '@remix-run/node';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Get form data
   const formData = await request.formData();
@@ -19,7 +18,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Update the leetcode_username field
-  const { error } = await supabase
+  const { error } = await supabase.client
     .from('members')
     .update({ leetcode_username })
     .eq('id', member_id);

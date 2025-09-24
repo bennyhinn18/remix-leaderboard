@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient} from '~/utils/supabase.server';
 
 async function checkOrgMembership(accessToken: string) {
   const response = await fetch('https://api.github.com/user/orgs', {
@@ -18,8 +18,7 @@ async function checkOrgMembership(accessToken: string) {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
 
@@ -30,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const {
     data: { session },
     error,
-  } = await supabase.auth.exchangeCodeForSession(code);
+  } = await supabase.client.auth.exchangeCodeForSession(code);
 
   if (error || !session) {
     return redirect('/login?error=auth');
@@ -41,17 +40,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const isMember = await checkOrgMembership(session.provider_token!);
 
     if (!isMember) {
-      await supabase.auth.signOut();
-      return redirect('/login?error=not-member');
+      await supabase.client.auth.signOut();
+      return redirect('/login?error=not-member', {
+        headers: supabase.headers,
+      });
     }
 
     return redirect('/leaderboard', {
-      headers: response.headers,
+      headers: supabase.headers,
     });
   } catch (error) {
     console.error('Error checking organization membership:', error);
-    await supabase.auth.signOut();
-    return redirect('/login?error=org-check-failed');
+    await supabase.client.auth.signOut();
+    return redirect('/login?error=org-check-failed', {
+      headers: supabase.headers,
+    });
   }
 };
 

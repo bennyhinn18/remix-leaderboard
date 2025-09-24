@@ -97,12 +97,12 @@ export default function Events() {
             avatar_url
           )
         )
-      `
+            `
           )
-          .eq('type', 'weeklybash')
+          .ilike('type', 'weeklybash') // case-insensitive match
           .order('date', { ascending: false });
 
-        console.log('Fetched events:', eventsData);
+        // console.log('Fetched events:', eventsData);
 
         if (error) throw error;
 

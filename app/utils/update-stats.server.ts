@@ -1,14 +1,15 @@
-import { createServerSupabase } from './supabase.server';
+import { createSupabaseServerClient} from './supabase.server';
 import { fetchGitHubStats } from '../services/github.server';
 import { fetchDuolingoStats } from '../services/duolingo.server';
 import { fetchLeetCodeStats } from '../services/leetcode.server';
+import { json } from '@remix-run/node';
 // Import other services as needed
 
 export async function updateMemberStats(request: Request, response: Response) {
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Get all members
-  const { data: members, error } = await supabase
+  const { data: members, error } = await supabase.client
     .from('members')
     .select('id, github_username, duolingo_username,leetcode_username');
 
@@ -47,7 +48,7 @@ export async function updateMemberStats(request: Request, response: Response) {
         }
 
         // Update the stats in the database
-        await supabase.from('member_stats').upsert(
+        await supabase.client.from('member_stats').upsert(
           {
             member_id: member.id,
             ...stats,
@@ -60,6 +61,12 @@ export async function updateMemberStats(request: Request, response: Response) {
       } catch (err) {
         console.error(`Error updating stats for member ${member.id}:`, err);
       }
+
+      const { error } = await supabase.client.rpc('sync_bash_points');
+        if (error) {
+          return json({ success: false, message: error.message }, { status: 500 });
+        }
+      
     }
 
     // Add delay between batches

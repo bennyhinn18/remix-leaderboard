@@ -60,9 +60,12 @@ export interface ClanAttendanceStats {
 }
 
 export interface WeeklyBashAttendance {
-  week: string;
-  attendanceCount: number;
-  memberIds: number[];
+  event_id: string;
+  event_title: string;
+  event_date: string;
+  clan_stats: ClanAttendanceStats[];
+  top_clans: ClanAttendanceStats[]; // For ties
+  has_tie: boolean;
 }
 
 // Hall of Fame data structure
@@ -522,6 +525,41 @@ export class AttendanceService {
     return csvContent;
   }
 
+
+    /**
+   * Get the most recent completed weekly bash event
+   */
+  static async getLatestWeeklyBashEvent(request: Request): Promise<string | null> {
+    const response = new Response();
+    const supabase = createServerSupabase(request, response);
+
+    try {
+      const { data: events, error } = await supabase
+        .from('events')
+        .select('id, title, date, status, type')
+        .eq('status', 'completed')
+        .ilike('title', '%weekly bash%')
+        .order('date', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('Error fetching latest weekly bash event:', error);
+        return null;
+      }
+
+      if (!events || events.length === 0) {
+        console.log('No completed weekly bash events found');
+        return null;
+      }
+
+      return events[0].id;
+    } catch (error) {
+      console.error('Error in getLatestWeeklyBashEvent:', error);
+      return null;
+    }
+  }
+
+
   // ===== CLAN ATTENDANCE METHODS (from stage 2) =====
 
   // Get weekly bash attendance for clans (Hall of Fame functionality)
@@ -649,6 +687,111 @@ export class AttendanceService {
 
     return clanStats.sort((a, b) => b.attendanceRate - a.attendanceRate);
   }
+
+    /**
+   * Get the latest weekly bash attendance hall of fame data
+   */
+  static async getLatestAttendanceHallOfFame(request: Request): Promise<WeeklyBashAttendance | null> {
+    try {
+      const latestEventId = await this.getLatestWeeklyBashEvent(request);
+      
+      if (!latestEventId) {
+        return null;
+      }
+
+      return await this.getClanAttendanceStats(request, latestEventId);
+    } catch (error) {
+      console.error('Error in getLatestAttendanceHallOfFame:', error);
+      return null;
+    }
+  }
+  static getClanAttendanceStats(request: Request, latestEventId: string): WeeklyBashAttendance | PromiseLike<WeeklyBashAttendance | null> | null {
+    throw new Error('Method not implemented.');
+  }
+
+
+
+  /**
+   * Get attendance details including which members attended for a specific event
+   */
+  static async getAttendanceDetails(
+    request: Request, 
+    eventId: string
+  ): Promise<any> {
+    const response = new Response();
+    const supabase = createServerSupabase(request, response);
+
+    try {
+      // Get all clans
+      const { data: allClans, error: clansError } = await supabase
+        .from('clans')
+        .select('id, clan_name');
+
+      if (clansError) {
+        console.error('Error fetching clans:', clansError);
+        return null;
+      }
+
+      // Get all active members with their clan information
+      const { data: allMembers, error: membersError } = await supabase
+        .from('members')
+        .select('id, name, clan_id, clan_name, title')
+        .not('clan_id', 'is', null)
+        .in('title', ['Basher', 'Organiser', 'Captain Bash']);
+
+      if (membersError) {
+        console.error('Error fetching members:', membersError);
+        return null;
+      }
+
+      // Get attendance records for this event
+      const { data: attendance, error: attendanceError } = await supabase
+        .from('attendance')
+        .select('member_id')
+        .eq('event_id', eventId);
+
+      if (attendanceError) {
+        console.error('Error fetching attendance:', attendanceError);
+        return null;
+      }
+
+      const attendedMemberIds = new Set(attendance?.map(a => a.member_id) || []);
+
+      // Group members by clan with attendance details
+      const clanDetails = allClans?.map(clan => {
+        const clanMembers = allMembers?.filter(m => m.clan_id === clan.id) || [];
+        const attendedMembers = clanMembers.filter(m => attendedMemberIds.has(m.id));
+        const absentMembers = clanMembers.filter(m => !attendedMemberIds.has(m.id));
+
+        return {
+          clan_id: clan.id,
+          clan_name: clan.clan_name,
+          total_members: clanMembers.length,
+          attended_count: attendedMembers.length,
+          absent_count: absentMembers.length,
+          attendance_percentage: clanMembers.length > 0 
+            ? Math.round((attendedMembers.length / clanMembers.length) * 100)
+            : 0,
+          attended_members: attendedMembers.map(m => ({
+            id: m.id,
+            name: m.name,
+            title: m.title
+          })),
+          absent_members: absentMembers.map(m => ({
+            id: m.id,
+            name: m.name,
+            title: m.title
+          }))
+        };
+      }).filter(clan => clan.total_members > 0);
+
+      return clanDetails;
+    } catch (error) {
+      console.error('Error in getAttendanceDetails:', error);
+      return null;
+    }
+  }
+
 
   // Get attendance hall of fame (top performers across all clans) - Optimized version
   async getAttendanceHallOfFame() {

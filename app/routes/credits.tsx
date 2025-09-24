@@ -9,7 +9,7 @@ import { useLoaderData } from '@remix-run/react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Crown, Star, Award, Users } from 'lucide-react';
 import { Card } from '~/components/ui/card';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { useEffect, useState } from 'react';
 import type React from 'react'; // Added import for React
 import { UpdateChampionsForm } from '~/components/update-champions-form';
@@ -26,9 +26,9 @@ interface Award {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
-  const { data: creditData, error } = await supabase
+  const { data: creditData, error } = await supabase.client
     .from('credits')
     .select('*')
     .order('month_date', { ascending: false })
@@ -40,12 +40,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const [basherDetails, leaderDetails] = await Promise.all([
-    supabase
+    supabase.client
       .from('members')
       .select('avatar_url, points')
       .eq('name', creditData?.best_basher)
       .single(),
-    supabase
+    supabase.client
       .from('members')
       .select('avatar_url, points')
       .eq('name', creditData?.best_leader)
@@ -118,7 +118,7 @@ function getLucideIcon(iconName: Award['lucideIcon']) {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const formData = await request.formData();
   const data = {
     month_date: new Date().toISOString(),
@@ -151,7 +151,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   try {
-    const { error } = await supabase.from('credits').insert([data]);
+    const { error } = await supabase.client.from('credits').insert([data]);
 
     if (error) throw error;
 

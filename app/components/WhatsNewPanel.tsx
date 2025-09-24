@@ -18,10 +18,34 @@ export default function WhatsNewPanel() {
   const [isMinimized, setIsMinimized] = useState(true);
 
   // Current app version/update ID - update this when you make changes
-  const currentVersion = 'v1.4.5';
+  const currentVersion = 'v2.0.0';
 
   // Latest updates - newest first
   const updates = [
+    {
+      version: 'v2.0.0',
+      date: 'Sep 24, 2025',
+      title: 'Enhanced PWA & Points Graph Updates',
+      description:
+        'Fixed app caching issues to ensure you always get the latest updates. Points graph now shows last 30 days with daily aggregation. Improved date formatting across the app.',
+      link: null,
+    },
+    {
+      version: 'v1.9.5',
+      date: 'Sep 20, 2025',
+      title: 'Automatic Update Notifications',
+      description:
+        'The app now automatically notifies you when new updates are available. No more missing out on new features!',
+      link: null,
+    },
+    {
+      version: 'v1.9.0',
+      date: 'Sep 15, 2025',
+      title: 'Improved Performance & Bug Fixes',
+      description:
+        'Fixed hydration mismatches, improved loading times, and enhanced overall app stability.',
+      link: null,
+    },
     {
       version: 'v1.4.5',
       date: 'May 22, 2025',

@@ -13,7 +13,7 @@ import {
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarIcon, Loader2, Plus, X } from 'lucide-react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import Calendar from '~/components/calendar';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -31,14 +31,14 @@ import { parseISO, format } from 'date-fns';
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const organiserData = await isOrganiser(request);
 
   if (!organiserData.isOrganiser) {
     return redirect('/events');
   }
 
-  const { data: event } = await supabase
+  const { data: event } = await supabase.client
     .from('events')
     .select('*')
     .eq('id', params.id)
@@ -53,7 +53,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const formData = await request.formData();
   const organiserData = await isOrganiser(request);
   console.log('Organiser status:', organiserData.isOrganiser);
@@ -107,7 +107,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       agenda: agendaItems,
     };
     console.log('Updated event:', updatedEvent);
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('events')
       .update(updatedEvent)
       .eq('id', params.id);

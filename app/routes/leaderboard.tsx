@@ -17,7 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { initSupabase } from '~/utils/supabase.client';
 import iconImage from '~/assets/bashers.png';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 
 import ClanTopOneCard from '~/components/leaderboard/clantopcard';
 import TopThreeCard from '~/components/leaderboard/topthreecard';
@@ -55,12 +55,11 @@ interface MemberWithStats {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.client.auth.getUser();
   return json({
     user,
     members: [],

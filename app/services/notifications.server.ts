@@ -1,4 +1,4 @@
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import {
   sendPushNotificationToMember,
   sendPushNotificationBroadcast,
@@ -24,11 +24,11 @@ export async function createNotification(
   params: CreateNotificationParams
 ) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // First, insert the notification
-    const { data: notification, error } = await supabase
+    const { data: notification, error } = await supabase.client
       .from('notifications')
       .insert({
         title: params.title,
@@ -50,7 +50,7 @@ export async function createNotification(
       params.isBroadcast &&
       (!params.memberIds || params.memberIds.length === 0)
     ) {
-      const { data: members, error: membersError } = await supabase
+      const { data: members, error: membersError } = await supabase.client
         .from('members')
         .select('id');
 
@@ -62,7 +62,7 @@ export async function createNotification(
         member_id: member.id,
       }));
 
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase.client
         .from('member_notifications')
         .insert(memberNotifications);
 
@@ -86,7 +86,7 @@ export async function createNotification(
         member_id: memberId,
       }));
 
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase.client
         .from('member_notifications')
         .insert(memberNotifications);
 
@@ -115,11 +115,11 @@ export async function createNotification(
 
 export async function getUserNotifications(request: Request, memberId: number) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // Get user's notifications with join to get notification details
-    const { data, error } = await supabase
+    const { data, error } = await supabase.client
       .from('member_notifications')
       .select(
         `
@@ -162,10 +162,10 @@ export async function markNotificationAsRead(
   memberNotificationId: number
 ) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('member_notifications')
       .update({ read_at: new Date().toISOString() })
       .eq('id', memberNotificationId);
@@ -184,10 +184,10 @@ export async function dismissNotification(
   memberNotificationId: number
 ) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('member_notifications')
       .update({ dismissed_at: new Date().toISOString() })
       .eq('id', memberNotificationId);
@@ -206,10 +206,10 @@ export async function markAllNotificationsAsRead(
   memberId: number
 ) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('member_notifications')
       .update({ read_at: new Date().toISOString() })
       .eq('member_id', memberId)

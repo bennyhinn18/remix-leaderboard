@@ -1,4 +1,4 @@
-import { createServerSupabase } from './supabase.server';
+import { createSupabaseServerClient } from './supabase.server';
 import { userCache, getCacheKeyFromRequest } from './cache.server';
 
 interface User {
@@ -16,19 +16,18 @@ async function getCurrentUser(request: Request): Promise<User | null> {
     return cachedUser;
   }
 
-  const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await supabase.client.auth.getUser();
 
   if (error || !user) {
     console.error('Error fetching user:', error);
     return null;
   }
 
-  const { data, error: roleError } = await supabase
+  const { data, error: roleError } = await supabase.client
     .from('members')
     .select('title,id')
     .eq('github_username', user?.user_metadata.user_name)

@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs, defer } from '@remix-run/node';
 import { Link, useLoaderData, Await } from '@remix-run/react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { isOrganiser } from '~/utils/currentUser';
 import { AttendanceService } from '~/services/attendance.server';
 import { motion } from 'framer-motion';
@@ -38,6 +38,7 @@ import { Badge } from '~/components/ui/badge';
 import { Card } from '~/components/ui/card';
 import { MainNav } from '~/components/main-nav';
 import { useState, useEffect, Suspense } from 'react';
+import { format, parseISO, isSameDay } from 'date-fns';
 import WhatsNewPanel from '~/components/WhatsNewPanel';
 import { NotificationManager } from '~/components/notification-manager';
 import UpdateClanScore from '~/components/update-clan-score';
@@ -60,12 +61,12 @@ import { ProjectShowcaseBanner } from '~/components/project-showcase-banner';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request);
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Get current user
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.client.auth.getUser();
 
   if (!user) {
     return json({
@@ -81,14 +82,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   // Fetch the member profile (critical data, wait for this)
-  const { data: member } = await supabase
+  const { data: member } = await supabase.client
     .from('members')
     .select('*, clan:clans(*)')
     .eq('github_username', user.user_metadata?.user_name)
     .single();
 
   // Create promise for less critical data that can load later
-  const getRecentActivities = supabase
+  const getRecentActivities = supabase.client
     .from('points')
     .select('*, member:members!points_member_id_fkey(name, avatar_url)')
     .eq('member_id', member?.id)
@@ -97,7 +98,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .then((result) => result.data || []);
 
   // Create promise for announcements
-  const getAnnouncements = supabase
+  const getAnnouncements = supabase.client
     .from('announcements')
     .select('*')
     .order('created_at', { ascending: false })
@@ -105,7 +106,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .then((result) => result.data || []);
 
   // Create promise for upcoming events
-  const getUpcomingEvents = supabase
+  const getUpcomingEvents = supabase.client
     .from('events')
     .select('id, title, date, leading_clan')
     .gte('date', new Date().toISOString())
@@ -114,7 +115,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .then((result) => result.data || []);
 
   // Create attendance service instance and get hall of fame data (with timeout)
-  const attendanceService = new AttendanceService(supabase);
+  const attendanceService = new AttendanceService(supabase.client);
   const getAttendanceHallOfFame = Promise.race([
     attendanceService.getAttendanceHallOfFame(),
     new Promise((_, reject) => 
@@ -147,7 +148,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     // If user is an organiser, fetch all members for NotificationManager
     if (organiserStatus) {
-      const { data: members } = await supabase
+      const { data: members } = await supabase.client
         .from('members')
         .select('id, name, github_username, avatar_url')
         .order('name');
@@ -155,7 +156,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       allMembers = members || [];
 
       // Also fetch recent notifications for NotificationManager
-      const { data: recentNotifs } = await supabase
+      const { data: recentNotifs } = await supabase.client
         .from('notifications')
         .select('*')
         .order('created_at', { ascending: false })
@@ -270,7 +271,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const today = new Date().toISOString().split('T')[0];
   
   // Get the currently open project showcase event
-  const { data: openEvent } = await supabase
+  const { data: openEvent } = await supabase.client
     .from('project_showcase_events')
     .select('*')
     .eq('status', 'open')
@@ -293,7 +294,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (openEvent) {
     // Get allocated slots count for this event
-    const { data: allocatedSlots } = await supabase
+    const { data: allocatedSlots } = await supabase.client
       .from('project_showcase_slots')
       .select('id')
       .eq('event_id', openEvent.event_id);
@@ -301,8 +302,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const currentFilledSlots = allocatedSlots?.length || 0;
 
     // Check if the event is happening today
-    const eventDate = new Date(openEvent.event_date);
-    const isEventToday = eventDate.toDateString() === new Date().toDateString();
+    const eventDate = parseISO(openEvent.event_date);
+    const isEventToday = isSameDay(eventDate, new Date());
     
     projectShowcaseData = {
       isActive: true,
@@ -321,7 +322,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Get clan information if available
   let hostingClan = null;
   if (projectShowcaseData.isActive && projectShowcaseData.clanId) {
-    const { data: clanData } = await supabase
+    const { data: clanData } = await supabase.client
       .from('clans')
       .select('id, clan_name')
       .eq('id', projectShowcaseData.clanId)
@@ -998,9 +999,7 @@ export default function Home() {
                         <div className="text-sm text-gray-400">
                           Posted on{' '}
                           {selectedAnnouncement &&
-                            new Date(
-                              selectedAnnouncement.created_at
-                            ).toLocaleDateString()}
+                            format(parseISO(selectedAnnouncement.created_at), 'MMM dd, yyyy')}
                         </div>
                         {selectedAnnouncement?.created_by && (
                           <div className="text-sm text-blue-400">

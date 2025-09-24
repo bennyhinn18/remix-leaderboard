@@ -1,4 +1,4 @@
-import { createServerSupabase } from './supabase.server';
+import { createSupabaseServerClient } from './supabase.server';
 
 // Simple in-memory cache implementation
 type CacheEntry<T> = {
@@ -82,10 +82,10 @@ export async function getCachedMember(
   }
   // If no supabase instance is provided, create one
   const supabaseClient =
-    supabase || createServerSupabase(request, new Response());
+    supabase || createSupabaseServerClient(request);
 
   // Fetch the member data
-  const { data: member, error } = await supabaseClient
+  const { data: member, error } = await supabaseClient.client
     .from('members')
     .select('*')
     .eq('github_username', username)
@@ -116,10 +116,10 @@ export async function getCachedPoints(
 
   // If no supabase instance is provided, create one
   const supabaseClient =
-    supabase || createServerSupabase(request, new Response());
+    supabase || createSupabaseServerClient(request);
 
   // Fetch the points data
-  const { data: points, error } = await supabaseClient
+  const { data: points, error } = await supabaseClient.client
     .from('points')
     .select('*')
     .eq('member_id', memberId)

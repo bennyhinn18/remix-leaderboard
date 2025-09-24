@@ -1,6 +1,6 @@
 import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { motion } from 'framer-motion';
 import {
   History,
@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
+import { format, parseISO } from 'date-fns';
 import { isOrganiser } from '~/utils/currentUser';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -22,19 +23,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const isUserOrganiser = await isOrganiser(request);
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Get current user information
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.client.auth.getUser();
 
   if (!user) {
     return redirect('/login');
   }
 
   // Get member information for the current user
-  const { data: currentMember, error: memberError } = await supabase
+  const { data: currentMember, error: memberError } = await supabase.client
     .from('members')
     .select('id,bash_points,name')
     .eq(
@@ -49,7 +50,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   // Get points history for current user
-  const { data: userPointsHistory } = await supabase
+  const { data: userPointsHistory } = await supabase.client
     .from('points')
     .select('*')
     .eq('member_id', currentMember?.id)
@@ -60,7 +61,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // If user is organiser, fetch all points history and all members for filtering
   if (isUserOrganiser) {
-    const { data: allHistory, error } = await supabase
+    const { data: allHistory, error } = await supabase.client
       .from('points')
       .select('*, member:members!points_member_id_fkey(id,name)')
       .order('updated_at', { ascending: false });
@@ -73,7 +74,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
 
     // Fetch all members for the filter dropdown
-    const { data: members } = await supabase
+    const { data: members } = await supabase.client
       .from('members')
       .select('id,name')
       .order('name');
@@ -91,13 +92,33 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export default function PointsHistory() {
+  const loaderData = useLoaderData<typeof loader>();
+
+  if ('error' in loaderData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black text-white">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8 text-center">
+          <h1 className="text-2xl font-bold mb-4">Error</h1>
+          <p className="text-gray-400">{loaderData.error}</p>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const {
     isOrganiser,
     currentMember,
     userPointsHistory,
     allPointsHistory,
     allMembers,
-  } = useLoaderData<typeof loader>();
+  } = loaderData;
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [sortField, setSortField] = useState('updated_at');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -171,8 +192,8 @@ export default function PointsHistory() {
   // Get the appropriate points history based on user role and selection
   const sortedData =
     isOrganiser && showAllHistory
-      ? processPointsHistory(allPointsHistory)
-      : processPointsHistory(userPointsHistory);
+      ? processPointsHistory(allPointsHistory ?? [])
+      : processPointsHistory(userPointsHistory ?? []);
 
   // Calculate total pages
   const totalPages = Math.ceil((sortedData?.length || 0) / itemsPerPage);
@@ -460,7 +481,7 @@ export default function PointsHistory() {
                         className="hover:bg-white/5"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {new Date(entry.updated_at).toLocaleDateString()}
+                          {format(parseISO(entry.updated_at), 'MMM dd, yyyy')}
                         </td>
                         {isOrganiser && showAllHistory && (
                           <td className="px-6 py-4 whitespace-nowrap">

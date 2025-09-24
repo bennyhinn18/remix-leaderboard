@@ -25,7 +25,7 @@ import {
   Bell,
   Settings,
 } from 'lucide-react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { ProfileInfo } from '~/components/profile-info';
 import { ProfileAchievements } from '~/components/achievements';
 import ProfileConnections from '~/components/profile-connections';
@@ -56,7 +56,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const organiserData = await isOrganiser(request);
   
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Get current user (cached)
   const user = await getCurrentUser(request);
@@ -247,7 +247,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   };
 
   // Initialize achievement service and get user achievements
-  const achievementService = new AchievementService(supabase);
+  const achievementService = new AchievementService(supabase.client);
   let userAchievements: any[] = [];
   
   if (member) {
@@ -297,7 +297,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   console.log(`🔥 Request method: ${request.method}`);
   
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   try {
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
@@ -332,7 +332,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     console.log(`🔥 Permission check - Current user:`, currentUser);
     console.log(`🔥 Permission check - Is organiser:`, organiserData.isOrganiser);
 
-    const { data: targetMember } = await supabase
+    const { data: targetMember } = await supabase.client
       .from('members')
       .select('id, user_id')
       .eq('github_username', params.username)
@@ -437,7 +437,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     console.log(`🔥 Updating member profile for: ${params.username}`);
     console.log(`🔥 Update data:`, JSON.stringify(updatedMember, null, 2));
     
-    const { data: updateResult, error } = await supabase
+    const { data: updateResult, error } = await supabase.client
       .from('members')
       .update(updatedMember)
       .eq('github_username', params.username)

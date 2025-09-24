@@ -10,7 +10,7 @@ import {
   useLoaderData,
   useNavigation,
 } from '@remix-run/react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import type { Member } from '~/types/database';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -34,8 +34,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
-  const { data: members } = await supabase
+  const supabase = createSupabaseServerClient(request);
+  const { data: members } = await supabase.client
     .from('members')
     .select('*')
     .order('name');
@@ -50,7 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const action = formData.get('action');
   const description = formData.get('description');
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Get organiser info
   const organiserData = await isOrganiser(request);
@@ -62,7 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ error: 'Missing required fields' });
   }
 
-  const { error: InsertionError } = await supabase.from('points').insert({
+  const { error: InsertionError } = await supabase.client.from('points').insert({
     member_id: memberId,
     points: action === 'add' ? Number(points) : -Number(points),
     description: description || '',

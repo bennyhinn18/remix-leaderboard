@@ -8,27 +8,27 @@ import {
 } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { AlertCircle, Github } from 'lucide-react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await supabase.client.auth.getSession();
 
   if (session) {
-    return redirect('/leaderboard');
+    return redirect('/leaderboard', {
+      headers: supabase.headers,
+    });
   }
   return null;
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.client.auth.signInWithOAuth({
     provider: 'github',
     options: {
       redirectTo: `${
@@ -43,7 +43,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   return redirect(data.url, {
-    headers: response.headers,
+    headers: supabase.headers,
   });
 };
 const errorMessages = {

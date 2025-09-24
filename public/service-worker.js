@@ -1,28 +1,131 @@
-const CACHE_NAME = "fitness-center-v1";
+// Version should be updated with each deployment to force cache refresh
+const CACHE_VERSION = "remix-leaderboard-v2.0.0";
+const CACHE_NAME = `${CACHE_VERSION}`;
+
 const urlsToCache = [
   "/",
-  "/index.css",
-  "/manifest.json",
-  "/icon-192x192.png",
-  "/icon-512x512.png",
+  "/manifest.webmanifest",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
 ];
 
+// Install event - cache resources and skip waiting
 self.addEventListener("install", (event) => {
+  console.log(`[SW] Installing version ${CACHE_VERSION}`);
+  
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log(`[SW] Caching resources for ${CACHE_VERSION}`);
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        // Force the new service worker to activate immediately
+        return self.skipWaiting();
+      })
   );
-  console.log('Service Worker installed');
 });
 
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request);
+// Activate event - clean up old caches and claim clients
+self.addEventListener("activate", (event) => {
+  console.log(`[SW] Activating version ${CACHE_VERSION}`);
+  
+  event.waitUntil(
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log(`[SW] Deleting old cache: ${cacheName}`);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of all clients immediately
+      self.clients.claim()
+    ]).then(() => {
+      console.log(`[SW] Version ${CACHE_VERSION} is now active`);
+      
+      // Notify all clients about the update
+      return self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'SW_UPDATED',
+            version: CACHE_VERSION
+          });
+        });
+      });
     })
   );
+});
+
+// Fetch event - network first for HTML, cache first for assets
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+  
+  // Skip requests to different origins
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+  
+  // Network first strategy for HTML pages and API calls
+  if (request.headers.get('accept')?.includes('text/html') || 
+      url.pathname.startsWith('/api/') ||
+      url.pathname.includes('?')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Only cache successful responses
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(request);
+        })
+    );
+  } 
+  // Cache first strategy for static assets
+  else {
+    event.respondWith(
+      caches.match(request).then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(request).then((response) => {
+          // Cache successful responses
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+  }
+});
+
+// Message event - handle messages from the client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Received SKIP_WAITING message');
+    self.skipWaiting();
+  }
 });
 
 // Push event handler - this will be triggered when a push notification is received

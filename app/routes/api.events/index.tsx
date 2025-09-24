@@ -34,7 +34,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     let query = supabase
       .from('events')
       .select(fields)
-      .in('type', ['weeklybash', 'others'])
+      .in('type', ['weeklybash', 'others','weeklyBash'])
       .limit(limit);
     const { data: events, error } = (await query.order('date', {
       ascending: false,

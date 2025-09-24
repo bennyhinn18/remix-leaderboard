@@ -1,6 +1,7 @@
 import { useAsyncValue } from '@remix-run/react';
 import { User, ChevronRight, Calendar } from 'lucide-react';
 import { Badge } from '~/components/ui/badge';
+import { format, parseISO } from 'date-fns';
 
 // Types for the API data
 interface Member {
@@ -76,7 +77,7 @@ export function RecentActivitiesData() {
               </p>
             </div>
             <div className="text-xs text-gray-500">
-              {new Date(activity.updated_at).toLocaleDateString()}
+              {format(parseISO(activity.updated_at), 'MMM dd, yyyy')}
             </div>
           </div>
         ))
@@ -124,7 +125,7 @@ export function AnnouncementsData({
             </p>
             <div className="text-xs flex justify-between items-center mt-2">
               <span className="text-gray-500">
-                {new Date(announcement.created_at).toLocaleDateString()}
+                {format(parseISO(announcement.created_at), 'MMM dd, yyyy')}
               </span>
               <span className="text-blue-400 text-xs flex items-center">
                 Read more <ChevronRight className="w-3 h-3 ml-1" />
@@ -161,7 +162,7 @@ export function UpcomingEventsData() {
             </div>
             <div className="text-sm text-gray-400 mt-2 flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {new Date(event.date).toLocaleDateString()} at {event.time}
+              {format(parseISO(event.date), 'MMM dd, yyyy')} at {event.time}
             </div>
             <div className="text-sm text-gray-400 mt-1">{event.location}</div>
           </div>

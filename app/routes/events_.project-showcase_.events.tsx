@@ -21,7 +21,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
@@ -67,17 +67,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // Test basic connection first
-    const { data: testQuery } = await supabase
+    const { data: testQuery } = await supabase.client
       .from('members')
       .select('id')
       .limit(1);
 
     // Try to get events table
-    const { data: events, error: eventsError } = await supabase
+    const { data: events, error: eventsError } = await supabase.client
       .from('project_showcase_events')
       .select('*')
       .order('created_at', { ascending: false });
@@ -93,7 +93,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Get all clans for dropdown
-    const { data: clans } = await supabase
+    const { data: clans } = await supabase.client
       .from('clans')
       .select('id, clan_name')
       .order('clan_name');
@@ -128,7 +128,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const formData = await request.formData();
   const intent = formData.get('intent');
 
@@ -162,7 +162,7 @@ export async function action({ request }: ActionFunctionArgs) {
       status: 'draft'
     });
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase.client
       .from('project_showcase_events')
       .insert({
         event_id: eventId,
@@ -195,7 +195,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     console.log('🔄 UPDATE_STATUS: Updating event:', { eventId, status });
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase.client
       .from('project_showcase_events')
       .update({ status })
       .eq('id', eventId);
@@ -217,7 +217,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('🗑️ DELETE_EVENT: Deleting event:', eventId);
 
     // First delete all related slots
-    const { data: slotsData, error: slotsError } = await supabase
+    const { data: slotsData, error: slotsError } = await supabase.client
       .from('project_showcase_slots')
       .delete()
       .eq('showcase_event_id', eventId);
@@ -225,7 +225,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('💾 DELETE_EVENT: Slots deletion response:', { slotsData, slotsError });
 
     // Then delete the event
-    const { data, error } = await supabase
+    const { data, error } = await supabase.client
       .from('project_showcase_events')
       .delete()
       .eq('id', eventId);
@@ -247,7 +247,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('📋 DUPLICATE_EVENT: Duplicating event:', sourceEventId);
 
     // Get source event
-    const { data: sourceEvent, error: fetchError } = await supabase
+    const { data: sourceEvent, error: fetchError } = await supabase.client
       .from('project_showcase_events')
       .select('*')
       .eq('id', sourceEventId)
@@ -274,7 +274,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     console.log('📝 DUPLICATE_EVENT: Data to insert:', duplicateData);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase.client
       .from('project_showcase_events')
       .insert(duplicateData);
 

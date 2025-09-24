@@ -10,7 +10,7 @@ import {
   Tooltip,
   ReferenceLine,
 } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays, isAfter } from 'date-fns';
 import { ChevronDown, ChevronUp, ChevronRight, History } from 'lucide-react';
 import { Link } from '@remix-run/react';
 
@@ -23,12 +23,16 @@ function PointsGraph({
 }) {
   const [showDetails, setShowDetails] = useState(false);
 
-  // Validate and filter the pointsHistory data
+  // Get the date 30 days ago
+  const thirtyDaysAgo = subDays(new Date(), 30);
+
+  // Validate and filter the pointsHistory data for last 30 days
   const validPointsHistory = pointsHistory?.filter(entry => 
     entry && 
     typeof entry.points === 'number' && 
     entry.updated_at &&
-    entry.description
+    entry.description &&
+    isAfter(parseISO(entry.updated_at), thirtyDaysAgo)
   ) || [];
 
   // Calculate total points (sum of all point transactions)
@@ -37,29 +41,58 @@ function PointsGraph({
     0
   );
 
-  // Process the data to create a cumulative points graph
-  const processedData = validPointsHistory.reduce(
-    (acc: any[], entry: any, index: number) => {
-      try {
-        const date = format(parseISO(entry.updated_at.split('T')[0]), 'MMM dd');
-        const lastTotal = index > 0 ? acc[acc.length - 1].totalPoints : 0;
-        const totalPoints = lastTotal + entry.points;
+  // Group points by date and aggregate them
+  const dailyPointsMap = new Map<string, {
+    date: string;
+    rawDate: string;
+    totalPoints: number;
+    descriptions: string[];
+  }>();
 
-        acc.push({
-          date,
-          rawDate: entry.updated_at,
-          points: entry.points,
-          totalPoints,
-          description: entry.description,
-        });
-      } catch (error) {
-        console.warn('Error processing points history entry:', entry, error);
-      }
-
-      return acc;
-    },
-    []
+  // Sort entries by date first
+  const sortedEntries = [...validPointsHistory].sort((a, b) => 
+    new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
   );
+
+  // Aggregate points by date
+  sortedEntries.forEach(entry => {
+    const dateKey = entry.updated_at.split('T')[0]; // Get YYYY-MM-DD format
+    const formattedDate = format(parseISO(dateKey), 'MMM dd');
+    
+    if (dailyPointsMap.has(dateKey)) {
+      const existing = dailyPointsMap.get(dateKey)!;
+      existing.totalPoints += entry.points;
+      existing.descriptions.push(entry.description);
+    } else {
+      dailyPointsMap.set(dateKey, {
+        date: formattedDate,
+        rawDate: entry.updated_at,
+        totalPoints: entry.points,
+        descriptions: [entry.description]
+      });
+    }
+  });
+
+  // Convert to array and create cumulative totals
+  const dailyPointsArray = Array.from(dailyPointsMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b)) // Sort by date string
+    .map(([dateKey, data]) => ({
+      dateKey,
+      ...data
+    }));
+
+  // Create cumulative points data
+  let cumulativeTotal = 0;
+  const processedData = dailyPointsArray.map(day => {
+    cumulativeTotal += day.totalPoints;
+    return {
+      date: day.date,
+      rawDate: day.rawDate,
+      dailyPoints: day.totalPoints,
+      totalPoints: cumulativeTotal,
+      descriptions: day.descriptions
+    };
+  });
 
   return (
     <motion.div
@@ -78,12 +111,12 @@ function PointsGraph({
       >
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <History className="w-5 h-5 text-blue-400" />
-          Points History
+          Points History 
         </h2>
 
         <div className="flex items-center gap-4">
           <div className="text-2xl font-bold text-blue-400">
-            {totalPoints}{' '}
+            {pointsHistory?.reduce((sum, entry) => sum + (typeof entry.points === 'number' ? entry.points : 0), 0)}{' '}
             <span className="text-base font-normal text-gray-400">points</span>
           </div>
 
@@ -160,18 +193,21 @@ function PointsGraph({
                       }}
                       labelFormatter={(value) => `Date: ${value}`}
                       formatter={(value, name, props) => {
+                        const point = props.payload;
                         if (name === 'Total Points') {
                           return [`${value} points`, name];
-                        } else {
-                          const point = props.payload;
-                          const numValue = Number(value);
+                        } else if (name === 'Daily Points') {
+                          const dailyPoints = point.dailyPoints;
+                          const descriptions = point.descriptions || [];
+                          const descriptionText = descriptions.length > 1 
+                            ? `${descriptions.length} activities` 
+                            : descriptions[0] || 'Activity';
                           return [
-                            `${numValue > 0 ? '+' + numValue : numValue} points (${
-                              point.description
-                            })`,
+                            `${dailyPoints > 0 ? '+' + dailyPoints : dailyPoints} points (${descriptionText})`,
                             name,
                           ];
                         }
+                        return [value, name];
                       }}
                     />
                     <Area
@@ -191,34 +227,40 @@ function PointsGraph({
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400">
-                  No points history available.
+                  No points history available for the last 30 days.
                 </div>
               )}
             </div>
 
-            {/* Recent Points Transactions */}
-            {validPointsHistory.length > 0 && (
+            {/* Recent Points Summary */}
+            {processedData.length > 0 && (
               <div className="mt-6">
-                {/* <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Transactions</h3>
-                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                  {[...validPointsHistory]
-                    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                {/* <h3 className="text-sm font-medium text-gray-400 mb-3">
+                  Recent Daily Points (Last 30 Days)
+                </h3> 
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                  {[...processedData]
+                    .reverse() // Show most recent first
                     .slice(0, 5)
-                    .map((entry) => (
+                    .map((day, index) => (
                       <div 
-                        key={entry.id}
+                        key={`${day.rawDate}-${index}`}
                         className="bg-white/5 rounded-lg p-3 flex justify-between items-center"
                       >
                         <div>
-                          <p className="text-sm">{entry.description}</p>
+                          <p className="text-sm">
+                            {day.descriptions.length > 1 
+                              ? `${day.descriptions.length} activities` 
+                              : day.descriptions[0] || 'Daily points'}
+                          </p>
                           <p className="text-xs text-gray-400">
-                            {format(parseISO(entry.updated_at), 'MMM dd, yyyy')}
+                            {format(parseISO(day.rawDate), 'MMM dd, yyyy')}
                           </p>
                         </div>
                         <div className={`text-lg font-semibold ${
-                          entry.points > 0 ? 'text-green-400' : 'text-red-400'
+                          day.dailyPoints > 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
-                          {entry.points > 0 ? '+' : ''}{entry.points}
+                          {day.dailyPoints > 0 ? '+' : ''}{day.dailyPoints}
                         </div>
                       </div>
                     ))
