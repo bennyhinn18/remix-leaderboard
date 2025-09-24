@@ -1,5 +1,5 @@
 import { json, type LoaderFunctionArgs } from '@remix-run/node';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { parseISO, isAfter, isBefore, startOfDay } from 'date-fns';
 
 function getEventStatus(date: string, time: string) {
@@ -22,7 +22,7 @@ function getEventStatus(date: string, time: string) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   try {
     const url = new URL(request.url);
     const status = url.searchParams.get('status');
@@ -31,7 +31,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       : 10;
     const fields = url.searchParams.get('fields') || 'id,title,time,date,venue';
     console.log('Fetching events with fields:', fields);
-    let query = supabase
+    let query = supabase.client
       .from('events')
       .select(fields)
       .in('type', ['weeklybash', 'others','weeklyBash'])

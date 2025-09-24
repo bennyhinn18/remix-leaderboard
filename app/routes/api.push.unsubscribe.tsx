@@ -1,6 +1,6 @@
 import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 // import { requireMemberId } from "~/utils/currentUser";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -25,10 +25,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Delete the subscription from the database
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
-    const { error } = await supabase
+    const { error } = await supabase.client
       .from('push_subscriptions')
       .delete()
       .eq('endpoint', endpoint)

@@ -47,6 +47,14 @@ import { PushNotificationManager } from '~/components/push-notification-manager'
 import { getUserNotifications } from '~/services/notifications.server';
 import { toast } from '~/hooks/use-toast';
 
+// Prevent search engines from indexing profile pages for privacy
+export const meta = () => {
+  return [
+    { name: "robots", content: "noindex, nofollow" },
+    { name: "googlebot", content: "noindex, nofollow" },
+  ];
+};
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // 🔄 AUTO-REFRESH: Clear user cache to ensure fresh data on every profile visit
   invalidateUserCache(request);
@@ -715,13 +723,13 @@ export default function Profile() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation */}
         <div className="mb-8 flex justify-between items-center">
-          <Link
-            to="/leaderboard"
+          <Button
+            onClick={() => history.back()}
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Leaderboard
-          </Link>
+          </Button>
           {profile && (
             <MainNav
               user={{

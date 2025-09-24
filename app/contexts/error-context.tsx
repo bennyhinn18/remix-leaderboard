@@ -27,6 +27,12 @@ interface ErrorProviderProps {
 
 export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   const [errors, setErrors] = useState<ErrorToastProps[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration issues by only showing errors after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const generateId = () => `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -35,6 +41,9 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
     description?: string, 
     variant: ToastVariant = 'error'
   ) => {
+    // Don't show errors during hydration to prevent mismatches
+    if (!isMounted) return;
+
     const id = generateId();
     const newError: ErrorToastProps = {
       id,
@@ -52,7 +61,7 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
       code: `TOAST_${variant.toUpperCase()}`,
       timestamp: new Date().toISOString(),
     });
-  }, []);
+  }, [isMounted]);
 
   const showNetworkError = useCallback((message?: string) => {
     const title = "Connection Issue";
@@ -116,8 +125,10 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
     setErrors([]);
   }, []);
 
-  // Listen to online/offline status
+  // Listen to online/offline status only after mount
   useEffect(() => {
+    if (!isMounted) return;
+
     const handleOnline = () => {
       setTimeout(() => {
         showError("Connection Restored", "You're back online!", 'success');
@@ -137,7 +148,7 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [showError, showNetworkError]);
+  }, [showError, showNetworkError, isMounted]);
 
   // Auto-dismiss errors after a certain amount
   useEffect(() => {

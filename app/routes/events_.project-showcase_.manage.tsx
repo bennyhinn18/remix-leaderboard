@@ -50,6 +50,19 @@ interface ManagementData {
   };
 }
 
+interface ManagementError {
+  error: string;
+  currentEvent: null;
+  allocatedSlots: [];
+  eligibleMembers: [];
+  stats: {
+    totalSlots: number;
+    allocatedSlots: number;
+    availableSlots: number;
+    eligibleMembers: number;
+  };
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const organiserStatus = await isOrganiser(request);
   
@@ -59,6 +72,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const response = new Response();
   const supabase = createSupabaseServerClient(request);
+
+  try {
   
     // Get event ID from URL params (default to current open event)
   const url = new URL(request.url);
@@ -137,6 +152,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
     eligibleMembers: eligibleMembers || [],
     stats,
   }, { headers: response.headers });
+
+  } catch (error) {
+    console.error('Error loading project showcase management data:', error);
+    return json({ 
+      error: 'Failed to load event data',
+      currentEvent: null,
+      allocatedSlots: [],
+      eligibleMembers: [],
+      stats: {
+        totalSlots: 0,
+        allocatedSlots: 0,
+        availableSlots: 0,
+        eligibleMembers: 0,
+      }
+    }, { status: 500, headers: response.headers });
+  }
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -258,23 +289,66 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function ProjectShowcaseManagement() {
-  const { currentEvent, allocatedSlots, eligibleMembers, stats } = useLoaderData<typeof loader>() as ManagementData;
+  const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const { toast } = useToast();
+
+  // Check if loader returned an error
+  if ('error' in loaderData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 text-white p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-red-400">{loaderData.error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle potential undefined data with defaults
+  const currentEvent = loaderData.currentEvent;
+  const allocatedSlots = loaderData.allocatedSlots || [];
+  const eligibleMembers = loaderData.eligibleMembers || [];
+  const stats = loaderData.stats || {
+    totalSlots: 0,
+    allocatedSlots: 0,
+    availableSlots: 0,
+    eligibleMembers: 0,
+  };
 
   const [selectedMember, setSelectedMember] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
   const [showManualAllocation, setShowManualAllocation] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  // Early return if currentEvent is not available
+  if (!currentEvent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 text-white p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-gray-400">Loading event data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Generate available slot numbers
-  const allocatedNumbers = allocatedSlots.map(slot => slot.slot_number);
+  const allocatedNumbers = allocatedSlots.map((slot: any) => slot.slot_number);
   const availableSlotNumbers = Array.from({ length: currentEvent.max_slots }, (_, i) => i + 1)
     .filter(num => !allocatedNumbers.includes(num));
 
   // Get members without slots
-  const allocatedMemberIds = allocatedSlots.map(slot => slot.member_id);
-  const availableMembers = eligibleMembers.filter(member => !allocatedMemberIds.includes(member.id));
+  const allocatedMemberIds = allocatedSlots.map((slot: any) => slot.member_id);
+  const availableMembers = eligibleMembers.filter((member: any) => !allocatedMemberIds.includes(member.id));
 
   useEffect(() => {
     if (fetcher.data) {
@@ -480,7 +554,7 @@ export default function ProjectShowcaseManagement() {
                       <SelectValue placeholder="Choose a member" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700">
-                      {availableMembers.map(member => (
+                      {availableMembers.map((member: any) => (
                         <SelectItem key={member.id} value={member.id.toString()}>
                           {member.name} (@{member.github_username})
                         </SelectItem>
@@ -592,7 +666,7 @@ export default function ProjectShowcaseManagement() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allocatedSlots.map((slot) => (
+                    {allocatedSlots.map((slot: any) => (
                       <tr key={slot.id} className="border-b border-gray-700/50">
                         <td className="p-2">
                           <Badge className="bg-yellow-500/20 text-yellow-300">

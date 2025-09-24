@@ -1,6 +1,6 @@
 import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 // import { requireMemberId } from "~/utils/currentUser";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -52,11 +52,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Store the subscription in the database
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // Check if this endpoint already exists
-    const { data: existingData, error: checkError } = await supabase
+    const { data: existingData, error: checkError } = await supabase.client
       .from('push_subscriptions')
       .select('id')
       .eq('endpoint', subscription.endpoint)
@@ -66,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (existingData && existingData.length > 0) {
       // Update the existing subscription
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabase.client
         .from('push_subscriptions')
         .update({
           p256dh: subscription.keys.p256dh,
@@ -79,7 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
       if (updateError) throw updateError;
     } else {
       // Create a new subscription
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase.client
         .from('push_subscriptions')
         .insert({
           endpoint: subscription.endpoint,

@@ -9,10 +9,27 @@ interface AttendanceHallOfFameProps {
 }
 
 export function AttendanceHallOfFame({ attendanceData, className = '' }: AttendanceHallOfFameProps) {
-  if (!attendanceData || !attendanceData.clanStats || attendanceData.clanStats.length === 0) {
-    return null;
+  // Debug: Log the data we're getting (only in development)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+   // console.log('AttendanceHallOfFame received data:', attendanceData);
   }
-  console.log(attendanceData);
+  
+  // Show a debug message if no data
+  if (!attendanceData || !attendanceData.clanStats || attendanceData.clanStats.length === 0) {
+    // For debugging, show a placeholder instead of returning null
+    return (
+      // <Card className={`bg-gray-800/50 rounded-lg p-4 text-center ${className}`}>
+      //   <div className="text-gray-400 text-sm">
+      //     <Trophy className="h-8 w-8 mx-auto mb-2 opacity-50" />
+      //     <p>No attendance data available</p>
+      //     <p className="text-xs mt-1">
+      //       Waiting for attendance records...
+      //     </p>
+      //   </div>
+      // </Card>
+      null
+    );
+  }
   // Transform the data to match the expected structure
   const top_clans = attendanceData.clanStats.slice(0, 3).map(clan => ({
     clan_name: clan.clanName,
@@ -23,21 +40,23 @@ export function AttendanceHallOfFame({ attendanceData, className = '' }: Attenda
   }));
 
   const event_title = 'Weekly Bash Attendance';
-  const event_date = new Date().toISOString().split('T')[0];
+  // Use a fixed date format to avoid hydration mismatches
+  const event_date = '2025-09-24'; // This should ideally come from the server data
   const has_tie = attendanceData.clanStats.length > 1 && 
     attendanceData.clanStats[0].attendanceRate === attendanceData.clanStats[1].attendanceRate;
 
   const topPercentage = top_clans[0]?.attendance_percentage || 0;
   const isFullAttendance = topPercentage === 100;
 
-  // Format date to be more readable
+  // Format date to be more readable - use a consistent format
   const formatDate = (dateStr: string) => {
     try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
+      // Use a more predictable date formatting to avoid hydration mismatches
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = date.toLocaleDateString('en-US', { month: 'short' });
+      const day = date.getDate();
+      return `${month} ${day}, ${year}`;
     } catch {
       return dateStr;
     }

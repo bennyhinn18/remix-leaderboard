@@ -1,5 +1,5 @@
 // Version should be updated with each deployment to force cache refresh
-const CACHE_VERSION = "remix-leaderboard-v2.0.0";
+const CACHE_VERSION = "Basher Terminal v2.1.0";
 const CACHE_NAME = `${CACHE_VERSION}`;
 
 const urlsToCache = [
@@ -131,15 +131,23 @@ self.addEventListener('message', (event) => {
 // Push event handler - this will be triggered when a push notification is received
 self.addEventListener('push', function(event) {
   console.log('[Service Worker] Push Received.');
-  console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+  console.log(`[Service Worker] Push had this data: "${event.data ? event.data.text() : 'No data'}"`);
+
+  // Check if we have permission first
+  if (self.Notification && self.Notification.permission !== 'granted') {
+    console.log('[SW] No notification permission, skipping notification display');
+    return;
+  }
 
   let notificationData = {};
   try {
-    notificationData = event.data.json();
+    if (event.data) {
+      notificationData = event.data.json();
+    }
   } catch (e) {
     notificationData = {
       title: 'Byte Bash Blitz',
-      body: event.data.text(),
+      body: event.data ? event.data.text() : 'Something new happened!',
       icon: '/icons/icon-192x192.png'
     };
   }
@@ -157,7 +165,20 @@ self.addEventListener('push', function(event) {
     vibrate: [100, 50, 100]
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(title, options).catch(error => {
+      console.log('[SW] Failed to show notification:', error.message);
+      // Send message to client about the notification failure
+      return self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'NOTIFICATION_FAILED',
+            error: error.message
+          });
+        });
+      });
+    })
+  );
 });
 
 // Notification click handler - opens the relevant page when notification is clicked

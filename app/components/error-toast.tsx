@@ -22,16 +22,22 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({
   onDismiss,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch by only showing after client mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (duration > 0) {
+    if (duration > 0 && isMounted) {
       const timer = setTimeout(() => {
         handleDismiss();
       }, duration);
 
       return () => clearTimeout(timer);
     }
-  }, [duration]);
+  }, [duration, isMounted]);
 
   const handleDismiss = () => {
     setIsVisible(false);
@@ -39,49 +45,68 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({
   };
 
   const getVariantStyles = () => {
+    // Only render icons on client side to prevent hydration mismatch
+    const IconComponent = !isMounted ? null : (() => {
+      switch (variant) {
+        case 'error':
+          return <AlertTriangle className="w-5 h-5 text-red-200" />;
+        case 'warning':
+          return <AlertTriangle className="w-5 h-5 text-yellow-200" />;
+        case 'info':
+          return <Bug className="w-5 h-5 text-blue-200" />;
+        case 'success':
+          return <Wifi className="w-5 h-5 text-green-200" />;
+        case 'network':
+          return <WifiOff className="w-5 h-5 text-orange-200" />;
+        default:
+          return <AlertTriangle className="w-5 h-5 text-gray-200" />;
+      }
+    })();
+
     switch (variant) {
       case 'error':
         return {
           bg: 'bg-red-600/90',
           border: 'border-red-500/50',
-          icon: <AlertTriangle className="w-5 h-5 text-red-200" />,
+          icon: IconComponent,
         };
       case 'warning':
         return {
           bg: 'bg-yellow-600/90',
           border: 'border-yellow-500/50',
-          icon: <AlertTriangle className="w-5 h-5 text-yellow-200" />,
+          icon: IconComponent,
         };
       case 'info':
         return {
           bg: 'bg-blue-600/90',
           border: 'border-blue-500/50',
-          icon: <Bug className="w-5 h-5 text-blue-200" />,
+          icon: IconComponent,
         };
       case 'success':
         return {
           bg: 'bg-green-600/90',
           border: 'border-green-500/50',
-          icon: <Wifi className="w-5 h-5 text-green-200" />,
+          icon: IconComponent,
         };
       case 'network':
         return {
           bg: 'bg-orange-600/90',
           border: 'border-orange-500/50',
-          icon: <WifiOff className="w-5 h-5 text-orange-200" />,
+          icon: IconComponent,
         };
       default:
         return {
           bg: 'bg-gray-600/90',
           border: 'border-gray-500/50',
-          icon: <AlertTriangle className="w-5 h-5 text-gray-200" />,
+          icon: IconComponent,
         };
     }
   };
 
   const styles = getVariantStyles();
 
-  if (!isVisible) return null;
+  // Don't render anything on server to prevent hydration mismatch
+  if (!isMounted || !isVisible) return null;
 
   return (
     <motion.div
@@ -115,7 +140,7 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({
           onClick={handleDismiss}
           className="flex-shrink-0 text-gray-300 hover:text-white transition-colors"
         >
-          <X className="w-4 h-4" />
+          {isMounted ? <X className="w-4 h-4" /> : <span className="w-4 h-4 inline-block">×</span>}
         </button>
       </div>
 

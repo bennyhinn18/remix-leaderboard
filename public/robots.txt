@@ -1,0 +1,23 @@
+# Robots.txt for Byte Bash Blitz
+# Allow crawling of main pages but block user profiles for privacy
+
+User-agent: *
+
+# Block all profile pages to protect user privacy
+Disallow: /profile/
+
+# Allow important pages
+Allow: /
+Allow: /leaderboard
+Allow: /events
+Allow: /login
+Allow: /clans
+
+# Block admin and management pages
+Disallow: /admin/
+Disallow: /manage-
+Disallow: /notification-preferences
+Disallow: /api/
+
+# Sitemap location (create this later if needed)
+# Sitemap: https://yourdomain.com/sitemap.xml

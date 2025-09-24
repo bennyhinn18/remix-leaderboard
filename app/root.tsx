@@ -22,6 +22,7 @@ import './styles/loading-effects.css';
 import TechLoader from './components/main-loader';
 import { Toaster } from '~/components/ui/toaster';
 import { ServiceWorkerUpdater } from '~/components/service-worker-updater';
+import { NotificationPermissionPrompt, NotificationDebugInfo } from '~/components/notification-permission-prompt';
 
 // Export the ErrorBoundary for Remix to use
 export { ErrorBoundary } from '~/components/error-boundary';
@@ -46,7 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#0f172a" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
@@ -137,6 +138,8 @@ export default function App() {
           </Suspense>
           <Toaster />
           <ServiceWorkerUpdater />
+          <NotificationPermissionPrompt />
+          {/* <NotificationDebugInfo /> */}
         </AuthProvider>
       </ErrorProvider>
     </ReactErrorBoundary>

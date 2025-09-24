@@ -18,10 +18,18 @@ export default function WhatsNewPanel() {
   const [isMinimized, setIsMinimized] = useState(true);
 
   // Current app version/update ID - update this when you make changes
-  const currentVersion = 'v2.0.0';
+  const currentVersion = 'v2.1.0';
 
   // Latest updates - newest first
   const updates = [
+    {
+      version: 'v2.1.0',
+      date: 'Sep 24, 2025',
+      title: 'Privacy & Notification System Enhancements',
+      description:
+        'Added privacy protection for profile pages (no more Google indexing), enhanced notification permission handling, fixed hydration errors for better performance, and improved PWA meta tags.',
+      link: null,
+    },
     {
       version: 'v2.0.0',
       date: 'Sep 24, 2025',

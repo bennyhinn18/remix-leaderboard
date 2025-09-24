@@ -6,7 +6,7 @@ import {
   useNavigation,
 } from '@remix-run/react';
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient} from '~/utils/supabase.server';
 import { PushNotificationManager } from '~/components/push-notification-manager';
 import { PageTransition } from '~/components/page-transition';
 import { Button } from '~/components/ui/button';
@@ -29,20 +29,20 @@ import { useState, useEffect } from 'react';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // Verify user is authenticated
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await supabase.client.auth.getUser();
 
     if (!user) {
       return redirect('/login');
     }
 
     // Get the member profile
-    const { data: member } = await supabase
+    const { data: member } = await supabase.client
       .from('members')
       .select('*, clan:clans(*)')
       .eq('github_username', user.user_metadata?.user_name)
@@ -68,7 +68,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Get notification preferences (you'd need to create this table)
-    const { data: preferences } = await supabase
+    const { data: preferences } = await supabase.client
       .from('notification_preferences')
       .select('*')
       .eq('member_id', member.id)
@@ -102,13 +102,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // Verify user is authenticated
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await supabase.client.auth.getUser();
 
     if (!user) {
       return json(
@@ -118,7 +118,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Get the member profile
-    const { data: member } = await supabase
+    const { data: member } = await supabase.client
       .from('members')
       .select('id')
       .eq('github_username', user.user_metadata?.user_name)
@@ -148,7 +148,7 @@ export async function action({ request }: ActionFunctionArgs) {
     };
 
     // Check if preferences already exist
-    const { data: existingPrefs } = await supabase
+    const { data: existingPrefs } = await supabase.client
       .from('notification_preferences')
       .select('id')
       .eq('member_id', member.id)
@@ -158,13 +158,13 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (existingPrefs) {
       // Update existing preferences
-      result = await supabase
+      result = await supabase.client
         .from('notification_preferences')
         .update(preferences)
         .eq('member_id', member.id);
     } else {
       // Insert new preferences
-      result = await supabase
+      result = await supabase.client
         .from('notification_preferences')
         .insert(preferences);
     }

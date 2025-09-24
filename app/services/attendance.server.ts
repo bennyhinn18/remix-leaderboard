@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 
 // Interfaces from comprehensive analytics (stage 3)
 export interface AttendanceRecord {
@@ -531,14 +532,14 @@ export class AttendanceService {
    */
   static async getLatestWeeklyBashEvent(request: Request): Promise<string | null> {
     const response = new Response();
-    const supabase = createServerSupabase(request, response);
+    const supabase = createSupabaseServerClient(request);
 
     try {
-      const { data: events, error } = await supabase
+      const { data: events, error } = await supabase.client
         .from('events')
         .select('id, title, date, status, type')
         .eq('status', 'completed')
-        .ilike('title', '%weekly bash%')
+        .ilike('type', 'weeklybash')
         .order('date', { ascending: false })
         .limit(1);
 
@@ -576,13 +577,13 @@ export class AttendanceService {
       // Get bash events for this week
       const { data: weekEvents, error: eventsError } = await this.supabase
         .from('events')
-        .select('id')
-        .eq('type', 'Weekly Bash')
+        .select('id, title, date')
+        .ilike('type', 'weeklybash')
         .gte('date', startDate.toISOString().split('T')[0])
         .lte('date', endDate.toISOString().split('T')[0]);
 
       if (eventsError) continue;
-
+      console.log(weekEvents);
       if (weekEvents && weekEvents.length > 0) {
         // Get attendance for these events
         const { data: weekAttendance, error: attendanceError } = await this.supabase
@@ -593,9 +594,12 @@ export class AttendanceService {
         if (!attendanceError && weekAttendance) {
           const memberIds = [...new Set(weekAttendance.map(a => a.member_id))];
           weeklyAttendances.push({
-            week: `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-            attendanceCount: memberIds.length,
-            memberIds
+            event_id: weekEvents[0]?.id || '',
+            event_title: weekEvents[0]?.title || '',
+            event_date: weekEvents[0]?.date || '',
+            clan_stats: [],
+            top_clans: [],
+            has_tie: false
           });
         }
       }
@@ -719,11 +723,11 @@ export class AttendanceService {
     eventId: string
   ): Promise<any> {
     const response = new Response();
-    const supabase = createServerSupabase(request, response);
+    const supabase = createSupabaseServerClient(request);
 
     try {
       // Get all clans
-      const { data: allClans, error: clansError } = await supabase
+      const { data: allClans, error: clansError } = await supabase.client
         .from('clans')
         .select('id, clan_name');
 
@@ -733,7 +737,7 @@ export class AttendanceService {
       }
 
       // Get all active members with their clan information
-      const { data: allMembers, error: membersError } = await supabase
+      const { data: allMembers, error: membersError } = await supabase.client
         .from('members')
         .select('id, name, clan_id, clan_name, title')
         .not('clan_id', 'is', null)
@@ -745,7 +749,7 @@ export class AttendanceService {
       }
 
       // Get attendance records for this event
-      const { data: attendance, error: attendanceError } = await supabase
+      const { data: attendance, error: attendanceError } = await supabase.client
         .from('attendance')
         .select('member_id')
         .eq('event_id', eventId);

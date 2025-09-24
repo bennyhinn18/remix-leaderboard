@@ -291,7 +291,9 @@ export default function PointsHistory() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-medium text-white">Your Points</h2>
+              <h2 className="text-xl font-medium text-white">
+                {currentMember?.name?.split(' ')[0]}'s Points
+              </h2>
               <p className="text-gray-400">Current balance and history</p>
             </div>
             <div className="text-right">

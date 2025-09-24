@@ -115,23 +115,38 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .then((result) => result.data || []);
 
   // Create attendance service instance and get hall of fame data (with timeout)
-  const attendanceService = new AttendanceService(supabase.client);
-  const getAttendanceHallOfFame = Promise.race([
-    attendanceService.getAttendanceHallOfFame(),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Attendance query timeout')), 10000)
-    )
-  ]).catch(error => {
-    console.error('Attendance hall of fame error:', error);
-    // Return fallback data on error
-    return {
+  let getAttendanceHallOfFame: Promise<any>;
+  
+  try {
+    const attendanceService = new AttendanceService(supabase.client);
+    getAttendanceHallOfFame = attendanceService.getAttendanceHallOfFame()
+      .then(result => result || {
+        clanStats: [],
+        weeklyAttendances: [],
+        globalTopAttenders: [],
+        totalClans: 0,
+        totalWeeks: 0
+      })
+      .catch(error => {
+        console.error('Attendance hall of fame error:', error);
+        return {
+          clanStats: [],
+          weeklyAttendances: [],
+          globalTopAttenders: [],
+          totalClans: 0,
+          totalWeeks: 0
+        };
+      });
+  } catch (error) {
+    console.error('Failed to create attendance service:', error);
+    getAttendanceHallOfFame = Promise.resolve({
       clanStats: [],
       weeklyAttendances: [],
       globalTopAttenders: [],
       totalClans: 0,
       totalWeeks: 0
-    };
-  });
+    });
+  }
 
   // Get user notifications if member exists
   let notifications: Array<any> = [];
@@ -881,18 +896,20 @@ export default function Home() {
           </div>
 
           {/* Attendance Hall of Fame Banner */}
-          <Suspense fallback={
-            <div className="h-20 bg-gray-800/50 rounded-lg animate-pulse" />
-          }>
-            <Await resolve={attendanceHallOfFame}>
-              {(attendanceData) => (
-                <AttendanceHallOfFame 
-                  attendanceData={attendanceData || null} 
-                  className="mb-6"
-                />
-              )}
-            </Await>
-          </Suspense>
+          <div className="mb-6">
+            <Suspense fallback={
+              <div className="h-20 bg-gray-800/50 rounded-lg animate-pulse" />
+            }>
+              <Await resolve={attendanceHallOfFame}>
+                {(attendanceData) => (
+                  <AttendanceHallOfFame 
+                    attendanceData={attendanceData || null} 
+                    className=""
+                  />
+                )}
+              </Await>
+            </Suspense>
+          </div>
 
           {/* Main Content Layout - Role-Based Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
