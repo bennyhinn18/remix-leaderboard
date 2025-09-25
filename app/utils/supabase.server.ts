@@ -29,3 +29,9 @@ export function createSupabaseServerClient(request: Request) {
 
   return supabase;
 }
+
+export function createServerSupabase(request: Request, response: Response) {
+  const supabase = createSupabaseServerClient(request);
+  response.headers.set("Set-Cookie", supabase.headers.get("Set-Cookie")!);
+  return supabase;
+}

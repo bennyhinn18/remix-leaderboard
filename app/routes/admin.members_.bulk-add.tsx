@@ -56,10 +56,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const supabase = createServerSupabase(request, response);
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.client.auth.getUser();
 
   // Fetch all clans for selection
-  const { data: clans } = await supabase
+  const { data: clans } = await supabase.client
     .from('clans')
     .select('*')
     .order('clan_name');
@@ -128,9 +128,9 @@ async function validateCsvData(csvData: string, supabase: any) {
   const requiredHeaders = ['name', 'github_username', 'title'];
   const optionalHeaders = ['discord_username', 'personal_email', 'mobile_number', 'clan_name', 'bash_points'];
   
-  const validationResults = {
+  const validationResults: ValidationResult = {
     valid: [],
-    errors: [],
+    errors: [] as { row: number; data?: any; message: string }[],
     warnings: [],
     duplicates: [],
     headerValid: true,
@@ -149,7 +149,7 @@ async function validateCsvData(csvData: string, supabase: any) {
   }
 
   // Check for existing members
-  const { data: existingMembers } = await supabase
+  const { data: existingMembers } = await supabase.client
     .from('members')
     .select('github_username, discord_username');
 
@@ -169,8 +169,8 @@ async function validateCsvData(csvData: string, supabase: any) {
       row[header] = values[index] || '';
     });
 
-    const rowErrors = [];
-    const rowWarnings = [];
+    const rowErrors: string[] = [];
+    const rowWarnings: string[] = [];
 
     // Required field validation
     if (!row.name) rowErrors.push('Name is required');
@@ -243,7 +243,11 @@ async function validateCsvData(csvData: string, supabase: any) {
 
 // Import members function
 async function importMembers(membersData: any[], supabase: any) {
-  const results = {
+  const results: {
+    successful: any[];
+    errors: { data: any; error: string }[];
+    totalProcessed: number;
+  } = {
     successful: [],
     errors: [],
     totalProcessed: membersData.length
@@ -254,7 +258,7 @@ async function importMembers(membersData: any[], supabase: any) {
       // Fetch clan ID if clan_name is provided
       let clanId = null;
       if (memberData.clan_name) {
-        const { data: clan } = await supabase
+        const { data: clan } = await supabase.client
           .from('clans')
           .select('id')
           .ilike('clan_name', memberData.clan_name)
@@ -275,7 +279,7 @@ async function importMembers(membersData: any[], supabase: any) {
       }
 
       // Insert member
-      const { data: newMember, error } = await supabase
+      const { data: newMember, error } = await supabase.client
         .from('members')
         .insert({
           name: memberData.name,
@@ -339,13 +343,25 @@ function generateCsvTemplate(): string {
 }
 
 interface ValidationResult {
-  valid: any[];
-  errors: any[];
-  warnings: any[];
+  valid: { row: number; data: any }[];
+  errors: { row: number; data?: any; message: string }[];
+  warnings: { row: number; data?: any; message: string }[];
   duplicates: any[];
   headerValid: boolean;
   totalRows: number;
 }
+
+type ActionData = {
+  success?: boolean;
+  validationResults?: ValidationResult;
+  importResults?: {
+    successful: any[];
+    errors: { data: any; error: string }[];
+    totalProcessed: number;
+  };
+  error?: string;
+  template?: string;
+};
 
 export default function BulkAddMembers() {
   const { user, clans } = useLoaderData<typeof loader>();
@@ -357,7 +373,7 @@ export default function BulkAddMembers() {
   const [currentStep, setCurrentStep] = useState<'upload' | 'validate' | 'import'>('upload');
 
   const isProcessing = fetcher.state === 'submitting';
-  const actionData = fetcher.data;
+  const actionData = fetcher.data as ActionData;
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

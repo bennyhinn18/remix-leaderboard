@@ -19,7 +19,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const domainId = Number(params.domainId);
 
   // Fetch domain
-  const { data: domain, error: domainError } = await supabase
+  const { data: domain, error: domainError } = await supabase.client
     .from('domains')
     .select('*')
     .eq('id', domainId)
@@ -30,7 +30,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   // Fetch resources with member info
-  const { data: resources = [], error: resourcesError } = await supabase
+  const { data: resources = [], error: resourcesError } = await supabase.client
     .from('resources')
     .select(
       `
@@ -115,7 +115,7 @@ export default function DomainResources() {
       opacity: 1,
       y: 0,
       transition: {
-        type: 'spring',
+        type: "spring" as const,
         stiffness: 260,
         damping: 20,
       },

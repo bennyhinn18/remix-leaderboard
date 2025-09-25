@@ -18,7 +18,7 @@ import {
   Crown,
   Gift
 } from 'lucide-react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient} from '~/utils/supabase.server';
 import { isOrganiser, getCurrentUser } from '~/utils/currentUser';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -68,11 +68,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     const response = new Response();
-    const supabase = createServerSupabase(request, response);
+    const supabase = createSupabaseServerClient(request);
     const currentUser = await getCurrentUser(request);
 
     // Get all members
-    const { data: members, error: membersError } = await supabase
+    const { data: members, error: membersError } = await supabase.client
       .from('members')
       .select('*')
       .order('name');
@@ -82,7 +82,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     // Initialize achievement service
-    const achievementService = new AchievementService(supabase);
+    const achievementService = new AchievementService(supabase.client);
 
     // Get all achievements from database
     const allAchievements = await achievementService.getAllAchievements();
@@ -91,7 +91,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const stats = await achievementService.getAchievementStats();
 
     // Get all user achievements for display
-    const { data: userAchievements, error: userAchievementsError } = await supabase
+    const { data: userAchievements, error: userAchievementsError } = await supabase.client
       .from('user_achievements')
       .select(`
         *,
@@ -133,7 +133,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const currentUser = await getCurrentUser(request);
   
   if (!currentUser) {
@@ -141,7 +141,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Get current user's member record
-  const { data: currentMember } = await supabase
+  const { data: currentMember } = await supabase.client
     .from('members')
     .select('id')
     .eq('id', currentUser.member_id)
@@ -151,7 +151,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ error: 'Member not found' }, { status: 404 });
   }
 
-  const achievementService = new AchievementService(supabase);
+  const achievementService = new AchievementService(supabase.client);
   const formData = await request.formData();
   const action = formData.get('action');
 

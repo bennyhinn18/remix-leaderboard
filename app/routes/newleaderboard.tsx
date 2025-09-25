@@ -58,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.client.auth.getUser();
   return json({
     user,
     members: [],

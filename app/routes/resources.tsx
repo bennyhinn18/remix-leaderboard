@@ -28,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const supabase = createServerSupabase(request, response);
 
   // Fetch domains
-  const { data: domain, error } = await supabase
+  const { data: domain, error } = await supabase.client
     .from('domains')
     .select('*')
     .order('name', { ascending: true });
@@ -38,13 +38,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   // Fetch projects
-  const { data: projectsData } = await supabase
+  const { data: projectsData } = await supabase.client
     .from('projects')
     .select('*')
     .order('created_at', { ascending: false });
 
   // Fetch members
-  const { data: membersData } = await supabase
+  const { data: membersData } = await supabase.client
     .from('members')
     .select('id, name')
     .order('name', { ascending: true });
@@ -79,7 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Insert into database
-  const { error } = await supabase.from('resources').insert({
+  const { error } = await supabase.client.from('resources').insert({
     domain_id: Number(domainId),
     website_name: websiteName!.toString(),
     website_url: websiteUrl!.toString(),
@@ -138,7 +138,7 @@ export default function ResourcesPage() {
       opacity: 1,
       y: 0,
       transition: {
-        type: 'spring',
+        type: "spring" as const,
         stiffness: 260,
         damping: 20,
       },

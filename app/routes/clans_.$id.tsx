@@ -25,7 +25,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const supabase = createServerSupabase(request, response);
   
   try {
-    const { data: clan, error: clanError } = await supabase
+    const { data: clan, error: clanError } = await supabase.client
       .from('clans')
       .select('*')
       .eq('id', params.id)
@@ -40,7 +40,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     }
 
     if (clan) {
-      const { data: members, error: membersError } = await supabase
+      const { data: members, error: membersError } = await supabase.client
         .from('members')
         .select('*')
         .eq('clan_id', clan.id)

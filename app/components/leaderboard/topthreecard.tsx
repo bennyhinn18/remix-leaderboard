@@ -3,6 +3,7 @@ import {
   User,
   Trophy,
   Medal,
+  Shield,
   Crown,
 } from 'lucide-react';
 import { Link } from '@remix-run/react';
@@ -16,6 +17,7 @@ type MemberWithStats = {
   github_username: string;
   tier: string;
   bash_points: number;
+  title?: string;
   bashClanPoints?: number;
   githubStreak?: number;
   leetcodeStreak?: number;
@@ -40,7 +42,7 @@ const TopThreeCard = forwardRef<
         return {
           background:
             'bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-600',
-          icon: <Crown className="w-6 h-6 text-cyan-900" />,
+          icon: <Trophy className="w-6 h-6 text-cyan-900" />,
           text: 'text-cyan-900',
           glow: 'shadow-lg shadow-cyan-500/50',
           border: 'border-cyan-400',
@@ -145,14 +147,25 @@ const TopThreeCard = forwardRef<
                 to={`/profile/${member.github_username}`}
                 className="text-xl font-bold hover:underline decoration-2 underline-offset-4"
               >
-                <p className="text-white flex items-center gap-2">
+                <div className="text-white flex items-center gap-2">
                   {member.name}
+                  {member.title === 'Captain Bash' && (
+                    
+                    <span className="text-xs hidden sm:block bg-purple-500 text-white px-2 py-2 rounded-full">
+                      <Crown className="w-4 h-4 text-white"/>
+                    </span>
+                  )}
+                  {member.title === 'Organiser' && (
+                    <span className="text-xs hidden sm:block bg-amber-500 text-white px-2 py-2 rounded-full">
+                      <Shield className="w-4 h-4 text-white"/>
+                    </span>
+                  )}
                   {isCurrentUser && (
                     <span className="text-xs hidden sm:block bg-blue-500 text-white px-2 py-0.5 rounded-full">
                       You
                     </span>
                   )}
-                </p>
+                </div>
               </Link>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-sm hidden sm:block ${styles.text}`}>

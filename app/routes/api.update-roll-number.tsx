@@ -39,7 +39,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Check if the roll number is already associated with another account
-    const { data: existingMember } = await supabase
+    const { data: existingMember } = await supabase.client
       .from('members')
       .select('id')
       .eq('roll_number', roll_number)
@@ -55,7 +55,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Update the member's roll number
-  const { error } = await supabase
+  const { error } = await supabase.client
     .from('members')
     .update({ roll_number: roll_number || null })
     .eq('id', member_id);

@@ -50,10 +50,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const supabase = createServerSupabase(request, response);
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.client.auth.getUser();
 
   // Fetch all clans for selection
-  const { data: clans } = await supabase
+  const { data: clans } = await supabase.client
     .from('clans')
     .select('*')
     .order('clan_name');
@@ -100,7 +100,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     // Check if GitHub username already exists
-    const { data: existingMember } = await supabase
+    const { data: existingMember } = await supabase.client
       .from('members')
       .select('id')
       .eq('github_username', memberData.github_username)
@@ -115,7 +115,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     // Check if Discord username already exists (if provided)
     if (memberData.discord_username) {
-      const { data: existingDiscord } = await supabase
+      const { data: existingDiscord } = await supabase.client
         .from('members')
         .select('id')
         .eq('discord_username', memberData.discord_username)
@@ -146,7 +146,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     // Insert new member
-    const { data: newMember, error: insertError } = await supabase
+    const { data: newMember, error: insertError } = await supabase.client
       .from('members')
       .insert({
         ...memberData,
@@ -249,7 +249,7 @@ export default function AddMember() {
   const [selectedRole, setSelectedRole] = useState('');
 
   const isSubmitting = fetcher.state === 'submitting';
-  const actionData = fetcher.data;
+  const actionData = (fetcher.data ?? {}) as { error?: string; formData?: any };
 
   const handleGitHubPreview = async (username: string) => {
     if (!username) {

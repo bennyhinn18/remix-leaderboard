@@ -30,6 +30,12 @@ export function PushNotificationManager({
       return;
     }
 
+    // Disable push notifications in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] Push notifications disabled in development mode');
+      return;
+    }
+
     setPermission(Notification.permission);
 
     // Check for existing subscription
@@ -67,6 +73,13 @@ export function PushNotificationManager({
     setError(null);
     setSuccessMessage(null);
     setIsSubscribing(true);
+
+    // Don't allow subscription in development
+    if (process.env.NODE_ENV === 'development') {
+      setError('Push notifications are disabled in development mode');
+      setIsSubscribing(false);
+      return;
+    }
 
     try {
       // Request notification permission if not granted
@@ -135,6 +148,13 @@ export function PushNotificationManager({
     setError(null);
     setSuccessMessage(null);
     setIsSubscribing(true);
+
+    // Don't allow unsubscription in development (there should be no subscription anyway)
+    if (process.env.NODE_ENV === 'development') {
+      setError('Push notifications are disabled in development mode');
+      setIsSubscribing(false);
+      return;
+    }
 
     try {
       if (subscription) {

@@ -35,7 +35,7 @@ import {
 } from '~/components/ui/select';
 import { MainNav } from '~/components/main-nav';
 import { PageTransition } from '~/components/page-transition';
-import type { BasherProfile } from '~/utils/types';
+// import type { BasherProfile } from '~/utils/types';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request);
@@ -48,10 +48,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const supabase = createServerSupabase(request, response);
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.client.auth.getUser();
 
   // Fetch all members with clan information
-  const { data: members, error: membersError } = await supabase
+  const { data: members, error: membersError } = await supabase.client
     .from('members')
     .select(`
       *,
@@ -60,7 +60,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .order('created_at', { ascending: false });
 
   // Fetch all clans
-  const { data: clans } = await supabase
+  const { data: clans } = await supabase.client
     .from('clans')
     .select('*')
     .order('clan_name');
@@ -69,7 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const { data: recentPointsActivities } = await supabase
+  const { data: recentPointsActivities } = await supabase.client
     .from('points_history')
     .select(`
       *,

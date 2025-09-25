@@ -1,5 +1,6 @@
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import webpush from 'web-push';
+import { create } from 'node:domain';
 
 // Configure web-push with VAPID keys
 // In a real application, these would come from environment variables
@@ -59,11 +60,11 @@ export async function sendPushNotificationToMember(
   }
 ) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // Get all the user's push subscriptions
-    const { data: subscriptions, error } = await supabase
+    const { data: subscriptions, error } = await supabase.client
       .from('push_subscriptions')
       .select('*')
       .eq('member_id', memberId);
@@ -114,11 +115,11 @@ export async function sendPushNotificationBroadcast(
   }
 ) {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   try {
     // Get all push subscriptions
-    const { data: subscriptions, error } = await supabase
+    const { data: subscriptions, error } = await supabase.client
       .from('push_subscriptions')
       .select('*');
 

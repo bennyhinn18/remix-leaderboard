@@ -30,6 +30,7 @@ interface MemberWithStats {
   github_username: string;
   avatar_url: string;
   bash_points: number;
+  title?: string;
   githubStreak?: number;
   leetcodeStreak?: number;
   bashClanPoints?: number;
@@ -75,9 +76,7 @@ export default function Leaderboard() {
     SUPABASE_ANON_KEY,
     user,
   } = useLoaderData<typeof loader>();
-  const [members, setMembers] = useState<MemberWithStats[]>(
-    initialMembers.map((m) => ({ ...m, tier: getTier(m.bash_points) }))
-  );
+  const [members, setMembers] = useState<MemberWithStats[]>([]);
   const [activeTab, setActiveTab] = useState<
     | 'overall'
     | 'bashclan'

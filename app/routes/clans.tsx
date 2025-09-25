@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (quote2) quotes.push(quote2.toString());
 
   try {
-    const { error } = await supabase.from('clans').insert([
+    const { error } = await supabase.client.from('clans').insert([
       {
         clan_name: clanName,
         description,
@@ -96,10 +96,10 @@ interface Clan {
 export const loader = async ({ request }: ActionFunctionArgs) => {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
-  const { data: clans } = await supabase.from('clans').select('*');
+  const { data: clans } = await supabase.client.from('clans').select('*');
   if (clans) {
     for (const clan of clans) {
-      const { data: members } = await supabase
+      const { data: members } = await supabase.client
         .from('members')
         .select('*')
         .eq('clan_id', clan.id)

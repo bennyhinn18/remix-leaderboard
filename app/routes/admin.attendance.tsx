@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 import { AttendanceService, type AttendanceFilters, type Member } from '~/services/attendance.server';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { isOrganiser } from '~/utils/currentUser';
 import { MainNav } from '~/components/main-nav';
 import { PageTransition } from '~/components/page-transition';
@@ -62,13 +62,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Create attendance service instance
-  const attendanceService = new AttendanceService(supabase);
+  const attendanceService = new AttendanceService(supabase.client);
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.client.auth.getUser();
   
   // Parse search parameters for filtering
   const url = new URL(request.url);

@@ -14,6 +14,12 @@ export function ServiceWorkerUpdater() {
       return;
     }
 
+    // Disable service worker in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[SW] Service worker disabled in development mode');
+      return;
+    }
+
     let refreshing = false;
 
     // Register service worker

@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   // If no eventId provided, get the currently open event
   if (!eventId) {
-    const { data: openEvent } = await supabase
+    const { data: openEvent } = await supabase.client
       .from('project_showcase_events')
       .select('event_id, max_slots')
       .eq('status', 'open')
@@ -26,7 +26,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // Get event details to get max_slots
-  const { data: eventData } = await supabase
+  const { data: eventData } = await supabase.client
     .from('project_showcase_events')
     .select('max_slots')
     .eq('event_id', eventId)
@@ -36,7 +36,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   try {
     // Get allocated slots with member details
-    const { data: slots, error: slotsError } = await supabase
+    const { data: slots, error: slotsError } = await supabase.client
       .from('project_showcase_slots_with_members')
       .select('*')
       .eq('event_id', eventId)
@@ -48,7 +48,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Get total eligible members count
-    const { count: eligibleCount, error: countError } = await supabase
+    const { count: eligibleCount, error: countError } = await supabase.client
       .from('members')
       .select('*', { count: 'exact', head: true })
       .ilike('title', '%basher%');

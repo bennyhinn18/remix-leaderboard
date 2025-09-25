@@ -80,7 +80,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Get full user data from members table for MainNav
     let userData = null;
     if (currentUser?.member_id) {
-      const { data: member } = await supabase
+      const { data: member } = await supabase.client
         .from('members')
         .select('*')
         .eq('id', currentUser.member_id)
@@ -114,7 +114,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     // Fetch all members with clan information
-    const { data: members, error: membersError } = await supabase
+    const { data: members, error: membersError } = await supabase.client
       .from('members')
       .select(`
         *,
@@ -130,7 +130,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     // Fetch all clans for role assignment
-    const { data: clans, error: clansError } = await supabase
+    const { data: clans, error: clansError } = await supabase.client
       .from('clans')
       .select('*')
       .order('clan_name');
@@ -198,7 +198,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           bash_points: formData.get('bash_points') ? Number(formData.get('bash_points')) : 0,
         };
 
-        const { error } = await supabase
+        const { error } = await supabase.client
           .from('members')
           .update(updates)
           .eq('id', memberId);
@@ -217,7 +217,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       case 'delete_member': {
         const memberId = formData.get('memberId');
         
-        const { error } = await supabase
+        const { error } = await supabase.client
           .from('members')
           .delete()
           .eq('id', memberId);
@@ -237,7 +237,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (newTitle) updates.title = newTitle;
         if (newClanIdValue) updates.clan_id = newClanId;
 
-        const { error } = await supabase
+        const { error } = await supabase.client
           .from('members')
           .update(updates)
           .in('id', memberIds);
@@ -273,7 +273,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       case 'export_members': {
-        const { data: members } = await supabase
+        const { data: members } = await supabase.client
           .from('members')
           .select(`
             id, name, github_username, discord_username, title, bash_points,
@@ -321,9 +321,16 @@ interface Member {
   avatar_url?: string;
 }
 
+interface DiscordSyncStatus {
+  lastSync: string;
+  totalMembers: number;
+  syncedMembers: number;
+  pendingSync: number;
+}
+
 export default function MemberManagement() {
   const loaderData = useLoaderData<typeof loader>();
-  const { members = [], clans = [], user, discordSyncStatus = {} } = loaderData || {};
+  const { members = [], clans = [], user, discordSyncStatus = { lastSync: '', totalMembers: 0, syncedMembers: 0, pendingSync: 0 } } = loaderData || {};
   const fetcher = useFetcher();
   
   const [searchTerm, setSearchTerm] = useState('');

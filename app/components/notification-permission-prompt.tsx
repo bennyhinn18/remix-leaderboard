@@ -18,6 +18,12 @@ export function NotificationPermissionPrompt() {
       return;
     }
 
+    // Disable notification prompts in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Notifications] Notification prompts disabled in development mode');
+      return;
+    }
+
     const currentPermission = Notification.permission;
     setPermission(currentPermission);
 

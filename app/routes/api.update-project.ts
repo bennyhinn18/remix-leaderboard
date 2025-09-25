@@ -10,7 +10,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.json();
   const { projectId, memberName, status } = formData;
 
-  const { error } = await supabase
+  const { error } = await supabase.client
     .from('projects')
     .update({
       member_name: memberName,

@@ -23,7 +23,7 @@ import {
   Server,
   Info
 } from 'lucide-react';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient } from '~/utils/supabase.server';
 import { isOrganiser } from '~/utils/currentUser';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -66,13 +66,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.client.auth.getUser();
 
   // Fetch all members with Discord usernames
-  const { data: members, error: membersError } = await supabase
+  const { data: members, error: membersError } = await supabase.client
     .from('members')
     .select(`
       *,
@@ -137,7 +137,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
   const formData = await request.formData();
   const action = formData.get('action');
 
@@ -147,7 +147,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const memberId = formData.get('memberId');
         
         // Get member details
-        const { data: member } = await supabase
+        const { data: member } = await supabase.client
           .from('members')
           .select('*')
           .eq('id', memberId)
@@ -181,7 +181,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const errors: string[] = [];
 
         // Get members
-        const { data: members } = await supabase
+        const { data: members } = await supabase.client
           .from('members')
           .select('*')
           .in('id', memberIds);
@@ -239,7 +239,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       case 'sync_all_roles': {
         // This would sync all members with Discord usernames
-        const { data: members } = await supabase
+        const { data: members } = await supabase.client
           .from('members')
           .select('*')
           .not('discord_username', 'is', null)
@@ -270,7 +270,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const memberId = formData.get('memberId');
         const discordUsername = formData.get('discordUsername');
 
-        const { error } = await supabase
+        const { error } = await supabase.client
           .from('members')
           .update({ discord_username: discordUsername })
           .eq('id', memberId);

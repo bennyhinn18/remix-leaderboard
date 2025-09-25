@@ -1,14 +1,14 @@
 import { type LoaderFunctionArgs } from '@remix-run/node';
 import { AttendanceService, type AttendanceFilters } from '~/services/attendance.server';
 import { isOrganiser } from '~/utils/currentUser';
-import { createServerSupabase } from '~/utils/supabase.server';
+import { createSupabaseServerClient} from '~/utils/supabase.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response();
-  const supabase = createServerSupabase(request, response);
+  const supabase = createSupabaseServerClient(request);
 
   // Create attendance service instance
-  const attendanceService = new AttendanceService(supabase);
+  const attendanceService = new AttendanceService(supabase.client);
 
   // Parse search parameters for filtering
   const url = new URL(request.url);

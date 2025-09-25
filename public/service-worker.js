@@ -1,6 +1,9 @@
 // Version should be updated with each deployment to force cache refresh
-const CACHE_VERSION = "Basher Terminal v2.1.1";
+const CACHE_VERSION = "Basher Terminal v2.1.2";
 const CACHE_NAME = `${CACHE_VERSION}`;
+
+// Note: This service worker is disabled in development mode
+// See service-worker-updater.tsx for the registration logic
 
 const urlsToCache = [
   "/",
