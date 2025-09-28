@@ -322,6 +322,17 @@ export default function ProjectShowcase() {
 
   const isLoading = navigation.state === 'loading' || fetcher.state === 'submitting';
 
+  // Calculate available slot numbers for the current event
+  const getAvailableSlotNumbers = () => {
+    if (!currentEvent) return [];
+    
+    const allocatedNumbers = slots.map(slot => slot.slot_number);
+    const availableNumbers = Array.from({ length: currentEvent.max_slots }, (_, i) => i + 1)
+      .filter(num => !allocatedNumbers.includes(num));
+    
+    return availableNumbers;
+  };
+
   // Update slots when data changes
   useEffect(() => {
     setSlots(allocatedSlots);
@@ -659,6 +670,8 @@ export default function ProjectShowcase() {
           }}
           isAnimating={isAnimating}
           allocatedSlot={(fetcher.data as any)?.slotNumber}
+          availableSlots={getAvailableSlotNumbers()}
+          maxSlots={currentEvent?.max_slots || 25}
         />
 
         {/* Allocated Slots List */}

@@ -10,6 +10,8 @@ interface SlotPickerProps {
   onAllocate: () => void;
   isAnimating: boolean;
   allocatedSlot?: number;
+  availableSlots: number[];
+  maxSlots: number;
 }
 
 export function SlotPicker({ 
@@ -17,21 +19,24 @@ export function SlotPicker({
   onClose, 
   onAllocate, 
   isAnimating, 
-  allocatedSlot 
+  allocatedSlot,
+  availableSlots = [],
+  maxSlots = 25
 }: SlotPickerProps) {
   const [displayNumber, setDisplayNumber] = useState<number>(1);
   const [animationPhase, setAnimationPhase] = useState<'spinning' | 'slowing' | 'stopped'>('spinning');
 
   // Slot machine animation effect
   useEffect(() => {
-    if (!isAnimating) return;
+    if (!isAnimating || availableSlots.length === 0) return;
 
     let interval: NodeJS.Timeout;
     let timeout: NodeJS.Timeout;
 
-    // Fast spinning phase
+    // Fast spinning phase - only show available slots
     interval = setInterval(() => {
-      setDisplayNumber(Math.floor(Math.random() * 25) + 1);
+      const randomIndex = Math.floor(Math.random() * availableSlots.length);
+      setDisplayNumber(availableSlots[randomIndex]);
     }, 100);
 
     // Switch to slowing phase after 2 seconds
@@ -39,9 +44,10 @@ export function SlotPicker({
       clearInterval(interval);
       setAnimationPhase('slowing');
 
-      // Slower spinning
+      // Slower spinning - still only available slots
       interval = setInterval(() => {
-        setDisplayNumber(Math.floor(Math.random() * 25) + 1);
+        const randomIndex = Math.floor(Math.random() * availableSlots.length);
+        setDisplayNumber(availableSlots[randomIndex]);
       }, 300);
 
       // Stop after another second
@@ -58,15 +64,16 @@ export function SlotPicker({
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [isAnimating, allocatedSlot]);
+  }, [isAnimating, allocatedSlot, availableSlots]);
 
   // Reset state when visibility changes
   useEffect(() => {
     if (isVisible) {
-      setDisplayNumber(1);
+      // Start with the first available slot or 1 if no slots available
+      setDisplayNumber(availableSlots.length > 0 ? availableSlots[0] : 1);
       setAnimationPhase('spinning');
     }
-  }, [isVisible]);
+  }, [isVisible, availableSlots]);
 
   if (!isVisible) return null;
 
@@ -119,9 +126,11 @@ export function SlotPicker({
               </h3>
               
               <p className="text-gray-300">
-                {animationPhase === 'stopped' 
-                  ? 'Your presentation slot has been allocated!'
-                  : 'The slot machine is determining your presentation slot'
+                {availableSlots.length === 0 
+                  ? 'No slots are currently available for this event'
+                  : animationPhase === 'stopped' 
+                    ? 'Your presentation slot has been allocated!'
+                    : `The slot machine is determining your presentation slot from ${availableSlots.length} available slots`
                 }
               </p>
             </motion.div>
@@ -179,14 +188,19 @@ export function SlotPicker({
               className="mb-6"
             >
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                {animationPhase === 'spinning' && (
+                {availableSlots.length === 0 ? (
+                  <div className="flex items-center justify-center gap-2 text-red-300">
+                    <Trophy className="w-4 h-4" />
+                    <span className="font-medium">All {maxSlots} slots are taken for this event</span>
+                  </div>
+                ) : animationPhase === 'spinning' ? (
                   <div className="flex items-center justify-center gap-2 text-yellow-300">
                     <Zap className="w-4 h-4" />
-                    <span className="font-medium">Generating random slot...</span>
+                    <span className="font-medium">
+                      Picking from {availableSlots.length} available slots...
+                    </span>
                   </div>
-                )}
-                
-                {animationPhase === 'slowing' && (
+                ) : animationPhase === 'slowing' ? (
                   <div className="flex items-center justify-center gap-2 text-orange-300">
                     <motion.div
                       animate={{ rotate: 360 }}
@@ -196,9 +210,7 @@ export function SlotPicker({
                     </motion.div>
                     <span className="font-medium">Almost there...</span>
                   </div>
-                )}
-                
-                {animationPhase === 'stopped' && allocatedSlot && (
+                ) : animationPhase === 'stopped' && allocatedSlot ? (
                   <div className="text-green-300">
                     <div className="font-bold text-lg mb-1">
                       Slot #{allocatedSlot.toString().padStart(2, '0')} Allocated!
@@ -207,7 +219,7 @@ export function SlotPicker({
                       Get ready to showcase your project!
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </motion.div>
 
@@ -237,13 +249,23 @@ export function SlotPicker({
                     Cancel
                   </Button>
                   
-                  {!isAnimating && (
+                  {!isAnimating && availableSlots.length > 0 && (
                     <Button
                       onClick={onAllocate}
                       className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
                       Start Allocation
+                    </Button>
+                  )}
+                  
+                  {!isAnimating && availableSlots.length === 0 && (
+                    <Button
+                      disabled
+                      className="bg-gray-600 text-gray-400 cursor-not-allowed"
+                    >
+                      <Trophy className="w-4 h-4 mr-2" />
+                      No Slots Available
                     </Button>
                   )}
                 </>
