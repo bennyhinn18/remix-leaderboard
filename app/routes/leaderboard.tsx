@@ -24,6 +24,8 @@ import TopThreeCard from '~/components/leaderboard/topthreecard';
 import ClanCard from '~/components/leaderboard/clancard';
 import RegularCard from '~/components/leaderboard/regularcard';
 import { getTier, getTierIcon } from '~/utils/tiers';
+import { GitHubOptionsModal, type GitHubDisplayMode } from '~/components/modals/GitHubOptionsModal';
+import { useLongPress } from '~/hooks/useLongPress';
 interface MemberWithStats {
   id: string;
   name: string;
@@ -32,6 +34,7 @@ interface MemberWithStats {
   bash_points: number;
   title?: string;
   githubStreak?: number;
+  githubCommits?: number;
   leetcodeStreak?: number;
   bashClanPoints?: number;
   discordPoints?: number;
@@ -94,6 +97,12 @@ export default function Leaderboard() {
   const [userPosition, setUserPosition] = useState<
     'above' | 'below' | 'visible'
   >('below');
+  
+  // GitHub display mode state
+  const [githubDisplayMode, setGithubDisplayMode] = useState<GitHubDisplayMode>('streak');
+  const [showGithubOptions, setShowGithubOptions] = useState(false);
+  const [githubCommitsData, setGithubCommitsData] = useState<Record<string, number>>({});
+  const [loadingCommits, setLoadingCommits] = useState(false);
 
   interface Clan {
     id: string;
@@ -131,6 +140,39 @@ export default function Leaderboard() {
       setUserPosition('below');
     } else {
       setUserPosition('visible');
+    }
+  };
+
+  // Fetch GitHub commits for all members
+  const fetchGithubCommits = async (membersList: MemberWithStats[]) => {
+    if (loadingCommits) return;
+    
+    setLoadingCommits(true);
+    try {
+      const usernames = membersList
+        .map(member => member.github_username)
+        .filter(Boolean)
+        .join(',');
+      
+      if (!usernames) return;
+
+      const response = await fetch(`/api/github-commits?usernames=${encodeURIComponent(usernames)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setGithubCommitsData(data.data);
+        
+        // Update members with commits data
+        const updatedMembers = membersList.map(member => ({
+          ...member,
+          githubCommits: data.data[member.github_username] || 0
+        }));
+        setMembers(updatedMembers);
+      }
+    } catch (error) {
+      console.error('Error fetching GitHub commits:', error);
+    } finally {
+      setLoadingCommits(false);
     }
   };
 
@@ -188,14 +230,14 @@ export default function Leaderboard() {
       const membersWithStats = members.map((member) => {
         const stats =
           memberStats?.find((stat) => stat.member_id === member.id) || {};
-
+        
         return {
           ...member,
           tier: getTier(member.bash_points),
           tierIcon: getTierIcon(getTier(member.bash_points)),
           leetcodeStreak: stats.leetcode_streak || 0,
           githubStreak: stats.github_streak || 0,
-          discordPoints: stats.discord_points || 0,
+          discordPoints: stats.discord_streak || 0,
           duolingoStreak: stats.duolingo_streak || 0,
           bookRead: stats.books_read || 0,
         };
@@ -261,6 +303,12 @@ export default function Leaderboard() {
     if (savedTab) {
       setActiveTab(savedTab);
     }
+
+    // Load saved GitHub display mode
+    const savedGithubMode = localStorage.getItem('githubDisplayMode') as GitHubDisplayMode | null;
+    if (savedGithubMode) {
+      setGithubDisplayMode(savedGithubMode);
+    }
   }, []);
 
   useEffect(() => {
@@ -272,6 +320,40 @@ export default function Leaderboard() {
       window.removeEventListener('scroll', checkUserPosition);
     };
   }, [currentUser]);
+
+  // Fetch GitHub commits when switching to GitHub tab or changing display mode
+  useEffect(() => {
+    if (activeTab === 'github' && (githubDisplayMode === 'commits' || githubDisplayMode === 'both')) {
+      if (members.length > 0 && Object.keys(githubCommitsData).length === 0) {
+        fetchGithubCommits(members);
+      }
+    }
+  }, [activeTab, githubDisplayMode, members.length]);
+
+  // Long press handler for GitHub tab
+  const githubTabLongPress = useLongPress({
+    onLongPress: () => {
+      setShowGithubOptions(true);
+    },
+    onClick: () => {
+      setActiveTab('github');
+      localStorage.setItem('activeTab', 'github');
+    },
+    onRightClick: () => {
+      setShowGithubOptions(true);
+    },
+    threshold: 500
+  });
+
+  const handleGithubModeChange = (mode: GitHubDisplayMode) => {
+    setGithubDisplayMode(mode);
+    localStorage.setItem('githubDisplayMode', mode);
+    
+    // Fetch commits if needed
+    if ((mode === 'commits' || mode === 'both') && Object.keys(githubCommitsData).length === 0) {
+      fetchGithubCommits(members);
+    }
+  };
 
   const filteredMembers = members
     .map((member, index) => ({ ...member, originalRank: index + 1 }))
@@ -374,31 +456,48 @@ export default function Leaderboard() {
                   'discord',
                   'duolingo',
                   'books',
-                ].map((tab) => (
-                  <motion.button
-                    key={tab}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
+                ].map((tab) => {
+                  const isGithubTab = tab === 'github';
+                  const buttonProps = isGithubTab ? githubTabLongPress : {
+                    onClick: () => {
                       setActiveTab(tab as typeof activeTab);
                       localStorage.setItem('activeTab', tab);
-                    }}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-colors ${
-                      activeTab === tab
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                    }`}
-                  >
-                    {tab === 'overall' && <Trophy className="w-4 h-4" />}
-                    {tab === 'bashclan' && <Building className="w-4 h-4" />}
-                    {tab === 'leetcode' && <Code className="w-4 h-4" />}
-                    {tab === 'github' && <Github className="w-4 h-4" />}
-                    {tab === 'discord' && <MessageCircle className="w-4 h-4" />}
-                    {tab === 'duolingo' && <Feather className="w-4 h-4" />}
-                    {tab === 'books' && <Book className="w-4 h-4" />}
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </motion.button>
-                ))}
+                    }
+                  };
+
+                  return (
+                    <motion.button
+                      key={tab}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      {...buttonProps}
+                      className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-colors select-none ${
+                        activeTab === tab
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                      } ${isGithubTab ? 'relative' : ''}`}
+                    >
+                      {tab === 'overall' && <Trophy className="w-4 h-4" />}
+                      {tab === 'bashclan' && <Building className="w-4 h-4" />}
+                      {tab === 'leetcode' && <Code className="w-4 h-4" />}
+                      {tab === 'github' && (
+                        <div className="flex items-center gap-1">
+                          <Github className="w-4 h-4" />
+                          {githubDisplayMode === 'both' && (
+                            <div className="w-1 h-1 bg-current rounded-full opacity-60"></div>
+                          )}
+                        </div>
+                      )}
+                      {tab === 'discord' && <MessageCircle className="w-4 h-4" />}
+                      {tab === 'duolingo' && <Feather className="w-4 h-4" />}
+                      {tab === 'books' && <Book className="w-4 h-4" />}
+                      <span>{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
+                      {isGithubTab && loadingCommits && (
+                        <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin opacity-60"></div>
+                      )}
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -495,6 +594,7 @@ export default function Leaderboard() {
                           activeTab={activeTab}
                           searchQuery={searchQuery}
                           isCurrentUser={currentUser?.id === member.id}
+                          githubDisplayMode={githubDisplayMode}
                           ref={
                             currentUser?.id === member.id
                               ? currentUserRef
@@ -510,6 +610,7 @@ export default function Leaderboard() {
                           searchQuery={searchQuery}
                           duolingoStreak={member.duolingoStreak || 0}
                           isCurrentUser={currentUser?.id === member.id}
+                          githubDisplayMode={githubDisplayMode}
                           ref={
                             currentUser?.id === member.id
                               ? currentUserRef
@@ -524,6 +625,14 @@ export default function Leaderboard() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* GitHub Options Modal */}
+      <GitHubOptionsModal
+        isOpen={showGithubOptions}
+        onClose={() => setShowGithubOptions(false)}
+        onSelectMode={handleGithubModeChange}
+        currentMode={githubDisplayMode}
+      />
     </div>
   );
 }

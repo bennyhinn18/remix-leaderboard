@@ -13,11 +13,14 @@ type MemberWithStats = {
   title?: string;
   bashClanPoints?: number;
   githubStreak?: number;
+  githubCommits?: number;
   leetcodeStreak?: number;
   duolingoStreak?: number;
   discordPoints?: number;
   bookRead?: number;
 };
+
+type GitHubDisplayMode = 'streak' | 'commits' | 'both';
 
 // Convert to forwardRef pattern
 const RegularCard = forwardRef<
@@ -29,12 +32,36 @@ const RegularCard = forwardRef<
     searchQuery: string;
     duolingoStreak?: number;
     isCurrentUser: boolean;
+    githubDisplayMode?: GitHubDisplayMode;
   }
 >(
   (
-    { member, index, activeTab, searchQuery, duolingoStreak, isCurrentUser },
+    { member, index, activeTab, searchQuery, duolingoStreak, isCurrentUser, githubDisplayMode = 'streak' },
     ref
   ) => {
+    // Helper function to get GitHub display value
+    const getGithubDisplayValue = () => {
+      if (githubDisplayMode === 'streak') {
+        return member.githubStreak || 0;
+      } else if (githubDisplayMode === 'commits') {
+        return member.githubCommits || 0;
+      } else { // both
+        const streak = member.githubStreak || 0;
+        const commits = member.githubCommits || 0;
+        return `${streak}/${commits}`;
+      }
+    };
+
+    // Helper function to get GitHub display label
+    const getGithubDisplayLabel = () => {
+      if (githubDisplayMode === 'streak') {
+        return 'Streak';
+      } else if (githubDisplayMode === 'commits') {
+        return 'Commits';
+      } else { // both
+        return 'S/C';
+      }
+    };
     return (
       <motion.div
         ref={ref} // Use ref here directly
@@ -103,14 +130,13 @@ const RegularCard = forwardRef<
                   <div className="text-white flex items-center gap-2">
                     {member.name}
                     {member.title === 'Captain Bash' && (
-                      <span className="text-xs  hidden sm:block bg-purple-500 text-white px-2 py-2 rounded-full">
-                        <Crown className="w-4 h-4 text-white"/> 
-                        
+                      <span className="text-xs hidden sm:block bg-white text-black px-2 py-0.5 rounded-full">
+                        CB
                       </span>
                     )}
                     {member.title === 'Organiser' && (
-                      <span className="text-xs hidden sm:block bg-amber-500 text-white px-2 py-2 rounded-full">
-                        <Shield className="w-4 h-4 text-white"/>
+                      <span className="text-xs hidden sm:block bg-white text-black px-2 py-0.5 rounded-full">
+                        Org
                       </span>
                     )}
                     {isCurrentUser && (
@@ -153,7 +179,7 @@ const RegularCard = forwardRef<
                   : activeTab === 'bashclan'
                   ? member.bashClanPoints || 0
                   : activeTab === 'github'
-                  ? member.githubStreak || 0
+                  ? getGithubDisplayValue()
                   : activeTab === 'leetcode'
                   ? member.leetcodeStreak
                   : activeTab === 'duolingo'
@@ -169,7 +195,7 @@ const RegularCard = forwardRef<
                 {activeTab === 'overall'
                   ? 'Points'
                   : activeTab === 'github'
-                  ? 'Commits'
+                  ? getGithubDisplayLabel()
                   : activeTab === 'leetcode'
                   ? 'Problems'
                   : activeTab === 'duolingo'
