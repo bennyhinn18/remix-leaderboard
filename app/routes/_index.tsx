@@ -55,8 +55,23 @@ import {
 } from '~/components/ui/dialog';
 
 import { getUserNotifications } from '~/services/notifications.server';
-import { ProjectShowcaseBanner } from '~/components/project-showcase-banner';
+import { ProjectShowcaseBanner } from '~/components/project-showcase/project-showcase-banner';
 
+function getEventdateTime(timeString:string){
+      const [hours, minutes,seconds] = timeString.split(':').map(Number);
+    
+      const now = new Date();
+      const event= new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        hours,
+        minutes,
+        seconds || 0
+      );
+      return event;
+    
+    }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const organiserStatus = await isOrganiser(request);
@@ -300,6 +315,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     clanName: '',
     isLive: false,
     eventDate: '',
+    eventTime: '',
     venue: '',
     totalSlots: 0,
     filledSlots: 0,
@@ -318,7 +334,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     // Check if the event is happening today
     const eventDate = parseISO(openEvent.event_date);
-    const isEventToday = isSameDay(eventDate, new Date());
+    const eventTime = openEvent.event_time ? parseISO(`${openEvent.event_date}T${openEvent.event_time}`) : null;
+    let isEventToday = isSameDay(eventDate, new Date());
+    let isEventLive = false;
+
+    
+    // Check if the event is within the next 2 hours or currently happening
+    if (eventTime) {
+      const now = new Date();
+
+      const start = getEventdateTime(openEvent.event_time);
+      const end = new Date(start);
+      end.setHours(end.getHours() + 2);
+      // Event is live if current time is between start time and 2 hours after start
+      isEventLive = now >= start && now <= end;
+
+      // Update isEventToday to be more specific (it's only "today" if it's happening now or within 2 hours)
+      isEventToday = isEventLive;
+    }
     
     projectShowcaseData = {
       isActive: true,
@@ -326,12 +359,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       clanName: '', // Will be filled below
       isLive: isEventToday, // Consider it live if it's happening today
       eventDate: openEvent.event_date,
+      eventTime: openEvent.event_time,
       venue: openEvent.venue,
       totalSlots: openEvent.max_slots,
       filledSlots: currentFilledSlots,
       eventName: openEvent.event_name,
       description: openEvent.description
     };
+    
   }
 
   // Get clan information if available
@@ -704,7 +739,7 @@ export default function Home() {
           </motion.div>
 
           {/* LeetCode Connect Component */}
-          <ProfileConnections member={member} />
+          {/* <ProfileConnections member={member} /> */}
           {/* What's New Section */}
           <WhatsNewPanel />
 

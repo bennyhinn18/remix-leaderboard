@@ -182,10 +182,26 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = formData.get('intent');
   
-  // Get event ID from URL params
+    // Get event ID from URL params (default to current open event)
   const url = new URL(request.url);
-  const eventId = url.searchParams.get('event') || 'project-showcase-2025';
-
+  let eventId = url.searchParams.get('event');
+  
+  // If no event specified in URL, get the currently open event
+  if (!eventId) {
+    const { data: openEvent } = await supabase.client
+      .from('project_showcase_events')
+      .select('event_id')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (openEvent) {
+      eventId = openEvent.event_id;
+    } else {
+      return json({ error: 'No open event available' }, { status: 400 });
+    }
+  }
   if (intent === 'manual_allocate') {
     const memberId = Number(formData.get('memberId'));
     const slotNumber = Number(formData.get('slotNumber'));
@@ -240,6 +256,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
 
     if (error) {
+      console.log("Failed to allocate slot:", error);
       return json({ error: 'Failed to allocate slot' }, { status: 500 });
     }
 

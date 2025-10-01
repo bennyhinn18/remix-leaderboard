@@ -18,12 +18,17 @@ import { Button } from '~/components/ui/button';
 import { Badge } from '~/components/ui/badge';
 import { Card } from '~/components/ui/card';
 
+function formatTime(): string {
+  return format(new Date(), 'h:mm a');
+}
+
 interface ProjectShowcaseBannerProps {
   isActive?: boolean;
   clanId?: number | null;
   clanName?: string;
   isLive?: boolean;
   eventDate?: string;
+  eventTime?: string;
   venue?: string;
   totalSlots?: number;
   filledSlots?: number;
@@ -37,7 +42,8 @@ export function ProjectShowcaseBanner({
   clanId,
   clanName = 'Tech Innovators',
   isLive = false,
-  eventDate,
+  eventDate = '', // Default to empty string
+  eventTime = '16:00', // Default to 4:00 PM
   venue = 'Main Auditorium',
   totalSlots = 25,
   filledSlots = 18,
@@ -52,10 +58,6 @@ export function ProjectShowcaseBanner({
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return 'TBD';
     return format(parseISO(dateStr), 'EEEE, MMMM dd, yyyy');
-  };
-
-  const formatTime = () => {
-    return format(new Date(), 'h:mm a');
   };
 
   return (
@@ -142,12 +144,38 @@ export function ProjectShowcaseBanner({
                 <div className="flex items-center gap-2 text-gray-300">
                   <Clock className="w-5 h-5 text-green-400" />
                   <span className="font-medium">
-                    {isLive ? `Live • ${formatTime()}` : '3:00 PM - 6:00 PM'}
+                    
+                    {isLive 
+                      ? `Live • ${formatTime()}` 
+                      : eventTime 
+                        ? `${format(parseISO(eventDate + 'T' + eventTime), 'h:mm a')} - ${format(new Date(parseISO(eventDate + 'T' + eventTime).getTime() + 2 * 60 * 60 * 1000), 'h:mm a')} IST`
+                        : 'TBD'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-300">
                   <MapPin className="w-5 h-5 text-orange-400" />
-                  <span className="font-medium">{venue}</span>
+                  {venue && venue.startsWith('http') ? (
+                    <a
+                      href={venue}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`underline ${isLive ? 'text-blue-300 font-semibold' : ''} flex items-center gap-1`}
+                    >
+                      {isLive ? (
+                        <>
+                          <ExternalLink className="w-4 h-4" />
+                          Watch Live (GMeet)
+                        </>
+                      ) : (
+                        <>
+                          <ExternalLink className="w-4 h-4" />
+                          Google Meet
+                        </>
+                      )}
+                    </a>
+                  ) : (
+                    venue
+                  )}
                 </div>
                 <div className="flex items-center gap-2 text-gray-300">
                   <Users className="w-5 h-5 text-purple-400" />
